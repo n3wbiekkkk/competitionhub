@@ -169,12 +169,13 @@ create policy profile_avatars_write_self
 alter table public.profiles
   add column if not exists directory_visible boolean not null default false;
 
+drop function if exists public.query_profile_directory(text, integer, integer);
 create or replace function public.query_profile_directory(
   p_query text default null,
   p_limit integer default 50,
   p_offset integer default 0
 )
-returns table (id uuid, full_name text, nickname text, grade text, skills text[])
+returns table (id uuid, full_name text, nickname text, grade text, skills text[], role text)
 language plpgsql
 stable
 security definer
@@ -186,10 +187,9 @@ begin
   end if;
 
   return query
-  select p.id, p.full_name, p.nickname, p.grade, p.skills
+  select p.id, p.full_name, p.nickname, p.grade, p.skills, p.role
   from public.profiles p
   where p.directory_visible
-    and p.role = 'student'
     and (
       p_query is null or btrim(p_query) = ''
       or strpos(lower(p.full_name), lower(p_query)) > 0
@@ -205,8 +205,9 @@ begin
 end;
 $$;
 
+drop function if exists public.get_directory_profile(uuid);
 create or replace function public.get_directory_profile(p_id uuid)
-returns table (id uuid, full_name text, nickname text, grade text, skills text[])
+returns table (id uuid, full_name text, nickname text, grade text, skills text[], role text)
 language plpgsql
 stable
 security definer
@@ -218,9 +219,9 @@ begin
   end if;
 
   return query
-  select p.id, p.full_name, p.nickname, p.grade, p.skills
+  select p.id, p.full_name, p.nickname, p.grade, p.skills, p.role
   from public.profiles p
-  where p.id = p_id and p.directory_visible and p.role = 'student';
+  where p.id = p_id and p.directory_visible;
 end;
 $$;
 

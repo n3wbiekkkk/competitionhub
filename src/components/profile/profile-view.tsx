@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/initials";
 import { parseClassroom } from "@/lib/constants/classroom";
-import { TECH_SKILLS } from "@/lib/constants/tech-taxonomy";
+import { TECH_SKILLS, USER_ROLE_LABELS_TH } from "@/lib/constants/tech-taxonomy";
 import type { DirectoryProfile } from "@/types/database";
 
 const PRESET_SKILLS = new Set<string>(TECH_SKILLS);
@@ -41,6 +41,9 @@ export function ProfileView({ profile }: { profile: DirectoryProfile }) {
               <GraduationCap className="h-4 w-4" aria-hidden="true" />
               {classroomLabel}
             </p>
+            <Badge variant="secondary" className="mt-1 h-auto rounded-md border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+              {USER_ROLE_LABELS_TH[profile.role]}
+            </Badge>
           </div>
         </div>
       </section>

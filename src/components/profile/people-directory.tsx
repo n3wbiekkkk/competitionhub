@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/initials";
 import { parseClassroom } from "@/lib/constants/classroom";
-import { TECH_SKILLS } from "@/lib/constants/tech-taxonomy";
+import { TECH_SKILLS, USER_ROLE_LABELS_TH } from "@/lib/constants/tech-taxonomy";
 import type { DirectoryProfile } from "@/types/database";
 
 const PRESET_SKILLS = new Set<string>(TECH_SKILLS);
@@ -124,6 +124,11 @@ export function PeopleDirectory({
                   <p className="mt-0.5 font-mono text-xs tabular-nums text-muted-foreground">
                     {classroomLabel}
                   </p>
+                  {person.role === "teacher" ? (
+                    <Badge variant="secondary" className="mt-2 h-auto rounded-md border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                      {USER_ROLE_LABELS_TH[person.role]}
+                    </Badge>
+                  ) : null}
                   {skills.length > 0 ? (
                     <ul className="mt-2 hidden flex-wrap gap-1 md:flex" aria-label="ทักษะ">
                       {skills.map((skill) => (

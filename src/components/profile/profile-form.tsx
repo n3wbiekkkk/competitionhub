@@ -467,7 +467,7 @@ export function ProfileForm({ initialProfile }: { initialProfile: Profile }) {
                 ให้ผู้อื่นค้นพบโปรไฟล์ของฉัน
               </span>
               <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
-                เมื่อเปิด ผู้อื่นจะเห็นชื่อ ชื่อเล่น ห้องเรียน และทักษะของคุณในหน้าผู้คน
+                เมื่อเปิด ผู้อื่นจะเห็นชื่อ ชื่อเล่น ห้องเรียน บทบาทในระบบ และทักษะของคุณในหน้าผู้คน
                 อีเมล ช่องทางติดต่อ และลิงก์ส่วนตัวจะไม่แสดง
               </span>
             </span>

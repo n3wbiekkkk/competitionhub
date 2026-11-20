@@ -598,6 +598,7 @@ end $$;
 
 -- Directory reads never widen profiles RLS. These functions return a fixed
 -- five-column DTO only, require a live caller, and reject system mode.
+drop function if exists public.query_profile_directory(text, integer, integer);
 create or replace function public.query_profile_directory(
   p_query text default null,
   p_limit integer default 50,
@@ -608,7 +609,8 @@ returns table (
   full_name text,
   nickname text,
   grade text,
-  skills text[]
+  skills text[],
+  role text
 )
 language plpgsql
 stable
@@ -621,10 +623,9 @@ begin
   end if;
 
   return query
-  select p.id, p.full_name, p.nickname, p.grade, p.skills
+  select p.id, p.full_name, p.nickname, p.grade, p.skills, p.role
   from public.profiles p
   where p.directory_visible
-    and p.role = 'student'
     and (
       p_query is null
       or btrim(p_query) = ''
@@ -641,13 +642,15 @@ begin
 end;
 $$;
 
+drop function if exists public.get_directory_profile(uuid);
 create or replace function public.get_directory_profile(p_id uuid)
 returns table (
   id uuid,
   full_name text,
   nickname text,
   grade text,
-  skills text[]
+  skills text[],
+  role text
 )
 language plpgsql
 stable
@@ -660,11 +663,11 @@ begin
   end if;
 
   return query
-  select p.id, p.full_name, p.nickname, p.grade, p.skills
+  select p.id, p.full_name, p.nickname, p.grade, p.skills, p.role
   from public.profiles p
   where p.id = p_id
     and p.directory_visible
-    and p.role = 'student';
+   ;
 end;
 $$;
 

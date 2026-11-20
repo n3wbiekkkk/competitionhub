@@ -20,7 +20,7 @@ export async function listDirectoryProfiles(
   const query = normalizeDirectoryQuery(rawQuery);
   return withUserDb(userId, async (client) => {
     const result = await client.query<DirectoryProfile>(
-      `SELECT id, full_name, nickname, grade, skills
+      `SELECT id, full_name, nickname, grade, skills, role
        FROM public.query_profile_directory($1, 50, 0)`,
       [query],
     );
@@ -34,7 +34,7 @@ export async function getDirectoryProfile(
 ): Promise<DirectoryProfile | null> {
   return withUserDb(userId, async (client) => {
     const result = await client.query<DirectoryProfile>(
-      `SELECT id, full_name, nickname, grade, skills
+      `SELECT id, full_name, nickname, grade, skills, role
        FROM public.get_directory_profile($1::uuid)`,
       [profileId],
     );
@@ -43,7 +43,7 @@ export async function getDirectoryProfile(
     // Confirmed teammates and teachers already have full-row visibility under
     // the existing RLS policy. Return the same narrow DTO for that relationship.
     const teammate = await client.query<DirectoryProfile>(
-      `SELECT id, full_name, nickname, grade, skills
+      `SELECT id, full_name, nickname, grade, skills, role
        FROM public.profiles
        WHERE id = $1::uuid
        LIMIT 1`,
