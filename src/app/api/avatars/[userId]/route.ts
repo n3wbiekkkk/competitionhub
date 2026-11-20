@@ -17,7 +17,27 @@ export async function GET(
   }
 
   const { userId } = await context.params;
-  if (!uuidSchema.safeParse(userId).success || userId !== auth.user.id) {
+  if (!uuidSchema.safeParse(userId).success) {
+    return NextResponse.json({ error: "ไม่พบภาพโปรไฟล์" }, { status: 404 });
+  }
+
+  const visible = await withUserDb(auth.user.id, async (client) => {
+    const directory = await client.query(
+      "SELECT 1 FROM public.get_directory_profile($1::uuid) LIMIT 1",
+      [userId],
+    );
+    if (directory.rowCount && directory.rowCount > 0) return true;
+
+    // Self, teachers and confirmed teammates already have full-row visibility
+    // under the existing profiles RLS policy.
+    const profile = await client.query(
+      "SELECT 1 FROM public.profiles WHERE id = $1::uuid LIMIT 1",
+      [userId],
+    );
+    return Boolean(profile.rowCount && profile.rowCount > 0);
+  });
+
+  if (!visible) {
     return NextResponse.json({ error: "ไม่พบภาพโปรไฟล์" }, { status: 404 });
   }
 

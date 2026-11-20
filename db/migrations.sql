@@ -175,7 +175,7 @@ create or replace function public.query_profile_directory(
   p_limit integer default 50,
   p_offset integer default 0
 )
-returns table (id uuid, full_name text, nickname text, grade text, skills text[], role text)
+returns table (id uuid, full_name text, nickname text, grade text, skills text[], role text, avatar_url text)
 language plpgsql
 stable
 security definer
@@ -187,7 +187,7 @@ begin
   end if;
 
   return query
-  select p.id, p.full_name, p.nickname, p.grade, p.skills, p.role
+  select p.id, p.full_name, p.nickname, p.grade, p.skills, p.role, p.avatar_url
   from public.profiles p
   where p.directory_visible
     and (
@@ -207,7 +207,7 @@ $$;
 
 drop function if exists public.get_directory_profile(uuid);
 create or replace function public.get_directory_profile(p_id uuid)
-returns table (id uuid, full_name text, nickname text, grade text, skills text[], role text)
+returns table (id uuid, full_name text, nickname text, grade text, skills text[], role text, avatar_url text)
 language plpgsql
 stable
 security definer
@@ -219,7 +219,7 @@ begin
   end if;
 
   return query
-  select p.id, p.full_name, p.nickname, p.grade, p.skills, p.role
+  select p.id, p.full_name, p.nickname, p.grade, p.skills, p.role, p.avatar_url
   from public.profiles p
   where p.id = p_id and p.directory_visible;
 end;
@@ -227,6 +227,11 @@ $$;
 
 revoke all on function public.query_profile_directory(text, integer, integer) from public;
 revoke all on function public.get_directory_profile(uuid) from public;
+
+drop policy if exists profile_avatars_select_visible on public.profile_avatars;
+create policy profile_avatars_select_visible
+  on public.profile_avatars for select
+  using (user_id = public.app_uid() or public.is_teacher() or public.app_is_system() or exists (select 1 from public.get_directory_profile(user_id)));
 
 do $$
 begin

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, GraduationCap, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/initials";
 import { parseClassroom } from "@/lib/constants/classroom";
 import { TECH_SKILLS, USER_ROLE_LABELS_TH } from "@/lib/constants/tech-taxonomy";
@@ -25,6 +25,9 @@ export function ProfileView({ profile }: { profile: DirectoryProfile }) {
       <section className="flex flex-col gap-5 border-b border-border pb-7 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-4">
           <Avatar className="size-16 rounded-2xl">
+            {profile.avatar_url ? (
+              <AvatarImage src={profile.avatar_url} alt="" className="rounded-2xl" />
+            ) : null}
             <AvatarFallback className="bg-sage font-mono text-lg font-semibold tabular-nums text-sage-foreground">
               {getInitials(profile.full_name, profile.nickname ?? "")}
             </AvatarFallback>

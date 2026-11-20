@@ -343,13 +343,6 @@ alter table public.profile_avatars enable row level security;
 alter table public.profile_avatars force row level security;
 
 drop policy if exists profile_avatars_select_self on public.profile_avatars;
-create policy profile_avatars_select_self
-  on public.profile_avatars for select
-  using (
-    user_id = public.app_uid()
-    or public.is_teacher()
-    or public.app_is_system()
-  );
 
 drop policy if exists profile_avatars_write_self on public.profile_avatars;
 create policy profile_avatars_write_self
@@ -610,7 +603,8 @@ returns table (
   nickname text,
   grade text,
   skills text[],
-  role text
+  role text,
+  avatar_url text
 )
 language plpgsql
 stable
@@ -623,7 +617,7 @@ begin
   end if;
 
   return query
-  select p.id, p.full_name, p.nickname, p.grade, p.skills, p.role
+  select p.id, p.full_name, p.nickname, p.grade, p.skills, p.role, p.avatar_url
   from public.profiles p
   where p.directory_visible
     and (
@@ -650,7 +644,8 @@ returns table (
   nickname text,
   grade text,
   skills text[],
-  role text
+  role text,
+  avatar_url text
 )
 language plpgsql
 stable
@@ -663,7 +658,7 @@ begin
   end if;
 
   return query
-  select p.id, p.full_name, p.nickname, p.grade, p.skills, p.role
+  select p.id, p.full_name, p.nickname, p.grade, p.skills, p.role, p.avatar_url
   from public.profiles p
   where p.id = p_id
     and p.directory_visible
@@ -673,6 +668,19 @@ $$;
 
 revoke all on function public.query_profile_directory(text, integer, integer) from public;
 revoke all on function public.get_directory_profile(uuid) from public;
+
+drop policy if exists profile_avatars_select_self on public.profile_avatars;
+drop policy if exists profile_avatars_select_visible on public.profile_avatars;
+create policy profile_avatars_select_visible
+  on public.profile_avatars for select
+  using (
+    user_id = public.app_uid()
+    or public.is_teacher()
+    or public.app_is_system()
+    or exists (
+      select 1 from public.get_directory_profile(user_id)
+    )
+  );
 
 do $$
 begin

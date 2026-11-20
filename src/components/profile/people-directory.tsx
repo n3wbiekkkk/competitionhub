@@ -6,7 +6,7 @@ import { ArrowRight, RotateCcw, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/initials";
 import { parseClassroom } from "@/lib/constants/classroom";
 import { TECH_SKILLS, USER_ROLE_LABELS_TH } from "@/lib/constants/tech-taxonomy";
@@ -113,6 +113,9 @@ export function PeopleDirectory({
                 className="flex min-w-0 items-center gap-3 border-b border-border py-3 last:border-b-0 md:flex-col md:items-start md:rounded-xl md:border md:bg-card md:p-4 md:py-4 md:last:border-b"
               >
                 <Avatar className="size-10 shrink-0 md:size-11">
+                  {person.avatar_url ? (
+                    <AvatarImage src={person.avatar_url} alt="" />
+                  ) : null}
                   <AvatarFallback className="bg-sage font-mono text-xs font-semibold tabular-nums text-sage-foreground">
                     {getInitials(person.full_name, person.nickname ?? "")}
                   </AvatarFallback>

@@ -48,6 +48,7 @@ export interface DirectoryProfile {
   grade: string | null;
   skills: string[];
   role: UserRole;
+  avatar_url: string | null;
 }
 
 export interface PasswordResetRequest {
