@@ -3,19 +3,8 @@ import { z } from "zod";
 import { requireAuthUser, setSessionCookie } from "@/lib/auth/cookies";
 import { signSessionToken } from "@/lib/auth/session";
 import { withUserDb } from "@/lib/db/pool";
+import { isValidProfileLink, SOCIAL_HOSTS } from "@/lib/utils/profile-links";
 import type { Profile } from "@/types/database";
-
-function isValidOptionalHttpUrl(value: string | null | undefined): boolean {
-  if (!value || value.trim() === "") {
-    return true;
-  }
-  try {
-    const parsed = new URL(value.trim());
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
 
 const profilePatchSchema = z.object({
   full_name: z
@@ -50,8 +39,8 @@ const profilePatchSchema = z.object({
     .max(300)
     .nullable()
     .optional()
-    .refine(isValidOptionalHttpUrl, {
-      message: "ลิงก์ GitHub ต้องขึ้นต้นด้วย http:// หรือ https://",
+    .refine((value) => isValidProfileLink(value, SOCIAL_HOSTS.github), {
+      message: "ลิงก์ GitHub ต้องเป็น URL สาธารณะของ GitHub",
     }),
   portfolio_url: z
     .string()
@@ -59,8 +48,27 @@ const profilePatchSchema = z.object({
     .max(300)
     .nullable()
     .optional()
-    .refine(isValidOptionalHttpUrl, {
-      message: "ลิงก์ Portfolio / Kaggle ต้องขึ้นต้นด้วย http:// หรือ https://",
+    .refine((value) => isValidProfileLink(value), {
+      message: "ลิงก์ผลงานต้องเป็น URL สาธารณะ http:// หรือ https://",
+    }),
+  bio: z.string().trim().max(240).nullable().optional(),
+  discord_url: z
+    .string()
+    .trim()
+    .max(300)
+    .nullable()
+    .optional()
+    .refine((value) => isValidProfileLink(value, SOCIAL_HOSTS.discord), {
+      message: "ลิงก์ Discord ต้องเป็น URL สาธารณะของ Discord",
+    }),
+  line_url: z
+    .string()
+    .trim()
+    .max(300)
+    .nullable()
+    .optional()
+    .refine((value) => isValidProfileLink(value, SOCIAL_HOSTS.line), {
+      message: "ลิงก์ LINE ต้องเป็น URL สาธารณะของ LINE",
     }),
   directory_visible: z.boolean().optional(),
 });
@@ -95,17 +103,22 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: firstIssue }, { status: 400 });
   }
 
+  const optionalText = (
+    value: string | null | undefined,
+    fallback: string | null,
+  ) => (value === undefined ? fallback : value?.trim() || null);
+
   const deduplicatedSkills = Array.from(
     new Set(parsed.data.skills.map((s) => s.trim()).filter(Boolean)),
   );
-  const nickname =
-    parsed.data.nickname === undefined
-      ? auth.user.nickname
-      : parsed.data.nickname?.trim() || null;
-  const grade = parsed.data.grade?.trim() || null;
-  const contact = parsed.data.contact?.trim() || null;
-  const githubUrl = parsed.data.github_url?.trim() || null;
-  const portfolioUrl = parsed.data.portfolio_url?.trim() || null;
+  const nickname = optionalText(parsed.data.nickname, auth.user.nickname);
+  const grade = optionalText(parsed.data.grade, auth.user.grade);
+  const contact = optionalText(parsed.data.contact, auth.user.contact);
+  const githubUrl = optionalText(parsed.data.github_url, auth.user.github_url);
+  const portfolioUrl = optionalText(parsed.data.portfolio_url, auth.user.portfolio_url);
+  const bio = optionalText(parsed.data.bio, auth.user.bio);
+  const discordUrl = optionalText(parsed.data.discord_url, auth.user.discord_url);
+  const lineUrl = optionalText(parsed.data.line_url, auth.user.line_url);
   const directoryVisible =
     parsed.data.directory_visible ?? auth.user.directory_visible;
 
@@ -120,11 +133,14 @@ export async function PATCH(request: Request) {
              contact = $5,
              github_url = $6,
              portfolio_url = $7,
-             directory_visible = $8
-         WHERE id = $9
+             bio = $8,
+             discord_url = $9,
+             line_url = $10,
+             directory_visible = $11
+         WHERE id = $12
          RETURNING id, full_name, nickname, email, role, grade, skills, contact,
-                   github_url, portfolio_url, directory_visible,
-                   created_at::text, updated_at::text`,
+                   github_url, portfolio_url, bio, avatar_url, discord_url, line_url,
+                   directory_visible, created_at::text, updated_at::text`,
         [
           parsed.data.full_name,
           nickname,
@@ -133,6 +149,9 @@ export async function PATCH(request: Request) {
           contact,
           githubUrl,
           portfolioUrl,
+          bio,
+          discordUrl,
+          lineUrl,
           directoryVisible,
           auth.user.id,
         ],

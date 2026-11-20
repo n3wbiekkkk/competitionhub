@@ -36,6 +36,10 @@ npm run dev
 
 Runs `tsc --noEmit`, ESLint, `node:test` unit tests, and a production build. `npm test` alone runs the unit tests.
 
+## License
+
+MIT. See `LICENSE`.
+
 ## Production deployment (self-hosted)
 
 Target: any self-hosted Linux machine with Docker Compose. Set `DEPLOY_HOST` and `DEPLOY_DIR` for your environment.

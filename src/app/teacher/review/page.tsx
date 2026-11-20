@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
-import {
-  ReviewQueueClient,
+import { ResetRequestsPanel } from "@/components/teacher/reset-requests-panel";
+import { ReviewQueueClient,
   type ReviewCompetitionItem,
 } from "@/components/teacher/review-queue-client";
 import { getAuthenticatedProfile } from "@/lib/auth/cookies";
 import type { UserRole } from "@/lib/constants/tech-taxonomy";
-import { withUserDb } from "@/lib/db/pool";
+import { withSystemDb, withUserDb } from "@/lib/db/pool";
+import type { PasswordResetRequest } from "@/types/database";
 import type { Competition } from "@/types/database";
 
 interface ReviewRow extends Competition {
@@ -55,8 +56,28 @@ export default async function TeacherReviewPage() {
     },
   );
 
+  const resetRequests: PasswordResetRequest[] = await withSystemDb(
+    async (client) => {
+      await client.query("SELECT public.expire_password_reset_requests()");
+      const result = await client.query<PasswordResetRequest>(
+        `SELECT r.id, r.user_id, r.status,
+                r.requested_at::text, r.expires_at::text,
+                r.resolved_at::text, r.resolved_by,
+                p.full_name, a.email
+         FROM public.password_reset_requests r
+         JOIN public.profiles p ON p.id = r.user_id
+         JOIN public.auth_accounts a ON a.id = r.user_id
+         WHERE r.status = 'pending' AND r.expires_at > now()
+         ORDER BY r.requested_at DESC
+         LIMIT 20`,
+      );
+      return result.rows;
+    },
+  );
+
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <main className="mx-auto max-w-6xl space-y-10 px-4 py-8 sm:px-6 lg:px-8">
+      <ResetRequestsPanel requests={resetRequests} />
       <ReviewQueueClient initialCompetitions={items} />
     </main>
   );

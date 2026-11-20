@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2, LogIn, UserPlus } from "lucide-react";
 import { toast } from "sonner";
@@ -175,13 +176,13 @@ export function AuthForm({ nextUrl, initialTab = "login" }: AuthFormProps) {
             value="login"
             className="flex-none rounded-none px-0 pb-2.5 text-sm font-medium after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-semibold"
           >
-            เข้าสู่ระบบ (Sign In)
+            เข้าสู่ระบบ
           </TabsTrigger>
           <TabsTrigger
             value="register"
             className="flex-none rounded-none px-0 pb-2.5 text-sm font-medium after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-semibold"
           >
-            สมัครสมาชิก (Sign Up)
+            สมัครสมาชิก
           </TabsTrigger>
         </TabsList>
 
@@ -233,6 +234,12 @@ export function AuthForm({ nextUrl, initialTab = "login" }: AuthFormProps) {
                   )}
                 </button>
               </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
+                ลืมรหัสผ่าน?
+              </Link>
             </div>
 
             <Button

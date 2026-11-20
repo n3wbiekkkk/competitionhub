@@ -67,19 +67,19 @@ export function PeopleDirectory({
 
       <p className="text-xs text-muted-foreground" role="status" aria-live="polite">
         แสดง <strong className="font-medium text-foreground">{filtered.length}</strong>{" "}
-        จาก {people.length} คนที่เปิดเผยโปรไฟล์
+        จาก {people.length} คน
       </p>
 
       {filtered.length === 0 ? (
         <div className="border-y border-border py-14 text-center">
           <p className="text-sm font-medium text-foreground">
             {people.length === 0
-              ? "ยังไม่มีคนที่เปิดเผยโปรไฟล์ในขณะนี้"
-              : "ไม่พบคนที่ตรงกับคำค้นหา"}
+              ? "ยังไม่มีผู้คนที่เปิดเผยโปรไฟล์"
+              : "ไม่พบผู้คนที่ตรงกับคำค้นหา"}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
             {people.length === 0
-              ? "ให้เพื่อนเปิดการค้นพบโปรไฟล์ในหน้าโปรไฟล์ของแต่ละคน แล้วกลับมาดูใหม่"
+              ? "ให้เพื่อนเปิดการค้นพบโปรไฟล์ในหน้าโปรไฟล์ แล้วกลับมาดูใหม่"
               : "ลองค้นหาด้วยชื่อเล่นหรือทักษะอื่น"}
           </p>
           {query ? (

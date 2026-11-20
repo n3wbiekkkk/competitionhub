@@ -53,7 +53,7 @@ export default async function AdminDashboardPage() {
       const [usersRes, compsRes, teamsRes, membersRes] = await Promise.all([
         client.query<AdminUserRow>(
           `SELECT p.id, p.full_name, p.nickname, p.email, p.role, p.grade, p.skills,
-                  p.contact, p.github_url, p.portfolio_url, p.directory_visible,
+                  p.contact, p.github_url, p.portfolio_url, p.bio, p.avatar_url, p.discord_url, p.line_url, p.directory_visible,
                   p.created_at::text, p.updated_at::text,
                   COALESCE((
                     SELECT count(*)::text FROM public.interests i WHERE i.user_id = p.id

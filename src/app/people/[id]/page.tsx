@@ -29,7 +29,7 @@ export default async function PersonPage({
     return (
       <main className="mx-auto max-w-3xl px-4 py-16 text-center">
         <p role="alert" className="rounded-xl border border-peach/30 bg-peach px-4 py-3 text-sm text-peach-foreground">
-         เปิดโปรไฟล์หลายครั้งเกินไปในช่วงสั้นนี้ กรุณารอสักครู่แล้วลองใหม่
+         เปิดโปรไฟล์บ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่
         </p>
       </main>
     );

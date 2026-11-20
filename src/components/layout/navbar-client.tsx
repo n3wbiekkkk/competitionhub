@@ -74,7 +74,7 @@ export function NavbarClient({ user, pendingReviewCount }: NavbarClientProps) {
     },
     {
       href: "/people",
-      label: "คนในสาย Tech",
+      label: "ผู้คน",
       show: Boolean(user),
       badge: 0,
     },
@@ -86,7 +86,7 @@ export function NavbarClient({ user, pendingReviewCount }: NavbarClientProps) {
     },
     {
       href: "/profile",
-      label: "โปรไฟล์สาย Tech",
+      label: "โปรไฟล์",
       show: Boolean(user),
       badge: 0,
     },
@@ -98,7 +98,7 @@ export function NavbarClient({ user, pendingReviewCount }: NavbarClientProps) {
     },
     {
       href: "/admin",
-      label: "Admin",
+      label: "ผู้ดูแลระบบ",
       show: user?.role === "teacher",
       badge: 0,
     },
@@ -178,7 +178,7 @@ export function NavbarClient({ user, pendingReviewCount }: NavbarClientProps) {
                       {user.full_name || user.email}
                     </span>
                     <span className="text-[11px] text-muted-foreground">
-                      {user.role === "teacher" ? "Admin" : "นักเรียน"}
+                      {user.role === "teacher" ? "ผู้ดูแลระบบ" : "นักเรียน"}
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
@@ -197,13 +197,13 @@ export function NavbarClient({ user, pendingReviewCount }: NavbarClientProps) {
                   <DropdownMenuItem asChild>
                     <Link href="/profile" className="cursor-pointer">
                       <UserCircle2 className="mr-2 h-4 w-4" />
-                      โปรไฟล์สาย Tech
+                      โปรไฟล์
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/people" className="cursor-pointer">
                       <Users className="mr-2 h-4 w-4" />
-                      คนในสาย Tech
+                      ผู้คน
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -229,7 +229,7 @@ export function NavbarClient({ user, pendingReviewCount }: NavbarClientProps) {
                       <DropdownMenuItem asChild>
                         <Link href="/admin" className="cursor-pointer">
                           <ShieldCheck className="mr-2 h-4 w-4" />
-                          Admin Dashboard
+                          ผู้ดูแลระบบ
                         </Link>
                       </DropdownMenuItem>
                     </>

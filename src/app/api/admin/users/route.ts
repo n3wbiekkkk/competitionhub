@@ -60,7 +60,7 @@ export async function GET() {
     const users = await withUserDb(auth.user.id, async (client) => {
       const res = await client.query<AdminUserRow>(
         `SELECT p.id, p.full_name, p.nickname, p.email, p.role, p.grade, p.skills,
-                p.contact, p.github_url, p.portfolio_url, p.directory_visible,
+                p.contact, p.github_url, p.portfolio_url, p.bio, p.avatar_url, p.discord_url, p.line_url, p.directory_visible,
                 p.created_at::text, p.updated_at::text,
                 COALESCE((
                   SELECT count(*)::text FROM public.interests i WHERE i.user_id = p.id
@@ -153,7 +153,7 @@ export async function POST(request: Request) {
         `INSERT INTO public.profiles (id, full_name, nickname, email, role, grade, contact)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING id, full_name, nickname, email, role, grade, skills, contact,
-                   github_url, portfolio_url, directory_visible,
+                   github_url, portfolio_url, bio, avatar_url, discord_url, line_url, directory_visible,
                    created_at::text, updated_at::text`,
         [
           accountId,

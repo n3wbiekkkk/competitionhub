@@ -24,7 +24,7 @@ export function Footer() {
             href="/profile"
             className="transition-colors hover:text-foreground"
           >
-            โปรไฟล์สาย Tech
+            โปรไฟล์
           </Link>
           <Link
             href="/settings"

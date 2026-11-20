@@ -28,10 +28,10 @@ export default async function PeoplePage({
           ค้นหาคนทำทีม
         </p>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-          คนในสาย Tech
+          ผู้คน
         </h1>
         <p className="text-sm leading-relaxed text-muted-foreground">
-          เฉพาะโปรไฟล์ที่เจ้าขอนุญาตให้ค้นพบ แสดงชื่อ ห้องเรียน และทักษะ
+          เฉพาะโปรไฟล์ที่เจ้าของอนุญาตให้ค้นพบ แสดงชื่อ ห้องเรียน และทักษะ
           เพื่อช่วยจัดทีมการแข่งขันในโรงเรียน
         </p>
       </section>
@@ -41,7 +41,7 @@ export default async function PeoplePage({
           role="alert"
           className="rounded-xl border border-peach/30 bg-peach px-4 py-3 text-sm text-peach-foreground"
         >
-          ค้นหาหลายครั้งเกินไปในช่วงสั้นนี้ กรุณารอสักครู่แล้วลองใหม่
+          ค้นหาบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่
         </p>
       ) : null}
 
@@ -53,7 +53,7 @@ export default async function PeoplePage({
 
       <p className="flex items-center gap-2 border-t border-border pt-6 text-xs text-muted-foreground">
         <Users className="h-3.5 w-3.5" aria-hidden="true" />
-        ไม่พบคนที่ใช่? ให้เพื่อนเปิด “ให้คนอื่นค้นพบโปรไฟล์ของฉัน” ในหน้าโปรไฟล์ของแต่ละคน
+        ไม่พบคนที่กำลังหา? ให้เพื่อนเปิดการค้นพบโปรไฟล์ในหน้าโปรไฟล์
       </p>
     </main>
   );

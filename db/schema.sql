@@ -31,6 +31,10 @@ create table if not exists public.profiles (
   contact text,
   github_url text,
   portfolio_url text,
+  bio text,
+  avatar_url text,
+  discord_url text,
+  line_url text,
   directory_visible boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -38,6 +42,10 @@ create table if not exists public.profiles (
 
 alter table public.profiles add column if not exists nickname text;
 alter table public.profiles add column if not exists directory_visible boolean not null default false;
+alter table public.profiles add column if not exists bio text;
+alter table public.profiles add column if not exists avatar_url text;
+alter table public.profiles add column if not exists discord_url text;
+alter table public.profiles add column if not exists line_url text;
 
 create table if not exists public.competitions (
   id uuid primary key default gen_random_uuid(),
@@ -323,6 +331,40 @@ create policy profiles_select_policy
     or public.can_view_profile(id)
   );
 
+-- Avatar bytes live outside profiles so authentication queries stay small.
+create table if not exists public.profile_avatars (
+  user_id uuid primary key references public.profiles(id) on delete cascade,
+  data bytea not null,
+  mime_type text not null check (mime_type in ('image/jpeg','image/png','image/webp')),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.profile_avatars enable row level security;
+alter table public.profile_avatars force row level security;
+
+drop policy if exists profile_avatars_select_self on public.profile_avatars;
+create policy profile_avatars_select_self
+  on public.profile_avatars for select
+  using (
+    user_id = public.app_uid()
+    or public.is_teacher()
+    or public.app_is_system()
+  );
+
+drop policy if exists profile_avatars_write_self on public.profile_avatars;
+create policy profile_avatars_write_self
+  on public.profile_avatars for all
+  using (
+    user_id = public.app_uid()
+    or public.is_teacher()
+    or public.app_is_system()
+  )
+  with check (
+    user_id = public.app_uid()
+    or public.is_teacher()
+    or public.app_is_system()
+  );
+
 drop policy if exists profiles_insert_self_student on public.profiles;
 create policy profiles_insert_self_student
   on public.profiles
@@ -468,6 +510,60 @@ create policy team_members_teacher_system_all
   using (public.app_is_system() or public.is_teacher())
   with check (public.app_is_system() or public.is_teacher());
 
+-- Password reset requests are public-created and teacher-reviewed.
+create table if not exists public.password_reset_requests (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.auth_accounts(id) on delete cascade,
+  status text not null default 'pending'
+    check (status in ('pending','resolved','rejected','expired')),
+  requested_at timestamptz not null default now(),
+  expires_at timestamptz not null,
+  resolved_at timestamptz,
+  resolved_by uuid references public.profiles(id) on delete set null
+);
+
+create or replace function public.expire_password_reset_requests()
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  update public.password_reset_requests
+  set status = 'expired'
+  where status = 'pending' and expires_at <= now();
+end;
+$$;
+
+create table if not exists public.password_reset_tokens (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.auth_accounts(id) on delete cascade,
+  token_hash bytea not null unique,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null,
+  used_at timestamptz,
+  revoked_at timestamptz,
+  created_by uuid references public.profiles(id) on delete set null,
+  constraint password_reset_tokens_expiry_future check (expires_at > created_at)
+);
+
+create index if not exists password_reset_tokens_active_user_idx
+  on public.password_reset_tokens (user_id)
+  where used_at is null and revoked_at is null;
+
+alter table public.password_reset_requests enable row level security;
+alter table public.password_reset_requests force row level security;
+alter table public.password_reset_tokens enable row level security;
+alter table public.password_reset_tokens force row level security;
+
+drop policy if exists reset_requests_system_all on public.password_reset_requests;
+create policy reset_requests_system_all
+  on public.password_reset_requests for all
+  using (public.app_is_system()) with check (public.app_is_system());
+
+drop policy if exists reset_tokens_system_all on public.password_reset_tokens;
+create policy reset_tokens_system_all
+  on public.password_reset_tokens for all
+  using (public.app_is_system()) with check (public.app_is_system());
+
+revoke all on function public.expire_password_reset_requests() from public;
+
 -- ----------------------------------------------------------------------------
 -- 6. Grants for Non-Superuser App Role (techhub_app)
 -- ----------------------------------------------------------------------------
@@ -482,7 +578,10 @@ begin
       public.competitions,
       public.interests,
       public.teams,
-      public.team_members
+      public.team_members,
+      public.profile_avatars,
+      public.password_reset_requests,
+      public.password_reset_tokens
     to techhub_app;
 
     grant execute on function
@@ -491,7 +590,8 @@ begin
       public.is_teacher(),
       public.is_confirmed_team_member(uuid),
       public.can_view_profile(uuid),
-      public.get_competition_interest_counts(uuid[])
+      public.get_competition_interest_counts(uuid[]),
+      public.expire_password_reset_requests()
     to techhub_app;
   end if;
 end $$;

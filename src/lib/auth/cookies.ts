@@ -56,7 +56,7 @@ export async function getAuthenticatedProfile(): Promise<Profile | null> {
     const row = await withUserDb(session.user.id, async (client) => {
       const result = await client.query<LiveAuthRow>(
         `SELECT p.id, p.full_name, p.nickname, p.email, p.role, p.grade, p.skills,
-                p.contact, p.github_url, p.portfolio_url, p.directory_visible,
+                p.contact, p.github_url, p.portfolio_url, p.bio, p.avatar_url, p.discord_url, p.line_url, p.directory_visible,
                 p.created_at::text, p.updated_at::text,
                 public.app_session_version() AS session_version
          FROM public.profiles p
@@ -82,6 +82,10 @@ export async function getAuthenticatedProfile(): Promise<Profile | null> {
       contact: row.contact,
       github_url: row.github_url,
       portfolio_url: row.portfolio_url,
+      bio: row.bio,
+      avatar_url: row.avatar_url,
+      discord_url: row.discord_url,
+      line_url: row.line_url,
       directory_visible: row.directory_visible,
       created_at: row.created_at,
       updated_at: row.updated_at,

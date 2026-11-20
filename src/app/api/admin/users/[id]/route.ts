@@ -134,6 +134,9 @@ export async function PATCH(
     const nextHash = rawNewPassword ? await hashPassword(rawNewPassword) : null;
 
     const outcome = await withSystemDb(async (client) => {
+      await client.query("SELECT pg_advisory_xact_lock(742902)");
+      let sessionVersion = 0;
+
       const targetRes = await client.query<{
         role: string;
         email: string;
@@ -172,7 +175,7 @@ export async function PATCH(
              contact = $5
          WHERE id = $6
          RETURNING id, full_name, nickname, email, role, grade, skills, contact,
-                   github_url, portfolio_url, directory_visible,
+                   github_url, portfolio_url, bio, avatar_url, discord_url, line_url, directory_visible,
                    created_at::text, updated_at::text`,
         [fullName, nextNickname, grade, parsed.data.role, contact, id],
       );
@@ -181,14 +184,20 @@ export async function PATCH(
         return { kind: "not_found" as const };
       }
 
-      if (nextHash) {
-        await client.query(
-          "UPDATE public.auth_accounts SET password_hash = $1 WHERE id = $2",
-          [nextHash, id],
+      if (nextHash || parsed.data.role !== updated.role) {
+        const securityRes = await client.query<{ session_version: number }>(
+          `INSERT INTO public.auth_security (user_id, session_version)
+           VALUES ($1, 1)
+           ON CONFLICT (user_id)
+           DO UPDATE SET session_version = public.auth_security.session_version + 1,
+                         updated_at = now()
+           RETURNING session_version`,
+          [id],
         );
+        sessionVersion = securityRes.rows[0]?.session_version ?? 1;
       }
 
-      return { kind: "updated" as const, user: updated };
+      return { kind: "updated" as const, user: updated, sessionVersion };
     });
 
     if (outcome.kind === "not_found") {
@@ -220,7 +229,7 @@ export async function PATCH(
         email: outcome.user.email,
         role: outcome.user.role,
         fullName: outcome.user.full_name,
-      });
+      }, outcome.sessionVersion);
       setSessionCookie(response, token);
     }
 

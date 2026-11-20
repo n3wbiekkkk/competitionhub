@@ -154,7 +154,7 @@ export async function POST(request: Request) {
         `INSERT INTO public.profiles (id, full_name, nickname, email, role, grade)
          VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING id, full_name, nickname, email, role, grade, skills, contact,
-                   github_url, portfolio_url, directory_visible,
+                   github_url, portfolio_url, bio, avatar_url, discord_url, line_url, directory_visible,
                    created_at::text, updated_at::text`,
         [accountId, fullName, nickname, normalizedEmail, assignedRole, grade],
       );

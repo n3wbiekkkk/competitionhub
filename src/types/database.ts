@@ -17,6 +17,10 @@ export interface Profile {
   contact: string | null;
   github_url: string | null;
   portfolio_url: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  discord_url: string | null;
+  line_url: string | null;
   directory_visible: boolean;
   created_at: string;
   updated_at: string;
@@ -30,6 +34,10 @@ export interface ProfileUpdate {
   contact?: string | null;
   github_url?: string | null;
   portfolio_url?: string | null;
+  bio?: string | null;
+  avatar_url?: string | null;
+  discord_url?: string | null;
+  line_url?: string | null;
   directory_visible?: boolean;
 }
 
@@ -39,6 +47,18 @@ export interface DirectoryProfile {
   nickname: string | null;
   grade: string | null;
   skills: string[];
+}
+
+export interface PasswordResetRequest {
+  id: string;
+  user_id: string;
+  status: "pending" | "resolved" | "rejected" | "expired";
+  requested_at: string;
+  expires_at: string;
+  resolved_at: string | null;
+  resolved_by: string | null;
+  email?: string | null;
+  full_name?: string | null;
 }
 
 export interface Competition {

@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       const result = await client.query<AccountRow>(
         `SELECT a.password_hash,
                 p.id, p.full_name, p.nickname, p.email, p.role, p.grade, p.skills,
-                p.contact, p.github_url, p.portfolio_url, p.directory_visible,
+                p.contact, p.github_url, p.portfolio_url, p.bio, p.avatar_url, p.discord_url, p.line_url, p.directory_visible,
                 p.created_at::text, p.updated_at::text,
                 coalesce(
                   (SELECT s.session_version FROM public.auth_security s WHERE s.user_id = a.id),
@@ -84,6 +84,10 @@ export async function POST(request: Request) {
       contact: account.contact,
       github_url: account.github_url,
       portfolio_url: account.portfolio_url,
+      bio: account.bio,
+      avatar_url: account.avatar_url,
+      discord_url: account.discord_url,
+      line_url: account.line_url,
       directory_visible: account.directory_visible,
       created_at: account.created_at,
       updated_at: account.updated_at,

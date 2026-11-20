@@ -74,7 +74,7 @@ export function ProfileView({ profile }: { profile: DirectoryProfile }) {
         </p>
         <Button asChild variant="outline" className="mt-5 gap-2 rounded-lg">
           <Link href="/people">
-            <ArrowLeft className="h-4 w-4" /> กลับไปคนในสาย Tech
+            <ArrowLeft className="h-4 w-4" /> กลับไปหน้าผู้คน
           </Link>
         </Button>
       </section>
