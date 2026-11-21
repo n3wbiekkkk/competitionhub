@@ -130,7 +130,7 @@ Goal: elevate TechComp Hub from commit `2ea7f5d` to world-class visual craft acr
 | D1 | Remove /showcase and establish surface/color/typography tokens | VERIFIED | All gates green; 12 E2E pass; 66 visual checks; commit on branch |
 | D2 | Linear-grade app shell: single-line sidebar and quiet topbar | VERIFIED | All gates green; 12 E2E pass; geometry 227/61/228; commit on branch |
 | D3 | Flagship discovery page: full-width grid and horizontal filter bar | VERIFIED | All gates green; 12 E2E pass; 72 visual checks; cards above fold; commit on branch |
-| D4 | Editorial detail and student workspaces | NOT STARTED | — |
+| D4 | Editorial detail and student workspaces | VERIFIED | All gates green; 12 E2E pass; 72 visual checks; commit on branch |
 | D5 | Teacher studio and admin console | NOT STARTED | — |
 | D6 | Motion, dev-warning fixes, visual audit and full gate | NOT STARTED | — |
 
@@ -235,3 +235,29 @@ The sticky-rail assertion was replaced with a horizontal-filter-bar assertion, t
 ### Visual spot check
 
 Inspected `.visual-audit/light-1440-home.png` and `.visual-audit/dark-1440-home.png` directly. Both show a single sidebar, full-width canvas, horizontal filters, one unified tag row per card, and the first card row fully visible. No raw hue or ad-hoc shadow styling was introduced.
+
+### D4 verification evidence
+
+- `npm run lint` — PASS, 0 errors, 0 warnings.
+- `npm run typecheck` — PASS, 0 errors.
+- `npm test` — PASS, 135/135.
+- `npm run check:schema` — PASS, `migrations=14 objects=96`.
+- `npm run test:integration` — PASS, `tables=36 migrations=14`.
+- `npm run build` — PASS, compiled and 29 static pages generated, no warnings.
+- `npm run test:e2e` — PASS, 12/12.
+- `npm run test:visual` — PASS, 72 checks.
+
+### D4 layout changes
+
+- Detail page: canvas capped at 1480px, 12-column grid kept with the 8/4 audit spans, hero de-shadowed with a specular hairline, horizontal milestone timeline with hairline separators, calm underline tabs labelled `รายละเอียด` / `ผู้สนใจ & หาทีม` / `ถาม-ตอบ`, and a sticky right rail. Added a Google Calendar template link beside the existing `.ics` download.
+- `/my-teams`: responsive 1/2/3-column team gallery; `/my-teams/[id]`: gap-8 8/4 split with a calmer right rail and preserved sticky/scroll behavior. Readiness progress bars and all E2E-coupled headings and ARIA labels are unchanged.
+- `/people`: gap-6 airy grid with p-6 cards and a ring on avatars; the `2xl:grid-cols-4` audit class and both empty-state strings stay.
+- `/profile` and `/settings`: content column now `max-w-3xl space-y-8`, sub-nav narrowed to `lg:w-56`, account sections keep their ids and 4/8 grid.
+
+### Lever
+
+Added a rerunnable throwaway-DB reset at `.e2e-reset.mjs` so each phase can prove the browser gates on clean data without touching the live database. It is a local verification tool, not application code.
+
+### Visual spot check
+
+Inspected `.visual-audit/dark-1440--competitions-*.png`. The detail page shows an editorial hero, horizontal timeline, calm underline tabs, and a crisp sticky rail with both `.ics` and Google Calendar actions.

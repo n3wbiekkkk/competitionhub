@@ -14,7 +14,7 @@ export function AccountSubNav({ label, items }: AccountSubNavProps) {
   return (
     <nav
       aria-label={label}
-      className="w-full shrink-0 lg:sticky lg:top-6 lg:w-60 lg:self-start"
+      className="w-full shrink-0 lg:sticky lg:top-6 lg:w-56 lg:self-start"
     >
       <p className="mb-3 px-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">
         ในหน้านี้

@@ -10,9 +10,9 @@ interface CompetitionDetailTabsProps {
 }
 
 const TAB_ITEMS = [
-  { value: "details", label: "รายละเอียดและเกณฑ์" },
-  { value: "team", label: "เพื่อนที่สนใจและหาทีม" },
-  { value: "community", label: "ถาม-ตอบและประกาศ" },
+  { value: "details", label: "รายละเอียด" },
+  { value: "team", label: "ผู้สนใจ & หาทีม" },
+  { value: "community", label: "ถาม-ตอบ" },
 ] as const;
 
 export function CompetitionDetailTabs({

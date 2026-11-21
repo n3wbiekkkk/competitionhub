@@ -37,7 +37,7 @@ export default async function PeoplePage({
         <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
           ผู้คน
         </h1>
-        <p className="text-sm leading-relaxed text-muted-foreground">
+        <p className="text-sm leading-[1.65] text-muted-foreground">
           เฉพาะโปรไฟล์ที่เจ้าของอนุญาตให้ค้นพบ แสดงรูปโปรไฟล์ ชื่อ ห้องเรียน บทบาท และทักษะ
           เปิดดูโปรไฟล์เพื่อเห็นข้อความเกี่ยวกับฉัน ลิงก์ของเจ้าของโปรไฟล์ และช่องทางติดต่อ อีเมลจะไม่แสดง
         </p>

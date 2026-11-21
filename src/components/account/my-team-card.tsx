@@ -133,8 +133,8 @@ export function MyTeamCard({
   const assigned = Boolean(confirmedTeam);
 
   return (
-    <article className="overflow-hidden rounded-xl border border-border bg-background">
-      <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
+    <article className="specular-card overflow-hidden rounded-xl border border-border bg-card p-6">
+      <div className="space-y-5">
         <div className="min-w-0 space-y-3">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
             <span className="font-medium text-foreground/80">{category.shortLabel}</span>
@@ -177,7 +177,7 @@ export function MyTeamCard({
           </div>
         </div>
 
-        <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-4 lg:border-0 lg:bg-transparent lg:p-0 lg:pl-6">
+        <div className="space-y-4 border-t border-border pt-4">
           <div className="space-y-1.5">
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               กำหนดปิดรับถัดไป
@@ -210,7 +210,7 @@ export function MyTeamCard({
                 style={{ width: `${readiness.score}%` }}
               />
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs leading-[1.65] tabular-nums text-muted-foreground">
               <span className="font-medium text-foreground">{readiness.label}</span>
               {" · "}
               {readiness.note}
@@ -219,7 +219,7 @@ export function MyTeamCard({
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <div className="mt-5 flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex -space-x-2">
             {members.length > 0 ? (
@@ -243,7 +243,7 @@ export function MyTeamCard({
             <p className="truncate text-sm font-medium text-foreground">
               {confirmedTeam ? `ทีม: ${confirmedTeam.team_name}` : "ยังไม่มีทีมที่ยืนยัน"}
             </p>
-            <p className="truncate text-xs text-muted-foreground">
+            <p className="truncate text-xs leading-[1.65] tabular-nums text-muted-foreground">
               {confirmedTeam
                 ? `อาจารย์ที่ปรึกษา: ${confirmedTeam.advisor_name ?? "ยังไม่ระบุ"} · สมาชิก ${members.length} คน`
                 : "อาจารย์กำลังรวบรวมรายชื่อผู้สนใจเพื่อจัดทีม"}

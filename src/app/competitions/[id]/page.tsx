@@ -193,7 +193,7 @@ export default async function CompetitionDetailPage({
   } catch (error) {
     console.error("[competitions/[id]] load error", error);
     return (
-      <main className="mx-auto w-full max-w-[1680px] px-4 py-16 text-center sm:px-6 lg:px-8 xl:px-10">
+      <main className="mx-auto w-full max-w-[1480px] px-4 py-16 text-center sm:px-6 lg:px-8 xl:px-10">
         <p className="text-xs font-medium text-muted-foreground">
           เชื่อมต่อฐานข้อมูลไม่สำเร็จชั่วคราว
         </p>
@@ -358,7 +358,7 @@ export default async function CompetitionDetailPage({
   );
 
   return (
-    <main className="mx-auto w-full max-w-[1680px] space-y-10 px-4 py-8 sm:px-6 lg:px-8 xl:px-10">
+    <main className="mx-auto w-full max-w-[1480px] space-y-10 px-4 py-8 sm:px-6 lg:px-8 xl:px-10">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-4">
         <Button
           asChild
@@ -386,16 +386,16 @@ export default async function CompetitionDetailPage({
             >
               <Link href={`/teacher/competitions/${competition.id}/teams`}>
                 <Users className="h-4 w-4" />
-                เปิดกระดานจัดทีม ({interestCount})
+                เปิดกระดานจัดทีม (<span className="tabular-nums">{interestCount}</span>)
               </Link>
             </Button>
           </div>
         ) : null}
       </div>
 
-      <div className="grid gap-10 lg:grid-cols-12">
+      <div className="grid gap-8 lg:grid-cols-12">
         <article className="min-w-0 space-y-8 lg:col-span-8">
-          <header className="rounded-xl border border-border bg-surface-elevated p-6 shadow-sm sm:p-8">
+          <header className="specular-card rounded-xl border border-border bg-card p-8">
             <div className="flex flex-wrap items-center gap-2">
               <Badge
                 variant="outline"
@@ -414,7 +414,7 @@ export default async function CompetitionDetailPage({
               </span>
             </div>
 
-            <h1 className="mt-5 max-w-4xl text-3xl font-semibold leading-[1.35] tracking-tight text-foreground sm:text-4xl">
+            <h1 className="mt-5 max-w-4xl text-3xl font-semibold leading-[1.3] tracking-[-0.02em] text-foreground sm:text-4xl">
               {competition.title}
             </h1>
 
@@ -438,28 +438,21 @@ export default async function CompetitionDetailPage({
               ) : null}
             </div>
 
-            <ol className="mt-8 flex items-start border-t border-border pt-6">
-              {timeline.map((step, index) => (
-                <li key={step.label} className="flex min-w-0 flex-1 items-start">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-medium tracking-wide text-muted-foreground">
-                      {step.label}
-                    </p>
-                    <p className="mt-1 text-sm font-medium tabular-nums text-foreground">
-                      {step.value}
-                    </p>
-                    <p className="mt-1 text-[11px] leading-[1.65] text-muted-foreground">
-                      {step.note}
-                    </p>
-                  </div>
-                  {index < timeline.length - 1 ? (
-                    <span
-                      aria-hidden="true"
-                      className="px-2 pt-4 font-mono text-muted-foreground"
-                    >
-                      →
-                    </span>
-                  ) : null}
+            <ol className="mt-8 grid border-t border-border pt-6 sm:grid-cols-3">
+              {timeline.map((step) => (
+                <li
+                  key={step.label}
+                  className="min-w-0 border-b border-border py-3 last:border-b-0 sm:border-b-0 sm:border-r sm:py-0 sm:pl-5 sm:pr-5 sm:first:pl-0 sm:last:border-r-0 sm:last:pr-0"
+                >
+                  <p className="text-[11px] font-medium tracking-wide text-muted-foreground">
+                    {step.label}
+                  </p>
+                  <p className="mt-1 text-sm font-medium tabular-nums text-foreground">
+                    {step.value}
+                  </p>
+                  <p className="mt-1 text-[11px] leading-[1.65] text-muted-foreground">
+                    {step.note}
+                  </p>
                 </li>
               ))}
             </ol>
@@ -521,21 +514,21 @@ export default async function CompetitionDetailPage({
 
             <dl className="divide-y divide-border border-y border-border text-sm">
               <div className="flex items-center justify-between gap-4 py-3">
-                <dt className="text-muted-foreground">ขนาดทีม</dt>
-                <dd className="font-medium tabular-nums text-foreground">
+                <dt className="text-xs text-muted-foreground">ขนาดทีม</dt>
+                <dd className="font-mono font-medium tabular-nums text-foreground">
                   {competition.min_size === competition.max_size
                     ? `${competition.min_size} คน`
                     : `${competition.min_size}–${competition.max_size} คน`}
                 </dd>
               </div>
               <div className="flex items-center justify-between gap-4 py-3">
-                <dt className="text-muted-foreground">ผู้ลงชื่อสนใจ</dt>
-                <dd className="font-medium tabular-nums text-foreground">
+                <dt className="text-xs text-muted-foreground">ผู้ลงชื่อสนใจ</dt>
+                <dd className="font-mono font-medium tabular-nums text-foreground">
                   {interestCount} คน
                 </dd>
               </div>
               <div className="flex items-center justify-between gap-4 py-3">
-                <dt className="text-muted-foreground">หมวดหมู่</dt>
+                <dt className="text-xs text-muted-foreground">หมวดหมู่</dt>
                 <dd className="text-right font-medium text-foreground">
                   {catMeta.shortLabel}
                 </dd>
@@ -622,14 +615,18 @@ export default async function CompetitionDetailPage({
               </div>
               {user ? (
                 <div className="mt-3 space-y-3">
-                  <div className="h-1 overflow-hidden rounded-full bg-muted">
+                  <div className="h-1.5 overflow-hidden rounded-full border border-border bg-muted">
                     <div
                       className="h-full rounded-full bg-primary"
                       style={{ width: `${skillMatch.score}%` }}
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    ทักษะของคุณตรงกับรายการนี้ {skillMatch.matchedSkills.length} รายการ
+                    ทักษะของคุณตรงกับรายการนี้{" "}
+                    <span className="font-mono tabular-nums">
+                      {skillMatch.matchedSkills.length}
+                    </span>{" "}
+                    รายการ
                   </p>
                   {skillMatch.matchedSkills.length > 0 ? (
                     <div className="flex flex-wrap gap-1.5">

@@ -45,7 +45,7 @@ export default async function ProfilePage() {
             { href: "#contact", label: "การติดต่อและการเปิดเผย" },
           ]}
         />
-        <div className="min-w-0 space-y-10">
+        <div className="min-w-0 max-w-3xl space-y-8">
           <ProfileBadges badges={badges} />
           <VerifiedSkillEvidencePanel skills={skillEvidence} />
           <ProfileForm initialProfile={auth.user} />

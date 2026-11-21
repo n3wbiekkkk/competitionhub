@@ -96,7 +96,7 @@ export function PeopleDirectory({
           ) : null}
         </div>
       ) : (
-        <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+        <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {filtered.map((person) => {
             const classroom = parseClassroom(person.grade);
             const classroomLabel = classroom.gradeLevel
@@ -114,10 +114,10 @@ export function PeopleDirectory({
             return (
               <li
                 key={person.id}
-                className="flex min-w-0 flex-col rounded-xl border border-border bg-background p-5"
+                className="flex min-w-0 flex-col rounded-xl border border-border bg-background p-6"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <Avatar className="size-14 rounded-2xl">
+                  <Avatar className="size-14 rounded-2xl ring-2 ring-border">
                     {person.avatar_url ? (
                       <AvatarImage src={person.avatar_url} alt="" className="rounded-2xl" />
                     ) : null}
@@ -191,8 +191,9 @@ export function PeopleDirectory({
 
                 <Button
                   asChild
+                  variant="outline"
                   size="sm"
-                  className="mt-5 h-9 w-full gap-1.5 rounded-lg px-3 text-xs"
+                  className="mt-5 h-9 w-full gap-1.5 rounded-lg px-3 text-xs hover:bg-muted"
                 >
                   <Link href={href}>
                     {isSelf ? "โปรไฟล์ของฉัน" : "ดูโปรไฟล์"}

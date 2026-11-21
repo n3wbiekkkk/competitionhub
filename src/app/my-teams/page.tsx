@@ -25,7 +25,7 @@ function TeamMembers({
   viewerId: string;
 }) {
   return (
-    <div className="space-y-4 border-l-2 border-primary bg-muted/30 px-4 py-4">
+    <div className="space-y-4 border-t border-border pt-4">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-foreground">ทีม: {team.team_name}</p>
@@ -182,7 +182,7 @@ export default async function MyTeamsPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
             รายการที่ลงชื่อและทีมของฉัน
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm leading-[1.65] text-muted-foreground">
             ดูความคืบหน้าการจัดทีมและข้อมูลติดต่อเพื่อนร่วมทีมเมื่ออาจารย์ยืนยันแล้ว
             แตะชื่อเพื่อนร่วมทีมเพื่อดูโปรไฟล์แบบอ่านอย่างเดียว
           </p>
@@ -221,7 +221,7 @@ export default async function MyTeamsPage() {
           <p className="text-sm font-medium text-foreground">
             คุณยังไม่ได้ลงชื่อสนใจการแข่งขันใดๆ
           </p>
-          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+          <p className="mx-auto mt-1 max-w-md text-sm leading-[1.65] text-muted-foreground">
             เลือกดูรายการแข่งขันสาย Tech ที่กำลังเปิดรับสมัคร
             แล้วกดปุ่ม &ldquo;ลงชื่อสนใจแข่ง&rdquo; เพื่อให้อาจารย์จัดทีมให้คุณ
           </p>
@@ -243,7 +243,7 @@ export default async function MyTeamsPage() {
                   {interests.length} รายการ
                 </span>
               </div>
-              <div className="grid gap-4">
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-3">
                 {interests.map((item) => {
                   const confirmedTeam = teamByCompetition.get(item.competition_id);
                   return (
@@ -266,7 +266,7 @@ export default async function MyTeamsPage() {
         <section className="space-y-4 border-t border-border pt-8" aria-labelledby="confirmed-teams-title">
           <div>
             <h2 id="confirmed-teams-title" className="text-lg font-semibold">ทีมที่ได้รับการยืนยัน</h2>
-            <p className="mt-1 text-sm text-muted-foreground">ข้อมูลเพื่อนร่วมทีมและอาจารย์ที่ปรึกษาสำหรับติดต่อทำงาน</p>
+            <p className="mt-1 text-sm leading-[1.65] text-muted-foreground">ข้อมูลเพื่อนร่วมทีมและอาจารย์ที่ปรึกษาสำหรับติดต่อทำงาน</p>
           </div>
           {Array.from(teamByCompetition.entries()).map(([competitionId, team]) => (
             <article key={team.team_id} className="space-y-3">

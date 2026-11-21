@@ -28,7 +28,7 @@ export default async function SettingsPage() {
             { href: "/profile", label: "โปรไฟล์ของฉัน" },
           ]}
         />
-        <div className="min-w-0 space-y-10">
+        <div className="min-w-0 max-w-3xl space-y-8">
           <CalendarSubscriptionCard />
           <SettingsClient profile={auth.user} />
         </div>

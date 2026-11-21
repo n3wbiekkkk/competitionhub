@@ -109,7 +109,7 @@ export default async function CompetitionTeamWorkspace({
   }
 
   return (
-    <main className="w-full space-y-6 px-4 py-8 sm:px-6 lg:px-8 xl:px-10">
+    <main className="w-full space-y-8 px-4 py-8 sm:px-6 lg:px-8 xl:px-10">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-5">
         <div className="space-y-1.5">
           <Button
@@ -137,8 +137,8 @@ export default async function CompetitionTeamWorkspace({
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-        <div className="min-w-0 space-y-6 xl:col-span-8">
+      <div className="grid grid-cols-1 gap-8 xl:grid-cols-12">
+        <div className="min-w-0 space-y-8 xl:col-span-8">
           {user.role === "teacher" ? (
             <StudentTeamsControls competitionId={competition.id} />
           ) : null}
@@ -157,7 +157,7 @@ export default async function CompetitionTeamWorkspace({
         </div>
 
         <aside className="min-w-0 xl:col-span-4">
-          <div className="space-y-6 rounded-xl border border-border bg-background p-5 xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
+          <div className="specular-card space-y-8 rounded-xl border border-border bg-card p-6 xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
             {workspaceTeam ? (
               <>
                 <section className="space-y-3" aria-label="รายชื่อสมาชิกทีม">
@@ -210,7 +210,7 @@ export default async function CompetitionTeamWorkspace({
             ) : (
               <section className="space-y-2" aria-label="พื้นที่ทีม">
                 <h2 className="text-sm font-semibold text-foreground">พื้นที่ทีม</h2>
-                <p className="text-xs leading-relaxed text-muted-foreground">
+                <p className="text-xs leading-[1.65] text-muted-foreground">
                   เมื่อมีทีมของคุณในรายการนี้ รายชื่อสมาชิกและแชททีมจะแสดงในแผงนี้
                   เพื่อให้ติดตามงานได้โดยไม่ต้องเลื่อนผ่านเนื้อหาหลัก
                 </p>

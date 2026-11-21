@@ -9,6 +9,7 @@ import {
   normalizeToIsoCeDate,
   parseIsoDateParts,
 } from "@/lib/utils/thai-date";
+import type { IsoDateParts } from "@/lib/utils/thai-date";
 
 interface CompetitionActionsProps {
   competitionId: string;
@@ -35,6 +36,42 @@ function formatIcsTimestampUtc(now: Date): string {
   return `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, "0")}${String(now.getUTCDate()).padStart(2, "0")}T${String(now.getUTCHours()).padStart(2, "0")}${String(now.getUTCMinutes()).padStart(2, "0")}${String(now.getUTCSeconds()).padStart(2, "0")}Z`;
 }
 
+function buildGoogleCalendarUrl(
+  parts: IsoDateParts,
+  title: string,
+  summary: string | null,
+  sourceUrl: string | null,
+  categoryLabel: string,
+): string {
+  const dtStart = formatIcsDateValue(parts.year, parts.month, parts.day);
+  const nextUtcDay = new Date(
+    Date.UTC(parts.year, parts.month - 1, parts.day + 1),
+  );
+  const dtEnd = formatIcsDateValue(
+    nextUtcDay.getUTCFullYear(),
+    nextUtcDay.getUTCMonth() + 1,
+    nextUtcDay.getUTCDate(),
+  );
+
+  const details = [
+    `หมวด: ${categoryLabel}`,
+    summary ? summary.trim() : "",
+    sourceUrl ? `ประกาศต้นทาง: ${sourceUrl}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: `ปิดรับสมัคร: ${title}`,
+    dates: `${dtStart}/${dtEnd}`,
+    details,
+    location: sourceUrl ?? "",
+  });
+
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
 export function CompetitionActions({
   competitionId,
   title,
@@ -48,6 +85,15 @@ export function CompetitionActions({
   const normalizedDeadline = normalizeToIsoCeDate(deadline);
   const deadlineParts = normalizedDeadline
     ? parseIsoDateParts(normalizedDeadline)
+    : null;
+  const googleCalendarHref = deadlineParts
+    ? buildGoogleCalendarUrl(
+        deadlineParts,
+        title,
+        summary,
+        sourceUrl,
+        categoryLabel,
+      )
     : null;
 
   async function handleCopyShare() {
@@ -138,17 +184,13 @@ export function CompetitionActions({
   }
 
   return (
-    <div
-      className={
-        deadlineParts ? "grid grid-cols-2 gap-2" : "grid grid-cols-1 gap-2"
-      }
-    >
+    <div className="grid grid-cols-2 gap-2">
       <Button
         type="button"
         variant="outline"
         size="sm"
         onClick={handleCopyShare}
-        className="gap-1.5 rounded-md text-xs"
+        className="col-span-2 gap-1.5 rounded-md text-xs"
       >
         {copied ? (
           <Check className="h-3.5 w-3.5 text-primary" />
@@ -158,17 +200,34 @@ export function CompetitionActions({
         คัดลอกลิงก์แชร์
       </Button>
 
-      {deadlineParts ? (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleDownloadIcs}
-          className="gap-1.5 rounded-md text-xs"
-        >
-          <CalendarPlus className="h-3.5 w-3.5" />
-          เพิ่มลงปฏิทิน (.ics)
-        </Button>
+      {deadlineParts && googleCalendarHref ? (
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadIcs}
+            className="gap-1.5 rounded-md text-xs"
+          >
+            <CalendarPlus className="h-3.5 w-3.5" />
+            เพิ่มลงปฏิทิน (.ics)
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="gap-1.5 rounded-md text-xs"
+          >
+            <a
+              href={googleCalendarHref}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <CalendarPlus className="h-3.5 w-3.5" />
+              เพิ่มลง Google Calendar
+            </a>
+          </Button>
+        </>
       ) : null}
     </div>
   );

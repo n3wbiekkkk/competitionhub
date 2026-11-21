@@ -23,7 +23,7 @@ export function AccountSection({
             <h2 className="text-sm font-semibold text-foreground">{title}</h2>
             {action}
           </div>
-          <p className="text-xs leading-relaxed text-muted-foreground">
+          <p className="text-xs leading-[1.65] text-muted-foreground">
             {description}
           </p>
         </div>
