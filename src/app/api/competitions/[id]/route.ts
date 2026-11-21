@@ -8,6 +8,7 @@ import {
 import { withUserDb } from "@/lib/db/pool";
 import { normalizeToIsoCeDate } from "@/lib/utils/thai-date";
 import type { Competition, Interest } from "@/types/database";
+import { logError } from "@/lib/utils/logger";
 
 const uuidSchema = z.string().uuid();
 
@@ -120,7 +121,7 @@ export async function GET(
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("[api/competitions/[id]] GET error:", error);
+    logError("[api/competitions/[id]] GET error:", error);
     return NextResponse.json(
       { error: "ไม่สามารถโหลดรายละเอียดรายการแข่งขันได้" },
       { status: 500 },
@@ -261,7 +262,7 @@ export async function PATCH(
         { status: 400 },
       );
     }
-    console.error("[api/competitions/[id]] PATCH error:", error);
+    logError("[api/competitions/[id]] PATCH error:", error);
     return NextResponse.json(
       { error: "ไม่สามารถอัปเดตรายการแข่งขันได้" },
       { status: 500 },
@@ -304,7 +305,7 @@ export async function DELETE(
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("[api/competitions/[id]] DELETE error:", error);
+    logError("[api/competitions/[id]] DELETE error:", error);
     return NextResponse.json(
       { error: "ไม่สามารถลบรายการแข่งขันได้" },
       { status: 500 },

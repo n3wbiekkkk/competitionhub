@@ -7,6 +7,7 @@ import {
   loadTeamBuilderData,
   queryCompetitionTeams,
 } from "@/lib/db/team-builder";
+import { logError } from "@/lib/utils/logger";
 
 class HttpError extends Error {
   constructor(
@@ -67,7 +68,7 @@ export async function GET(
 
     return NextResponse.json(payload);
   } catch (error) {
-    console.error("[api/teacher/competitions/[id]/teams] GET error:", error);
+    logError("[api/teacher/competitions/[id]/teams] GET error:", error);
     return NextResponse.json(
       { error: "ไม่สามารถโหลดข้อมูลกระดานจัดทีมได้" },
       { status: 500 },
@@ -277,7 +278,7 @@ export async function PUT(
         { status: 400 },
       );
     }
-    console.error("[api/teacher/competitions/[id]/teams] PUT error:", error);
+    logError("[api/teacher/competitions/[id]/teams] PUT error:", error);
     return NextResponse.json(
       { error: "ไม่สามารถบันทึกการจัดทีมได้" },
       { status: 500 },

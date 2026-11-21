@@ -6,6 +6,7 @@ import {
 } from "@/lib/auth/session";
 import { withUserDb } from "@/lib/db/pool";
 import type { Profile } from "@/types/database";
+import { logError } from "@/lib/utils/logger";
 
 function shouldUseSecureCookie(): boolean {
   const raw = process.env.COOKIE_SECURE?.trim().toLowerCase();
@@ -91,7 +92,7 @@ export async function getAuthenticatedProfile(): Promise<Profile | null> {
       updated_at: row.updated_at,
     };
   } catch (error) {
-    console.error("[auth] failed to load live profile", error);
+    logError("[auth] failed to load live profile", error);
     return null;
   }
 }

@@ -557,6 +557,48 @@ create policy reset_tokens_system_all
 
 revoke all on function public.expire_password_reset_requests() from public;
 
+-- Applied migration ledger for health checks and the Phase 2 runner.
+create table if not exists public.schema_migrations (
+  version text primary key,
+  checksum text not null,
+  applied_at timestamptz not null default now()
+);
+
+alter table public.schema_migrations enable row level security;
+alter table public.schema_migrations force row level security;
+
+drop policy if exists schema_migrations_system_all on public.schema_migrations;
+create policy schema_migrations_system_all
+  on public.schema_migrations
+  for all
+  using (public.app_is_system())
+  with check (public.app_is_system());
+
+insert into public.schema_migrations (version, checksum)
+values ('001-phase1-baseline', 'phase1-baseline')
+on conflict (version) do nothing;
+
+-- Persistent rate-limit buckets for auth and read-heavy routes.
+create table if not exists public.rate_limit_buckets (
+  key text primary key,
+  hit_count integer not null default 0,
+  window_start timestamptz not null default now(),
+  expires_at timestamptz not null
+);
+
+create index if not exists rate_limit_buckets_expires_at_idx
+  on public.rate_limit_buckets (expires_at);
+
+alter table public.rate_limit_buckets enable row level security;
+alter table public.rate_limit_buckets force row level security;
+
+drop policy if exists rate_limit_buckets_system_all on public.rate_limit_buckets;
+create policy rate_limit_buckets_system_all
+  on public.rate_limit_buckets
+  for all
+  using (public.app_is_system())
+  with check (public.app_is_system());
+
 -- ----------------------------------------------------------------------------
 -- 6. Grants for Non-Superuser App Role (techhub_app)
 -- ----------------------------------------------------------------------------
@@ -574,7 +616,9 @@ begin
       public.team_members,
       public.profile_avatars,
       public.password_reset_requests,
-      public.password_reset_tokens
+      public.password_reset_tokens,
+      public.rate_limit_buckets,
+      public.schema_migrations
     to techhub_app;
 
     grant execute on function

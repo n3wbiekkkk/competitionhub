@@ -11,6 +11,7 @@ import {
 import { userRoleSchema } from "@/lib/constants/tech-taxonomy";
 import { withSystemDb, withUserDb } from "@/lib/db/pool";
 import type { AdminUserItem, Profile } from "@/types/database";
+import { logError } from "@/lib/utils/logger";
 
 interface AdminUserRow extends Profile {
   interest_count: string;
@@ -86,7 +87,7 @@ export async function GET() {
 
     return NextResponse.json({ users });
   } catch (error) {
-    console.error("[api/admin/users] GET error:", error);
+    logError("[api/admin/users] GET error:", error);
     return NextResponse.json(
       { error: "ไม่สามารถดึงรายชื่อผู้ใช้ได้" },
       { status: 500 },
@@ -187,7 +188,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ user: outcome.user }, { status: 201 });
   } catch (error) {
-    console.error("[api/admin/users] POST error:", error);
+    logError("[api/admin/users] POST error:", error);
     return NextResponse.json(
       { error: "ไม่สามารถสร้างผู้ใช้ใหม่ได้" },
       { status: 500 },

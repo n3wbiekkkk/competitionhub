@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireAuthUser } from "@/lib/auth/cookies";
 import { withUserDb } from "@/lib/db/pool";
 import type { Interest } from "@/types/database";
+import { logError } from "@/lib/utils/logger";
 
 const uuidSchema = z.string().uuid();
 
@@ -95,7 +96,7 @@ export async function POST(
 
     return NextResponse.json({ interest: result.interest });
   } catch (error) {
-    console.error("[api/competitions/[id]/interest] POST error:", error);
+    logError("[api/competitions/[id]/interest] POST error:", error);
     return NextResponse.json(
       { error: "ไม่สามารถบันทึกความสนใจแข่งขันได้" },
       { status: 500 },
@@ -138,7 +139,7 @@ export async function DELETE(
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("[api/competitions/[id]/interest] DELETE error:", error);
+    logError("[api/competitions/[id]/interest] DELETE error:", error);
     return NextResponse.json(
       { error: "ไม่สามารถยกเลิกการลงชื่อได้" },
       { status: 500 },

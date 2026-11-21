@@ -3,7 +3,7 @@ import { z } from "zod";
 import { ProfileView } from "@/components/profile/profile-view";
 import { requireAuthUser } from "@/lib/auth/cookies";
 import { getDirectoryProfile } from "@/lib/db/directory";
-import { consumeRateLimit } from "@/lib/utils/rate-limit";
+import { consumeRateLimit } from "@/lib/auth/rate-limit";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +25,7 @@ export default async function PersonPage({
     redirect(`/login?next=/people/${id}`);
   }
 
-  if (!consumeRateLimit(`person:${auth.user.id}`).allowed) {
+  if (!(await consumeRateLimit(`person:${auth.user.id}`)).allowed) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-16 text-center">
         <p role="alert" className="rounded-xl border border-peach/30 bg-peach px-4 py-3 text-sm text-peach-foreground">

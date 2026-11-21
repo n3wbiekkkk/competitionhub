@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import sharp from "sharp";
 import { requireAuthUser } from "@/lib/auth/cookies";
 import { withUserDb } from "@/lib/db/pool";
+import { hasAllowedImageSignature } from "@/lib/utils/image-bytes";
+import { logError } from "@/lib/utils/logger";
 
 const MAX_RAW_BODY = 2 * 1024 * 1024;
 const MAX_INPUT_BYTES = 1024 * 1024;
@@ -47,6 +49,12 @@ export async function POST(request: Request) {
 
   try {
     const source = Buffer.from(await file.arrayBuffer());
+    if (!hasAllowedImageSignature(source, file.type)) {
+      return NextResponse.json(
+        { error: "ไฟล์ไม่ใช่ภาพ JPG, PNG หรือ WebP ที่ถูกต้อง" },
+        { status: 400 },
+      );
+    }
     const image = sharp(source, { limitInputPixels: 1_000_000 });
     const metadata = await image.metadata();
     if (
@@ -94,7 +102,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ avatarUrl });
   } catch (error) {
-    console.error("[api/profile/avatar] upload failed", error);
+    logError("[api/profile/avatar] upload failed", error);
     return NextResponse.json(
       { error: "ไม่สามารถอ่านภาพนี้ได้ กรุณาลองไฟล์อื่น" },
       { status: 400 },

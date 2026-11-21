@@ -1,6 +1,9 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
+import { consumeRateLimit } from "@/lib/auth/rate-limit";
+import { getRequestIp } from "@/lib/utils/request-ip";
 import { runAutoTechScout } from "@/lib/ai/scout";
+import { logError } from "@/lib/utils/logger";
 
 function sha256Buffer(value: string): Buffer {
   return createHash("sha256").update(value).digest();
@@ -38,11 +41,15 @@ async function handleCron(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (!(await consumeRateLimit(`cron:discover:${getRequestIp(request)}`, 1, 60_000)).allowed) {
+    return NextResponse.json({ error: "เรียกงานถี่เกินไป" }, { status: 429 });
+  }
+
   try {
     const summary = await runAutoTechScout({ maxProcess: 8 });
     return NextResponse.json({ ok: true, ...summary });
   } catch (error) {
-    console.error("[api/cron/discover] error:", error);
+    logError("[api/cron/discover] error:", error);
     return NextResponse.json(
       {
         error: "เกิดข้อผิดพลาดระหว่างค้นหาการแข่งขัน กรุณาลองใหม่ในภายหลัง",

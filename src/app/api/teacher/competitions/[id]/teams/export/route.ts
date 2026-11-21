@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireTeacherUser } from "@/lib/auth/cookies";
 import { withUserDb } from "@/lib/db/pool";
+import { logError } from "@/lib/utils/logger";
 
 const uuidSchema = z.string().uuid();
 
@@ -120,7 +121,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("[api/teacher/competitions/[id]/teams/export] error:", error);
+    logError("[api/teacher/competitions/[id]/teams/export] error:", error);
     return NextResponse.json(
       { error: "ไม่สามารถส่งออกไฟล์ CSV ได้" },
       { status: 500 },

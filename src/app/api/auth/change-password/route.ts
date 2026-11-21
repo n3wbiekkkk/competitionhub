@@ -4,6 +4,7 @@ import { requireAuthUser, setSessionCookie } from "@/lib/auth/cookies";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { signSessionToken } from "@/lib/auth/session";
 import { withSystemDb } from "@/lib/db/pool";
+import { logError } from "@/lib/utils/logger";
 
 const changePasswordSchema = z
   .object({
@@ -116,7 +117,7 @@ export async function POST(request: Request) {
     setSessionCookie(response, token);
     return response;
   } catch (error) {
-    console.error("[api/auth/change-password] error:", error);
+    logError("[api/auth/change-password] error:", error);
     return NextResponse.json(
       { error: "ไม่สามารถเปลี่ยนรหัสผ่านได้ กรุณาลองใหม่อีกครั้ง" },
       { status: 500 },

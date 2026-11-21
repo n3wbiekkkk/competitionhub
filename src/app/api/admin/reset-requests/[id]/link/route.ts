@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireTeacherUser } from "@/lib/auth/cookies";
 import { withSystemDb } from "@/lib/db/pool";
+import { logError } from "@/lib/utils/logger";
 
 const uuidSchema = z.string().uuid();
 
@@ -60,7 +61,7 @@ export async function POST(
     link.searchParams.set("token", result.token);
     return NextResponse.json({ link: link.toString() });
   } catch (error) {
-    console.error("[api/admin/reset-requests] link failed", error);
+    logError("[api/admin/reset-requests] link failed", error);
     return NextResponse.json(
       { error: "ไม่สามารถสร้างลิงก์รีเซ็ตได้" },
       { status: 500 },

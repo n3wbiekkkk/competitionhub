@@ -5,9 +5,12 @@ import {
   extractTextFromPosterImage,
   fetchUrlMarkdown,
 } from "@/lib/ai/extract-competition";
+import { consumeRateLimit } from "@/lib/auth/rate-limit";
 import { isTyphoonConfigured } from "@/lib/ai/opentyphoon";
+import { hasAllowedImageSignature } from "@/lib/utils/image-bytes";
 import { validatePublicHttpUrl } from "@/lib/utils/url-safety";
 import { requireAuthUser } from "@/lib/auth/cookies";
+import { logError } from "@/lib/utils/logger";
 
 const jsonExtractSchema = z.discriminatedUnion("mode", [
   z.object({
@@ -41,6 +44,13 @@ export async function POST(request: Request) {
   const auth = await requireAuthUser();
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
+  if (!(await consumeRateLimit(`extract:user:${auth.user.id}`, 30, 3_600_000)).allowed) {
+    return NextResponse.json(
+      { error: "วิเคราะห์ข้อมูลมากเกินไป กรุณารอสักครู่" },
+      { status: 429 },
+    );
   }
 
   if (!isTyphoonConfigured()) {
@@ -80,6 +90,16 @@ export async function POST(request: Request) {
       }
 
       const buffer = Buffer.from(await file.arrayBuffer());
+      if (!hasAllowedImageSignature(buffer, file.type)) {
+        logError("[api/ai/extract] invalid poster bytes", new Error("bad image signature"), {
+          route: "/api/ai/extract",
+        });
+        return NextResponse.json(
+          { error: "ไฟล์ภาพไม่ถูกต้อง กรุณาเลือกภาพ JPG, PNG หรือ WebP" },
+          { status: 400 },
+        );
+      }
+
       const ocrText = await extractTextFromPosterImage(
         buffer,
         file.type,
@@ -149,7 +169,7 @@ export async function POST(request: Request) {
       sourceUrl: optionalUrl,
     });
   } catch (error) {
-    console.error("[api/ai/extract] error:", error);
+    logError("[api/ai/extract] error:", error);
     return NextResponse.json(
       {
         error: "เกิดข้อผิดพลาดระหว่างวิเคราะห์ข้อมูลด้วย AI กรุณาลองใหม่อีกครั้ง",

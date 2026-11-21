@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { hashPassword } from "@/lib/auth/password";
 import { withSystemDb } from "@/lib/db/pool";
-import { consumeRateLimit } from "@/lib/utils/rate-limit";
+import { consumeRateLimit } from "@/lib/auth/rate-limit";
+import { logError } from "@/lib/utils/logger";
 
 const schema = z.object({
   token: z.string().trim().min(20).max(200),
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
 
   const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   const ip = forwarded || request.headers.get("x-real-ip") || "unknown";
-  if (!consumeRateLimit(`reset:ip:${ip}`, Date.now(), 10, 900_000).allowed) {
+  if (!(await consumeRateLimit(`reset:ip:${ip}`, 10, 900_000)).allowed) {
     return NextResponse.json(
       { error: "ลองรีเซ็ตรหัสผ่านมากเกินไป กรุณารอสักครู่" },
       { status: 429 },
@@ -83,7 +84,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("[api/auth/reset-password] failed", error);
+    logError("[api/auth/reset-password] failed", error);
     return NextResponse.json(
       { error: "ไม่สามารถตั้งรหัสผ่านใหม่ได้ในขณะนี้" },
       { status: 500 },

@@ -5,6 +5,7 @@ import { filterDiscoveryCandidates, parseDiscoveryQuery, rankCompetitionsWithAi,
 import { withUserDb } from "@/lib/db/pool";
 import { getTodayIsoBangkok } from "@/lib/utils/thai-date";
 import type { Competition } from "@/types/database";
+import { logError } from "@/lib/utils/logger";
 
 const requestSchema = z.object({
   query: z.string().trim().min(2, "บอกเราก่อนว่าอยากแข่งอะไร").max(300),
@@ -83,7 +84,7 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ mode: "ai", results });
   } catch (error) {
-    console.error("[api/discovery] error", error);
+    logError("[api/discovery] error", error);
     return NextResponse.json({ error: "ค้นหารายการไม่สำเร็จชั่วคราว ลองใช้ช่องค้นหาปกติแทน" }, { status: 500 });
   }
 }

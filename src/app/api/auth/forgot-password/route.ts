@@ -2,7 +2,8 @@ import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { withSystemDb } from "@/lib/db/pool";
-import { consumeRateLimit } from "@/lib/utils/rate-limit";
+import { consumeRateLimit } from "@/lib/auth/rate-limit";
+import { logError } from "@/lib/utils/logger";
 
 const schema = z.object({
   email: z.string().trim().email("รูปแบบอีเมลไม่ถูกต้อง"),
@@ -33,10 +34,10 @@ export async function POST(request: Request) {
   const ip = forwarded || request.headers.get("x-real-ip") || "unknown";
   const emailKey = sha256(email).slice(0, 32);
 
-  if (!consumeRateLimit(`forgot:email:${emailKey}`, Date.now(), 3, 900_000).allowed) {
+  if (!(await consumeRateLimit(`forgot:email:${emailKey}`, 3, 900_000)).allowed) {
     return NextResponse.json({ ok: true, message: GENERIC_MESSAGE });
   }
-  if (!consumeRateLimit(`forgot:ip:${ip}`, Date.now(), 20, 900_000).allowed) {
+  if (!(await consumeRateLimit(`forgot:ip:${ip}`, 20, 900_000)).allowed) {
     return NextResponse.json(
       { error: "ขอคำขอมากเกินไป กรุณารอสักครู่แล้วลองใหม่" },
       { status: 429 },
@@ -64,7 +65,7 @@ export async function POST(request: Request) {
       );
     });
   } catch (error) {
-    console.error("[api/auth/forgot-password] failed", error);
+    logError("[api/auth/forgot-password] failed", error);
   }
 
   return NextResponse.json({ ok: true, message: GENERIC_MESSAGE });

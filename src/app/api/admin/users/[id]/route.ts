@@ -13,6 +13,7 @@ import {
 import { userRoleSchema } from "@/lib/constants/tech-taxonomy";
 import { withSystemDb } from "@/lib/db/pool";
 import type { Profile } from "@/types/database";
+import { logError } from "@/lib/utils/logger";
 
 const uuidSchema = z.string().uuid();
 
@@ -151,6 +152,8 @@ export async function PATCH(
       const nextNickname =
         nickname === undefined ? targetUser.nickname : nickname;
 
+      const roleChanged = targetUser.role !== parsed.data.role;
+
       if (parsed.data.role === "student") {
         if (isConfiguredAdminEmail(targetUser.email)) {
           return { kind: "protected_admin" as const };
@@ -184,7 +187,7 @@ export async function PATCH(
         return { kind: "not_found" as const };
       }
 
-      if (nextHash || parsed.data.role !== updated.role) {
+      if (nextHash || roleChanged) {
         const securityRes = await client.query<{ session_version: number }>(
           `INSERT INTO public.auth_security (user_id, session_version)
            VALUES ($1, 1)
@@ -235,7 +238,7 @@ export async function PATCH(
 
     return response;
   } catch (error) {
-    console.error("[api/admin/users/[id]] PATCH error:", error);
+    logError("[api/admin/users/[id]] PATCH error:", error);
     return NextResponse.json(
       { error: "ไม่สามารถบันทึกการแก้ไขผู้ใช้ได้" },
       { status: 500 },
@@ -321,7 +324,7 @@ export async function DELETE(
 
     return NextResponse.json({ deleted: true }, { status: 200 });
   } catch (error) {
-    console.error("[api/admin/users/[id]] DELETE error:", error);
+    logError("[api/admin/users/[id]] DELETE error:", error);
     return NextResponse.json(
       { error: "ไม่สามารถลบบัญชีผู้ใช้ได้" },
       { status: 500 },

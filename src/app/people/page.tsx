@@ -3,7 +3,7 @@ import { Users } from "lucide-react";
 import { PeopleDirectory } from "@/components/profile/people-directory";
 import { requireAuthUser } from "@/lib/auth/cookies";
 import { listDirectoryProfiles } from "@/lib/db/directory";
-import { consumeRateLimit } from "@/lib/utils/rate-limit";
+import { consumeRateLimit } from "@/lib/auth/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,7 @@ export default async function PeoplePage({
   }
 
   const { q } = await searchParams;
-  const limited = !consumeRateLimit(`people:${auth.user.id}`).allowed;
+  const limited = !(await consumeRateLimit(`people:${auth.user.id}`)).allowed;
   const people = limited ? [] : await listDirectoryProfiles(auth.user.id, q);
 
   return (

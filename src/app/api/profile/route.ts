@@ -5,6 +5,7 @@ import { signSessionToken } from "@/lib/auth/session";
 import { withUserDb } from "@/lib/db/pool";
 import { isValidProfileLink, SOCIAL_HOSTS } from "@/lib/utils/profile-links";
 import type { Profile } from "@/types/database";
+import { logError } from "@/lib/utils/logger";
 
 const profilePatchSchema = z.object({
   full_name: z
@@ -190,7 +191,7 @@ export async function PATCH(request: Request) {
     setSessionCookie(response, refreshedToken);
     return response;
   } catch (error) {
-    console.error("[api/profile] update error:", error);
+    logError("[api/profile] update error:", error);
     return NextResponse.json(
       { error: "ไม่สามารถบันทึกโปรไฟล์ได้ กรุณาลองใหม่อีกครั้ง" },
       { status: 500 },

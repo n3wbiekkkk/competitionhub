@@ -12,6 +12,7 @@ import {
 import { withUserDb } from "@/lib/db/pool";
 import { normalizeToIsoCeDate } from "@/lib/utils/thai-date";
 import type { Competition } from "@/types/database";
+import { logError } from "@/lib/utils/logger";
 
 function isValidOptionalHttpUrl(value: string | null | undefined): boolean {
   if (!value || value.trim() === "") {
@@ -187,7 +188,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ competitions: items });
   } catch (error) {
-    console.error("[api/competitions] GET error:", error);
+    logError("[api/competitions] GET error:", error);
     return NextResponse.json(
       { error: "ไม่สามารถโหลดรายการแข่งขันได้" },
       { status: 500 },
@@ -304,7 +305,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.error("[api/competitions] POST error:", error);
+    logError("[api/competitions] POST error:", error);
     return NextResponse.json(
       { error: "ไม่สามารถบันทึกรายการแข่งขันได้" },
       { status: 500 },

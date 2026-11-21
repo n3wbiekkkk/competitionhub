@@ -1,10 +1,15 @@
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
+
 import { z } from "zod";
+import { consumeRateLimit } from "@/lib/auth/rate-limit";
+import { getRequestIp } from "@/lib/utils/request-ip";
 import { setSessionCookie } from "@/lib/auth/cookies";
 import { verifyPassword } from "@/lib/auth/password";
 import { signSessionToken } from "@/lib/auth/session";
 import { withSystemDb } from "@/lib/db/pool";
 import type { Profile } from "@/types/database";
+import { logError } from "@/lib/utils/logger";
 
 const loginSchema = z.object({
   email: z.string().trim().email("รูปแบบอีเมลไม่ถูกต้อง"),
@@ -34,6 +39,16 @@ export async function POST(request: Request) {
   }
 
   const normalizedEmail = parsed.data.email.toLowerCase();
+
+  const ip = getRequestIp(request);
+  const emailKey = createHash("sha256").update(normalizedEmail).digest("hex").slice(0, 32);
+  if (!(await consumeRateLimit(`login:ip:${ip}`, 10, 900_000)).allowed ||
+      !(await consumeRateLimit(`login:email:${emailKey}`, 5, 900_000)).allowed) {
+    return NextResponse.json(
+      { error: "ลองเข้าสู่ระบบมากเกินไป กรุณารอสักครู่" },
+      { status: 429 },
+    );
+  }
 
   try {
     const account = await withSystemDb(async (client) => {
@@ -107,7 +122,7 @@ export async function POST(request: Request) {
     setSessionCookie(response, token);
     return response;
   } catch (error) {
-    console.error("[auth/login] error:", error);
+    logError("[auth/login] error:", error);
     return NextResponse.json(
       { error: "ไม่สามารถเข้าสู่ระบบได้ในขณะนี้" },
       { status: 500 },

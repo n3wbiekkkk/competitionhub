@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createTyphoonClient, isTyphoonConfigured } from "@/lib/ai/opentyphoon";
 import type { TechCategory } from "@/lib/constants/tech-taxonomy";
 import type { Competition } from "../../types/database.ts";
+import { logError } from "@/lib/utils/logger";
 
 const categorySignals: ReadonlyArray<{ category: TechCategory; pattern: RegExp }> = [
   { category: "Robotics & IoT", pattern: /หุ่นยนต์|robot|arduino|esp32|iot|embedded/i },
@@ -185,14 +186,14 @@ export async function rankCompetitionsWithAi(input: {
       ? parseAiDiscoveryResponse(content, new Set(input.competitions.map((competition) => competition.id)))
       : null;
     if (content && !parsedRanking) {
-      console.error("[ai/discovery] invalid ranking payload", content.slice(0, 1600));
+      logError("[ai/discovery] invalid ranking payload", content.slice(0, 1600));
     }
     return {
       ranking: parsedRanking,
       error: content ? null : "AI ไม่ได้ส่งผลลัพธ์กลับมา",
     };
   } catch (error) {
-    console.error("[ai/discovery] ranking error", error);
+    logError("[ai/discovery] ranking error", error);
     return { ranking: null, error: "AI ไม่ตอบสนองในขณะนี้" };
   }
 }

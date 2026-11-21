@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { consumeRateLimit } from "@/lib/auth/rate-limit";
+import { getRequestIp } from "@/lib/utils/request-ip";
 import { isConfiguredAdminEmail } from "@/lib/auth/admin-emails";
 import { setSessionCookie } from "@/lib/auth/cookies";
 import { hashPassword } from "@/lib/auth/password";
@@ -13,6 +15,7 @@ import {
 import type { UserRole } from "@/lib/constants/tech-taxonomy";
 import { withSystemDb } from "@/lib/db/pool";
 import type { Profile } from "@/types/database";
+import { logError } from "@/lib/utils/logger";
 
 const registerSchema = z
   .object({
@@ -96,6 +99,13 @@ export async function POST(request: Request) {
   }
 
   const normalizedEmail = parsed.data.email.toLowerCase();
+  if (!(await consumeRateLimit(`register:ip:${getRequestIp(request)}`, 5, 3_600_000)).allowed) {
+    return NextResponse.json(
+      { error: "สร้างบัญชีมากเกินไป กรุณารอสักครู่" },
+      { status: 429 },
+    );
+  }
+
   const fullName =
     parsed.data.firstName !== undefined || parsed.data.lastName !== undefined
       ? joinFullName(parsed.data.firstName ?? "", parsed.data.lastName ?? "")
@@ -201,7 +211,7 @@ export async function POST(request: Request) {
     setSessionCookie(response, token);
     return response;
   } catch (error) {
-    console.error("[auth/register] error:", error);
+    logError("[auth/register] error:", error);
     return NextResponse.json(
       { error: "ไม่สามารถสมัครสมาชิกได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง" },
       { status: 500 },
