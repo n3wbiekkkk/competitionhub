@@ -24,6 +24,7 @@ test("ฟีดและ Smart Add ใช้งานได้บนจอ 390×
   await page.getByRole("button", { name: "เข้าสู่ระบบ", exact: true }).click();
   await page.waitForFunction(() => document.body.dataset.commandReady === "true");
   await expect(page.getByRole("navigation", { name: "เมนูด้านล่าง" })).toBeVisible();
+  await expect(page).toHaveURL(/\/$/);
 
   await page.goto("/");
   await page.waitForFunction(() => document.body.dataset.commandReady === "true");

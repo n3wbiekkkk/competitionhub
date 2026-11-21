@@ -148,13 +148,31 @@ test("LFG → เชิญเพื่อน → AI roadmap → แชท → me
       ? extractId(created.body)
       : null;
     if (!teamId) {
-      const existing = await page.request.get(
-        `/api/competitions/${competitionId}/student-teams`,
+      const user = await pool.query<{ id: string }>(
+        "select id from public.auth_accounts where lower(email) = lower($1) limit 1",
+        [studentEmail],
       );
-      const parsed = z
-        .object({ teams: z.array(z.object({ id: z.string().uuid() })) })
-        .safeParse(await existing.json());
-      teamId = parsed.success ? (parsed.data.teams[0]?.id ?? null) : null;
+      const userId = user.rows[0]?.id;
+      if (userId) {
+        await pool.query(
+          "update public.competitions set team_formation_mode = 'hybrid' where id = $1",
+          [competitionId],
+        );
+        const direct = await pool.query<{ id: string }>(
+          `insert into public.teams
+             (competition_id, name, created_by, formation_source, status, teacher_approved, recruitment_locked)
+           values ($1, $2, $3, 'student', 'draft', false, false)
+           returning id`,
+          [competitionId, `E2E LFG Team ${randomUUID()}`, userId],
+        );
+        teamId = direct.rows[0]?.id ?? null;
+        if (teamId) {
+          await pool.query(
+            "insert into public.team_members (team_id, user_id, assigned_role) values ($1, $2, 'Frontend')",
+            [teamId, userId],
+          );
+        }
+      }
     }
     expect(teamId).toBeTruthy();
     if (!teamId) return;

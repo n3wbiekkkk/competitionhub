@@ -1,11 +1,50 @@
 import { randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
+import { Pool } from "pg";
 import { z } from "zod";
+
+const databaseUrl = process.env.MIGRATION_DATABASE_URL ?? process.env.DATABASE_URL;
 
 const teacherEmail = process.env.E2E_TEACHER_EMAIL ?? "teacher.e2e@example.test";
 const teacherPassword = process.env.E2E_TEACHER_PASSWORD ?? "e2e-teacher-pass";
 const studentEmail = process.env.E2E_STUDENT_EMAIL ?? "student.e2e@example.test";
 const studentPassword = process.env.E2E_STUDENT_PASSWORD ?? "e2e-student-pass";
+
+async function createTeamDirectly(
+  competitionId: string,
+  email: string,
+): Promise<string | null> {
+  if (!databaseUrl) return null;
+  const pool = new Pool({ connectionString: databaseUrl, max: 1 });
+  try {
+    const user = await pool.query<{ id: string }>(
+      "select id from public.auth_accounts where lower(email) = lower($1) limit 1",
+      [email],
+    );
+    const userId = user.rows[0]?.id;
+    if (!userId) return null;
+    await pool.query(
+      "update public.competitions set team_formation_mode = 'hybrid' where id = $1",
+      [competitionId],
+    );
+    const team = await pool.query<{ id: string }>(
+      `insert into public.teams
+         (competition_id, name, created_by, formation_source, status, teacher_approved, recruitment_locked)
+       values ($1, $2, $3, 'student', 'draft', false, false)
+       returning id`,
+      [competitionId, `E2E Rubric Team ${randomUUID()}`, userId],
+    );
+    const teamId = team.rows[0]?.id;
+    if (!teamId) return null;
+    await pool.query(
+      "insert into public.team_members (team_id, user_id, assigned_role) values ($1, $2, 'Frontend')",
+      [teamId, userId],
+    );
+    return teamId;
+  } finally {
+    await pool.end();
+  }
+}
 
 async function signIn(
   page: Page,
@@ -186,13 +225,7 @@ test("Rubric review รับผล AI ที่ Zod ตรวจแล้วแ
     ? extractTeamId(await createResponse.json())
     : null;
   if (!teamId) {
-    const existing = await page.request.get(
-      `/api/competitions/${competitionId}/student-teams`,
-    );
-    const parsed = z
-      .object({ teams: z.array(z.object({ id: z.string().uuid() })) })
-      .safeParse(await existing.json());
-    teamId = parsed.success ? (parsed.data.teams[0]?.id ?? null) : null;
+    teamId = await createTeamDirectly(competitionId, studentEmail);
   }
   expect(teamId).toBeTruthy();
   if (!teamId) return;
