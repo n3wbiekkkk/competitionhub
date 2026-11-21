@@ -122,8 +122,8 @@ const QUERIES = [
     name: "scout_runs_last_30d",
     sql: `select source_name,
                  count(*)::bigint as runs,
-                 coalesce(sum(found_count), 0)::bigint as found,
-                 coalesce(sum(inserted_count), 0)::bigint as inserted
+                 coalesce(sum(r.found_count), 0)::bigint as found,
+                 0::bigint as inserted
           from public.scout_run_sources r
           join public.scout_runs s on s.id = r.run_id
           where s.started_at >= now() - interval '30 days'
