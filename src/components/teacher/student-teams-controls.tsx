@@ -20,8 +20,8 @@ import {
 } from "@/lib/utils/teammate-match";
 
 const MODE_LABELS: Record<TeamFormationMode, string> = {
-  teacher: "อาจารย์จัดทีมเท่านั้น",
-  student: "นักเรียนตั้งทีมได้",
+  teacher_managed: "อาจารย์จัดทีมเท่านั้น",
+  student_self_form: "นักเรียนตั้งทีมได้",
   hybrid: "นักเรียนตั้งทีมได้ · อาจารย์ตรวจสอบ",
 };
 
@@ -140,8 +140,8 @@ export function StudentTeamsControls({
             disabled={busy}
             onValueChange={(value) => {
               if (
-                value === "teacher" ||
-                value === "student" ||
+                value === "teacher_managed" ||
+                value === "student_self_form" ||
                 value === "hybrid"
               ) {
                 void patch(

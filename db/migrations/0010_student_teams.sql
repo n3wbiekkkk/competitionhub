@@ -1,8 +1,8 @@
 -- Phase 9: student-led team formation and recruitment.
 -- The migration runner already wraps this file in one transaction.
 
-alter table public.competitions add column if not exists team_formation_mode text not null default 'teacher'
-  check (team_formation_mode in ('teacher', 'student', 'hybrid'));
+alter table public.competitions add column if not exists team_formation_mode text not null default 'hybrid'
+  check (team_formation_mode in ('teacher_managed', 'student_self_form', 'hybrid'));
 
 alter table public.teams add column if not exists created_by uuid references public.profiles(id) on delete set null;
 alter table public.teams add column if not exists formation_source text not null default 'teacher'

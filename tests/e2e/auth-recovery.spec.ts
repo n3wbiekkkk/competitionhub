@@ -114,7 +114,7 @@ test("กู้คืนรหัสผ่านจากโทเค็นใ�
     expect(token.length).toBeGreaterThan(20);
 
     await page.goto(`/reset-password?token=${token}`);
-    await page.getByLabel("รหัสผ่านใหม่").fill(nextPassword);
+    await page.getByLabel("รหัสผ่านใหม่", { exact: true }).fill(nextPassword);
     await page.getByLabel("ยืนยันรหัสผ่านใหม่").fill(nextPassword);
     await page.getByRole("button", { name: "ตั้งรหัสผ่านใหม่" }).click();
     await expect(page).toHaveURL(/\/login/);

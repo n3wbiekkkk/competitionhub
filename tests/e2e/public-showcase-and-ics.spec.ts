@@ -75,8 +75,8 @@ async function seedShowcaseResults(pool: Pool): Promise<{
     );
 
     const team = await client.query<{ id: string }>(
-      `INSERT INTO public.teams (competition_id, name, advisor_id, status)
-       VALUES ($1, $2, $3, 'confirmed') RETURNING id`,
+      `INSERT INTO public.teams (competition_id, name, advisor_id, status, is_public_showcase)
+       VALUES ($1, $2, $3, 'confirmed', true) RETURNING id`,
       [competitionId, `E2E Showcase Team ${suffix}`, teacherId],
     );
     const teamId = team.rows[0]?.id;

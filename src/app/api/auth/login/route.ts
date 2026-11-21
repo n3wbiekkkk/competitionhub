@@ -42,8 +42,10 @@ export async function POST(request: Request) {
 
   const ip = getRequestIp(request);
   const emailKey = createHash("sha256").update(normalizedEmail).digest("hex").slice(0, 32);
-  if (!(await consumeRateLimit(`login:ip:${ip}`, 10, 900_000)).allowed ||
-      !(await consumeRateLimit(`login:email:${emailKey}`, 5, 900_000)).allowed) {
+  const ipLimit = Number(process.env.LOGIN_RATE_LIMIT_IP ?? 10);
+  const emailLimit = Number(process.env.LOGIN_RATE_LIMIT_EMAIL ?? 5);
+  if (!(await consumeRateLimit(`login:ip:${ip}`, ipLimit, 900_000)).allowed ||
+      !(await consumeRateLimit(`login:email:${emailKey}`, emailLimit, 900_000)).allowed) {
     return NextResponse.json(
       { error: "ลองเข้าสู่ระบบมากเกินไป กรุณารอสักครู่" },
       { status: 429 },

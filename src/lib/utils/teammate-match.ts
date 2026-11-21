@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TECH_ROLES } from "@/lib/constants/tech-taxonomy";
 
-export const teamFormationModeSchema = z.enum(["teacher", "student", "hybrid"]);
+export const teamFormationModeSchema = z.enum(["teacher_managed", "student_self_form", "hybrid"]);
 export type TeamFormationMode = z.infer<typeof teamFormationModeSchema>;
 
 export const studentTeamStatusSchema = z.enum(["draft", "confirmed"]);

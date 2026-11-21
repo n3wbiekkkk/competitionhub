@@ -27,8 +27,8 @@ import {
 } from "@/lib/utils/teammate-match";
 
 const MODE_LABELS: Record<TeamFormationMode, string> = {
-  teacher: "จัดทีมโดยอาจารย์",
-  student: "นักเรียนตั้งทีมได้",
+  teacher_managed: "จัดทีมโดยอาจารย์",
+  student_self_form: "นักเรียนตั้งทีมได้",
   hybrid: "นักเรียนตั้งทีมได้ · อาจารย์ตรวจสอบ",
 };
 

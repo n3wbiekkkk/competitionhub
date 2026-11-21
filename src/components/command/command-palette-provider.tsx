@@ -34,6 +34,7 @@ export function CommandPaletteProvider({
   const [user, setUser] = useState<CommandUser | null | undefined>(undefined);
 
   useEffect(() => {
+    document.body.dataset.commandReady = "true";
     const controller = new AbortController();
     void (async () => {
       try {

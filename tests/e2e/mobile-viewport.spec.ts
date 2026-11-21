@@ -47,6 +47,7 @@ test("มีแถบนำทางด้านล่างสำหรับ�
 
 test("Command Palette เปิดด้วย Ctrl+K และค้นหาคำสั่งได้", async ({ page }) => {
   await page.goto("/");
+  await page.waitForFunction(() => document.body.dataset.commandReady === "true");
   await page.keyboard.press("Control+k");
   const palette = page.getByRole("dialog", { name: /คำสั่ง|Command/ });
   await expect(palette).toBeVisible();

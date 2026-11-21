@@ -2,7 +2,6 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2, LogIn, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -29,7 +28,6 @@ interface AuthFormProps {
 }
 
 export function AuthForm({ nextUrl, initialTab = "login" }: AuthFormProps) {
-  const router = useRouter();
   const [tab, setTab] = useState<"login" | "register">(initialTab);
 
   // Login state
@@ -78,8 +76,7 @@ export function AuthForm({ nextUrl, initialTab = "login" }: AuthFormProps) {
       }
 
       toast.success("เข้าสู่ระบบเรียบร้อยแล้ว");
-      router.push(nextUrl);
-      router.refresh();
+      window.location.assign(nextUrl);
     } catch {
       setErrorMessage("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
     } finally {
@@ -146,12 +143,11 @@ export function AuthForm({ nextUrl, initialTab = "login" }: AuthFormProps) {
         toast.success(
           "สมัครสมาชิกสำเร็จ ระบบกำหนดบัญชีแรกเป็นผู้ดูแลระบบ (Admin) เรียบร้อย",
         );
-        router.push(nextUrl === "/" ? "/admin" : nextUrl);
+        window.location.assign(nextUrl === "/" ? "/admin" : nextUrl);
       } else {
         toast.success("สมัครสมาชิกสำเร็จ ยินดีต้อนรับสู่ TechComp Hub!");
-        router.push(nextUrl === "/" ? "/profile" : nextUrl);
+        window.location.assign(nextUrl === "/" ? "/profile" : nextUrl);
       }
-      router.refresh();
     } catch {
       setErrorMessage("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
     } finally {

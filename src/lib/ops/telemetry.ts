@@ -130,7 +130,7 @@ export async function loadOpsTelemetry(): Promise<OpsTelemetrySnapshot> {
           `select r.source_name,
                   count(*)::bigint as runs,
                   coalesce(sum(r.found_count), 0)::bigint as found,
-                  coalesce(sum(r.inserted_count), 0)::bigint as inserted,
+                  0::bigint as inserted,
                   count(*) filter (where r.status = 'failed')::bigint as failed,
                   max(s.started_at)::text as last_seen
            from public.scout_run_sources r

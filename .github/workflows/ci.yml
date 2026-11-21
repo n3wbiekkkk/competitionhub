@@ -37,6 +37,8 @@ jobs:
       E2E_STUDENT_EMAIL: student.e2e@example.test
       E2E_STUDENT_PASSWORD: e2e-student-pass
       E2E_COMPETITION_TITLE: E2E Hackathon
+      LOGIN_RATE_LIMIT_IP: "200"
+      LOGIN_RATE_LIMIT_EMAIL: "200"
       COOKIE_SECURE: "false"
       TYPHOON_API_KEY: ""
 

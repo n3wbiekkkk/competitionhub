@@ -102,7 +102,7 @@ interface CompetitionRow {
   min_size: number;
   max_size: number;
   status: CompetitionStatus;
-  team_formation_mode: "teacher" | "student" | "hybrid";
+  team_formation_mode: "teacher_managed" | "student_self_form" | "hybrid";
   recommended_roles: string[];
   tech_stack_hints: string[];
 }
@@ -183,7 +183,7 @@ interface AcceptRow extends InvitationRow {
   competition_status: CompetitionStatus;
   max_size: number;
   deadline: string | null;
-  team_formation_mode: "teacher" | "student" | "hybrid";
+  team_formation_mode: "teacher_managed" | "student_self_form" | "hybrid";
   open_role_status: OpenRoleStatus | null;
   open_role_slots: number | null;
   open_role_role: string | null;
@@ -356,7 +356,7 @@ async function loadTeamSummaries(
 }
 
 function isStudentMode(mode: CompetitionRow["team_formation_mode"]): boolean {
-  return mode === "student" || mode === "hybrid";
+  return mode === "student_self_form" || mode === "hybrid";
 }
 
 type EligibilityFields = Pick<
