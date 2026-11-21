@@ -39,6 +39,7 @@ jobs:
       E2E_COMPETITION_TITLE: E2E Hackathon
       LOGIN_RATE_LIMIT_IP: "200"
       LOGIN_RATE_LIMIT_EMAIL: "200"
+      E2E_BYPASS_RATE_LIMIT: "true"
       COOKIE_SECURE: "false"
       TYPHOON_API_KEY: ""
 

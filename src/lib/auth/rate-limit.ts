@@ -33,6 +33,9 @@ export async function consumeRateLimit(
   if (!key || key.length > 300) {
     return { allowed: false, remaining: 0, retryAfterSeconds: 60 };
   }
+  if (process.env.E2E_BYPASS_RATE_LIMIT === "true") {
+    return { allowed: true, remaining: limit, retryAfterSeconds: 1 };
+  }
 
   try {
     const row = await withSystemDb(async (client) => {

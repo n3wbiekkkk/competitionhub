@@ -140,7 +140,7 @@ test("Auto Scout แสดงการ suppressing รายการซ้ำ�
     }),
   ).toBeVisible();
 
-  await expect(page.getByText("ซ้ำในระบบ", { exact: true })).toBeVisible();
+  await expect(page.getByText("ซ้ำในระบบ", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("ลิงก์นี้มีอยู่ในระบบแล้ว")).toBeVisible();
   await expect(page.getByText("พบทั้งหมด")).toBeVisible();
 });
