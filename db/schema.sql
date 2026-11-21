@@ -590,7 +590,7 @@ begin
 end $$;
 
 -- Directory reads never widen profiles RLS. These functions return a fixed
--- five-column DTO only, require a live caller, and reject system mode.
+-- fixed-column DTO only, require a live caller, and reject system mode.
 drop function if exists public.query_profile_directory(text, integer, integer);
 create or replace function public.query_profile_directory(
   p_query text default null,
