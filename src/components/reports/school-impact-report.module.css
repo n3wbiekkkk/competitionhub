@@ -1,0 +1,63 @@
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.sheet {
+  width: 100%;
+}
+
+.tableWrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.table th,
+.table td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.625rem 0.75rem;
+  text-align: left;
+}
+
+.table th {
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+
+.table td:last-child,
+.table th:last-child {
+  text-align: right;
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+
+  .toolbar {
+    display: none !important;
+  }
+
+  .sheet {
+    color: black;
+  }
+
+  .tableWrap {
+    overflow: visible;
+  }
+
+  .table th,
+  .table td {
+    border-bottom-color: black;
+  }
+}
