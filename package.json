@@ -9,7 +9,9 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node --no-warnings --experimental-strip-types --experimental-loader ./tests/alias-loader.mjs --test tests/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:status": "node scripts/migrate.mjs --status"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

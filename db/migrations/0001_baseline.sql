@@ -341,10 +341,6 @@ create policy schema_migrations_system_all
   using (public.app_is_system())
   with check (public.app_is_system());
 
-insert into public.schema_migrations (version, checksum)
-values ('001-phase1-baseline', 'phase1-baseline')
-on conflict (version) do nothing;
-
 -- Persistent rate-limit buckets.
 create table if not exists public.rate_limit_buckets (
   key text primary key,
@@ -374,5 +370,3 @@ begin
     to techhub_app;
   end if;
 end $$;
-
-commit;

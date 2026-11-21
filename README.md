@@ -54,7 +54,7 @@ The script:
 2. takes a verified `pg_dump` backup on the host (`backups/`, 14-day retention),
 3. tags the running image as `tech-competition-hub-web:rollback-<UTC>`,
 4. rsyncs the tree while preserving the remote `.env.local` and `backups/`,
-5. applies `db/migrations.sql` (idempotent) to the live database,
+5. applies numbered SQL files through `npm run db:migrate` with checksum ledger,
 6. rebuilds the `web` container and checks `/`, `/login`, `/api/health`.
 
 ### Why `--env-file` is required
@@ -68,7 +68,7 @@ docker compose --env-file .env.local logs -f web
 
 ### Schema changes
 
-`db/schema.sql` runs **only when the Postgres volume is first created**. Every later change goes into `db/migrations.sql` (idempotent, wrapped in a transaction) and is applied by `deploy.sh`.
+`db/schema.sql` boots fresh Docker volumes. Every later change goes into a numbered file under `db/migrations/` and is applied by `npm run db:migrate`.
 
 ### Backups and restore
 

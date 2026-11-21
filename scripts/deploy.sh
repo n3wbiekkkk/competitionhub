@@ -29,11 +29,14 @@ ssh "$REMOTE" "cd '$REMOTE_DIR' && bash ./scripts/backup-db.sh '$REMOTE_DIR/back
 echo "==> tag current image for rollback"
 ssh "$REMOTE" "cd '$REMOTE_DIR' && docker tag tech-competition-hub-web:latest 'tech-competition-hub-web:rollback-$STAMP' 2>/dev/null || true"
 
-echo "==> apply idempotent schema migrations"
-ssh "$REMOTE" "cd '$REMOTE_DIR' && set -a && . ./.env.local && set +a && docker compose --env-file .env.local exec -T db psql -U \"\${POSTGRES_USER}\" -d \"\${POSTGRES_DB}\" -v ON_ERROR_STOP=1 -q < db/migrations.sql"
+echo "==> rebuild image"
+ssh "$REMOTE" "cd '$REMOTE_DIR' && docker compose --env-file .env.local build web"
 
-echo "==> rebuild and restart web"
-ssh "$REMOTE" "cd '$REMOTE_DIR' && docker compose --env-file .env.local up -d --build web"
+echo "==> apply deterministic migrations"
+ssh "$REMOTE" "cd '$REMOTE_DIR' && docker compose --env-file .env.local run --rm web npm run db:migrate"
+
+echo "==> start rebuilt web"
+ssh "$REMOTE" "cd '$REMOTE_DIR' && docker compose --env-file .env.local up -d web"
 
 echo "==> wait for health"
 for attempt in $(seq 1 30); do

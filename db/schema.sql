@@ -4,6 +4,7 @@
 -- ============================================================================
 
 create extension if not exists pgcrypto;
+create extension if not exists pg_trgm;
 
 -- ----------------------------------------------------------------------------
 -- 1. Tables
@@ -127,9 +128,6 @@ create index if not exists competitions_created_by_idx
 create index if not exists interests_competition_id_idx
   on public.interests (competition_id);
 
-create index if not exists interests_user_id_idx
-  on public.interests (user_id);
-
 create index if not exists teams_competition_status_idx
   on public.teams (competition_id, status);
 
@@ -138,6 +136,21 @@ create index if not exists team_members_user_id_idx
 
 create index if not exists profiles_skills_gin_idx
   on public.profiles using gin (skills);
+
+drop index if exists public.interests_user_id_idx;
+
+create index if not exists competitions_title_trgm_idx
+  on public.competitions using gin (title gin_trgm_ops);
+
+create index if not exists competitions_summary_trgm_idx
+  on public.competitions using gin ((coalesce(summary, '')) gin_trgm_ops);
+
+create index if not exists competitions_tech_stack_hints_gin_idx
+  on public.competitions using gin (tech_stack_hints);
+
+create index if not exists profiles_directory_visible_idx
+  on public.profiles (directory_visible)
+  where directory_visible;
 
 -- ----------------------------------------------------------------------------
 -- 3. Triggers (updated_at)
@@ -575,7 +588,7 @@ create policy schema_migrations_system_all
   with check (public.app_is_system());
 
 insert into public.schema_migrations (version, checksum)
-values ('001-phase1-baseline', 'phase1-baseline')
+values ('0001_baseline', 'eb7a935079255d024d521edbfa33e831419811c5b7844a1c487e55c8da724603')
 on conflict (version) do nothing;
 
 -- Persistent rate-limit buckets for auth and read-heavy routes.

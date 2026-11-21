@@ -128,7 +128,7 @@ Defined in `src/lib/constants/classroom.ts`:
    ```
    All three must exit `0` with zero TypeScript errors, zero ESLint warnings, and a clean standalone production build.
 2. **Schema Changes on Live PostgreSQL:**
-   Apply idempotent SQL (`ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...`) inside the `db` container **before** rebuilding/restarting `web` so queries never reference missing columns.
+   Apply migrations with `npm run db:migrate`. Files in `db/migrations/` are versioned, checksummed, and idempotent.
 3. **Deployment to a self-hosted Linux host:**
    - Sync without overwriting remote `.env.local` or host state:
      ```bash
