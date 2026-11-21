@@ -645,7 +645,13 @@ returns table (
   grade text,
   skills text[],
   role text,
-  avatar_url text
+  avatar_url text,
+  bio text,
+  github_url text,
+  portfolio_url text,
+  discord_url text,
+  line_url text,
+  contact text
 )
 language plpgsql
 stable
@@ -658,7 +664,7 @@ begin
   end if;
 
   return query
-  select p.id, p.full_name, p.nickname, p.grade, p.skills, p.role, p.avatar_url
+  select p.id, p.full_name, p.nickname, p.grade, p.skills, p.role, p.avatar_url, p.bio, p.github_url, p.portfolio_url, p.discord_url, p.line_url, p.contact
   from public.profiles p
   where p.id = p_id
     and p.directory_visible

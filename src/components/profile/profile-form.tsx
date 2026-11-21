@@ -441,7 +441,7 @@ export function ProfileForm({ initialProfile }: { initialProfile: Profile }) {
       <AccountSection
         id="contact"
         title="การติดต่อและการเปิดเผย"
-        description="ช่องทางติดต่อจะแสดงเฉพาะอาจารย์และเพื่อนในทีมที่ยืนยันแล้ว"
+        description="ช่องทางติดต่อจะแสดงตามการตั้งค่าด้านล่าง"
       >
         <div className="space-y-5">
           <div className="space-y-1.5">
@@ -464,18 +464,18 @@ export function ProfileForm({ initialProfile }: { initialProfile: Profile }) {
           >
             <span>
               <span className="block text-sm font-medium text-foreground">
-                ให้ผู้อื่นค้นพบโปรไฟล์ของฉัน
+                ให้ผู้อื่นเห็นโปรไฟล์ของฉัน
               </span>
               <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
-                เมื่อเปิด ผู้อื่นจะเห็นรูปโปรไฟล์ ชื่อ ชื่อเล่น ห้องเรียน บทบาทในระบบ และทักษะของคุณในหน้าผู้คน
-                อีเมล ช่องทางติดต่อ และลิงก์ส่วนตัวจะไม่แสดง
+                เมื่อเปิด ผู้อื่นจะเห็นรูปโปรไฟล์ ชื่อ ชื่อเล่น ห้องเรียน บทบาท ทักษะ ข้อความเกี่ยวกับฉัน ช่องทางติดต่อ และลิงก์ของคุณ
+                อีเมลจะไม่แสดง
               </span>
             </span>
             <Switch
               id="profile-directory-visible"
               checked={directoryVisible}
               onCheckedChange={setDirectoryVisible}
-              aria-label="ให้ผู้อื่นค้นพบโปรไฟล์ของฉัน"
+              aria-label="ให้ผู้อื่นเห็นโปรไฟล์ของฉัน"
             />
           </label>
         </div>

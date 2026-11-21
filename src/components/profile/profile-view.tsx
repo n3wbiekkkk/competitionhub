@@ -1,24 +1,57 @@
 import Link from "next/link";
-import { ArrowLeft, GraduationCap, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  ExternalLink,
+  GitBranch,
+  GraduationCap,
+  Hash,
+  Mail,
+  MessageCircle,
+} from "lucide-react";
+import { AccountSection } from "@/components/account/account-section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/initials";
 import { parseClassroom } from "@/lib/constants/classroom";
-import { TECH_SKILLS, USER_ROLE_LABELS_TH } from "@/lib/constants/tech-taxonomy";
-import type { DirectoryProfile } from "@/types/database";
+import {
+  SOCIAL_HOSTS,
+  isValidProfileLink,
+} from "@/lib/utils/profile-links";
+import {
+  USER_ROLE_LABELS_TH,
+} from "@/lib/constants/tech-taxonomy";
+import type { DirectoryPersonProfile } from "@/types/database";
 
-const PRESET_SKILLS = new Set<string>(TECH_SKILLS);
+interface SafeLink {
+  href: string;
+  label: string;
+  icon: typeof GitBranch;
+}
 
-export function ProfileView({ profile }: { profile: DirectoryProfile }) {
+export function ProfileView({ profile }: { profile: DirectoryPersonProfile }) {
   const classroom = parseClassroom(profile.grade);
   const classroomLabel = classroom.gradeLevel
     ? `${classroom.gradeLevel}${classroom.room ? `/${classroom.room}` : ""}`
     : "ไม่ระบุห้องเรียน";
-  const skills = profile.skills.filter((skill) => PRESET_SKILLS.has(skill));
+  const skills = profile.skills;
   const displayName = profile.nickname
     ? `${profile.full_name} (${profile.nickname})`
     : profile.full_name;
+
+  const links: SafeLink[] = [];
+  if (isValidProfileLink(profile.github_url, SOCIAL_HOSTS.github)) {
+    links.push({ href: profile.github_url!, label: "GitHub", icon: GitBranch });
+  }
+  if (isValidProfileLink(profile.portfolio_url)) {
+    links.push({ href: profile.portfolio_url!, label: "ผลงาน", icon: ExternalLink });
+  }
+  if (isValidProfileLink(profile.discord_url, SOCIAL_HOSTS.discord)) {
+    links.push({ href: profile.discord_url!, label: "Discord", icon: Hash });
+  }
+  if (isValidProfileLink(profile.line_url, SOCIAL_HOSTS.line)) {
+    links.push({ href: profile.line_url!, label: "LINE", icon: MessageCircle });
+  }
 
   return (
     <div className="space-y-8">
@@ -33,10 +66,9 @@ export function ProfileView({ profile }: { profile: DirectoryProfile }) {
             </AvatarFallback>
           </Avatar>
           <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-sage px-2.5 py-1 text-[11px] font-medium text-sage-foreground">
-              <Sparkles className="h-3 w-3" aria-hidden="true" />
-              โปรไฟล์แบบอ่านอย่างเดียว
-            </div>
+            <p className="text-xs font-medium uppercase tracking-widest text-primary">
+              โปรไฟล์สำหรับจัดทีม
+            </p>
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">
               {displayName}
             </h1>
@@ -44,17 +76,33 @@ export function ProfileView({ profile }: { profile: DirectoryProfile }) {
               <GraduationCap className="h-4 w-4" aria-hidden="true" />
               {classroomLabel}
             </p>
-            <Badge variant="secondary" className="mt-1 h-auto rounded-md border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+            <Badge
+              variant="secondary"
+              className="mt-1 h-auto rounded-md border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary"
+            >
               {USER_ROLE_LABELS_TH[profile.role]}
             </Badge>
           </div>
         </div>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-          ทักษะและเครื่องมือ
-        </h2>
+      <AccountSection
+        title="เกี่ยวกับฉัน"
+        description="สิ่งที่เจ้าของโปรไฟล์เล่าไว้สำหรับการจับคู่ทีม"
+      >
+        {profile.bio && profile.bio.trim() ? (
+          <p className="whitespace-pre-line text-sm leading-7 text-foreground/85">
+            {profile.bio}
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">ยังไม่ได้เขียนเกี่ยวกับฉัน</p>
+        )}
+      </AccountSection>
+
+      <AccountSection
+        title="ทักษะและเครื่องมือ"
+        description="ภาษา เฟรมเวิร์ก และเครื่องมือที่ใช้งานได้จริง"
+      >
         {skills.length > 0 ? (
           <ul className="flex flex-wrap gap-1.5">
             {skills.map((skill) => (
@@ -71,12 +119,55 @@ export function ProfileView({ profile }: { profile: DirectoryProfile }) {
         ) : (
           <p className="text-sm text-muted-foreground">ยังไม่ได้ระบุทักษะ</p>
         )}
-      </section>
+      </AccountSection>
+
+      <AccountSection
+        title="ผลงานและลิงก์"
+        description="ลิงก์ไปยังโค้ด ผลงาน หรือช่องทางที่เจ้าของโปรไฟล์เปิดไว้"
+      >
+        {links.length > 0 ? (
+          <ul className="flex flex-wrap gap-2">
+            {links.map((link) => {
+              const Icon = link.icon;
+              return (
+                <li key={link.label}>
+                  <a
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-muted"
+                  >
+                    <Icon className="h-4 w-4" />
+                    {link.label}
+                    <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted-foreground">ยังไม่ได้เพิ่มลิงก์ผลงาน</p>
+        )}
+      </AccountSection>
+
+      <AccountSection
+        title="การติดต่อ"
+        description="ช่องทางที่เจ้าของโปรไฟล์อนุญาตให้ผู้อื่นเห็น"
+      >
+        {profile.contact && profile.contact.trim() ? (
+          <p className="inline-flex items-start gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-foreground">
+            <Mail className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="whitespace-pre-line break-all">{profile.contact}</span>
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">ยังไม่ได้ระบุช่องทางติดต่อ</p>
+        )}
+      </AccountSection>
 
       <section className="border-t border-border pt-6">
         <p className="text-sm leading-relaxed text-muted-foreground">
-          ข้อมูลติดต่อและลิงก์ส่วนตัวจะแสดงเฉพาะในหน้าทีมที่อาจารย์ยืนยันแล้ว
-          โปรไฟล์นี้เปิดเผยเพื่อช่วยจัดทีมเท่านั้น
+          ข้อมูลในหน้านี้เปิดเผยเพื่อช่วยจัดทีมตามที่เจ้าของโปรไฟล์อนุญาต
+          อีเมลของเจ้าของโปรไฟล์จะไม่แสดง
         </p>
         <Button asChild variant="outline" className="mt-5 gap-2 rounded-lg">
           <Link href="/people">

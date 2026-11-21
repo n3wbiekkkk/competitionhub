@@ -9,10 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/initials";
 import { parseClassroom } from "@/lib/constants/classroom";
-import { TECH_SKILLS, USER_ROLE_LABELS_TH } from "@/lib/constants/tech-taxonomy";
+import { USER_ROLE_LABELS_TH } from "@/lib/constants/tech-taxonomy";
 import type { DirectoryProfile } from "@/types/database";
-
-const PRESET_SKILLS = new Set<string>(TECH_SKILLS);
 
 interface PeopleDirectoryProps {
   people: DirectoryProfile[];
@@ -40,7 +38,7 @@ export function PeopleDirectory({
       const haystack = [
         person.full_name,
         person.nickname ?? "",
-        ...person.skills.filter((skill) => PRESET_SKILLS.has(skill)),
+        ...person.skills,
       ]
         .join(" ")
         .toLowerCase();
@@ -100,10 +98,8 @@ export function PeopleDirectory({
             const classroomLabel = classroom.gradeLevel
               ? `${classroom.gradeLevel}${classroom.room ? `/${classroom.room}` : ""}`
               : "ไม่ระบุห้องเรียน";
-            const skills = person.skills
-              .filter((skill) => PRESET_SKILLS.has(skill))
-              .slice(0, 4);
-            const extra = person.skills.filter((skill) => PRESET_SKILLS.has(skill)).length - skills.length;
+            const skills = person.skills.slice(0, 4);
+            const extra = person.skills.length - skills.length;
             const isSelf = person.id === viewerId;
             const href = isSelf ? "/profile" : `/people/${person.id}`;
 

@@ -51,6 +51,15 @@ export interface DirectoryProfile {
   avatar_url: string | null;
 }
 
+export interface DirectoryPersonProfile extends DirectoryProfile {
+  bio: string | null;
+  github_url: string | null;
+  portfolio_url: string | null;
+  discord_url: string | null;
+  line_url: string | null;
+  contact: string | null;
+}
+
 export interface PasswordResetRequest {
   id: string;
   user_id: string;

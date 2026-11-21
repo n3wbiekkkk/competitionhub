@@ -203,6 +203,9 @@ export function SettingsClient({ profile }: SettingsClientProps) {
             <Field label="อีเมล" id="settings-email">
               <Input id="settings-email" value={liveProfile.email} disabled className="rounded-lg" />
             </Field>
+            <p className="text-xs text-muted-foreground sm:col-span-2">
+              อีเมลใช้สำหรับเข้าสู่ระบบ และไม่แสดงในโปรไฟล์ที่ผู้อื่นเห็น
+            </p>
           </div>
           <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
             <span className="text-xs text-muted-foreground">{accountDirty ? "ยังไม่บันทึก" : "บันทึกแล้ว"}</span>

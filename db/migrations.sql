@@ -205,9 +205,10 @@ begin
 end;
 $$;
 
+drop policy if exists profile_avatars_select_visible on public.profile_avatars;
 drop function if exists public.get_directory_profile(uuid);
 create or replace function public.get_directory_profile(p_id uuid)
-returns table (id uuid, full_name text, nickname text, grade text, skills text[], role text, avatar_url text)
+returns table (id uuid, full_name text, nickname text, grade text, skills text[], role text, avatar_url text, bio text,   github_url text,   portfolio_url text,   discord_url text,   line_url text,   contact text )
 language plpgsql
 stable
 security definer
@@ -219,7 +220,7 @@ begin
   end if;
 
   return query
-  select p.id, p.full_name, p.nickname, p.grade, p.skills, p.role, p.avatar_url
+  select p.id, p.full_name, p.nickname, p.grade, p.skills, p.role, p.avatar_url, p.bio, p.github_url, p.portfolio_url, p.discord_url, p.line_url, p.contact
   from public.profiles p
   where p.id = p_id and p.directory_visible;
 end;
