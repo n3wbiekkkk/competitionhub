@@ -176,12 +176,28 @@ async function visitPaths(page, paths, scheme, viewport, auth) {
       fail(`${label} HTTP ${response?.status() ?? "none"}`);
       continue;
     }
+    // Wait for React hydration before measuring or screenshotting. Playwright's
+    // screenshot hides the caret by mutating inputs, which otherwise surfaces
+    // as a false aria-hidden/hydration mismatch in the dev console.
+    try {
+      await page.waitForFunction(
+        () => document.body.dataset.commandReady === "true",
+        null,
+        { timeout: 10_000 },
+      );
+    } catch {
+      fail(`${label} app shell never became ready`);
+    }
     const metrics = await page.evaluate(() => ({
       innerWidth: window.innerWidth,
       scrollWidth: document.documentElement.scrollWidth,
       bottomNav: Boolean(document.querySelector('nav[aria-label="เมนูด้านล่าง"]')),
+      showcaseLinks: document.querySelectorAll('a[href="/showcase"]').length,
     }));
     checks += 1;
+    if (metrics.showcaseLinks > 0) {
+      fail(`${label} ${metrics.showcaseLinks} stale /showcase link(s)`);
+    }
     if (metrics.scrollWidth > metrics.innerWidth + 1) {
       fail(`${label} horizontal overflow ${metrics.scrollWidth}>${metrics.innerWidth}`);
     }

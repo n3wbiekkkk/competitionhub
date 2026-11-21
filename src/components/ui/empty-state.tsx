@@ -25,7 +25,9 @@ export function EmptyState({
         <Icon className="h-5 w-5" aria-hidden="true" />
       </span>
       <h2 className="text-base font-semibold text-foreground">{title}</h2>
-      <p className="mt-1 max-w-md text-sm text-muted-foreground">{description}</p>
+      <p className="mt-1 max-w-md text-sm leading-[1.65] text-muted-foreground">
+        {description}
+      </p>
       {actionLabel && onAction ? (
         <Button type="button" onClick={onAction} className="mt-5 rounded-xl">
           {actionLabel}

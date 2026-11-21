@@ -1,13 +1,16 @@
 import type { NextConfig } from "next";
 
-const devConnect = process.env.NODE_ENV === "development" ? " ws: wss:" : "";
+const isDev = process.env.NODE_ENV === "development";
+const devConnect = isDev ? " ws: wss:" : "";
+// React's dev runtime uses eval for call-stack reconstruction. Production keeps the strict policy.
+const devEval = isDev ? " 'unsafe-eval'" : "";
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  `script-src 'self' 'unsafe-inline'${devEval}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",

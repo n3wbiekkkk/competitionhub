@@ -132,7 +132,7 @@ Goal: elevate TechComp Hub from commit `2ea7f5d` to world-class visual craft acr
 | D3 | Flagship discovery page: full-width grid and horizontal filter bar | VERIFIED | All gates green; 12 E2E pass; 72 visual checks; cards above fold; commit on branch |
 | D4 | Editorial detail and student workspaces | VERIFIED | All gates green; 12 E2E pass; 72 visual checks; commit on branch |
 | D5 | Teacher studio and admin console | VERIFIED | All gates green; 12 E2E pass; 72 visual checks; commit on branch |
-| D6 | Motion, dev-warning fixes, visual audit and full gate | NOT STARTED | — |
+| D6 | Motion, dev-warning fixes, visual audit and full gate | VERIFIED | All gates green; 12 E2E pass; 72 visual checks; console warnings resolved; commit on branch |
 
 ### Baseline evidence (pre-change, commit `2ea7f5d`)
 
@@ -282,3 +282,41 @@ Inspected `.visual-audit/dark-1440--competitions-*.png`. The detail page shows a
 ### Visual spot check
 
 Inspected `.visual-audit/dark-1440-auth--admin.png`. The admin console shows a clean 4-column KPI bento, quiet line tabs, and a hairline table with roomy rows.
+
+### D6 verification evidence
+
+- `npm run lint` — PASS, 0 errors, 0 warnings.
+- `npm run typecheck` — PASS, 0 errors.
+- `npm test` — PASS, 135/135.
+- `npm run check:schema` — PASS, `migrations=14 objects=96`.
+- `npm run test:integration` — PASS, `tables=36 migrations=14`.
+- `npm run build` — PASS, compiled and 29 static pages generated, no warnings.
+- `npm run test:e2e` — PASS, 12/12 on the final code.
+- `npm run test:visual` — PASS, 72 checks on the final code.
+
+### D6 dev-warning findings
+
+- **Hydration / caret-color warning — fixed at the harness boundary.** Playwright screenshots inject `caret-color: transparent` on every input before React hydrates, so React reports it as an attribute mismatch. The visual audit now waits for the existing `document.body.dataset.commandReady` marker before measuring or screenshotting. A fresh dev run after this change reported 0 hydration mismatches, 0 `data-aria-hidden` diffs, and 0 eval warnings across all 72 checks.
+- **`data-aria-hidden` warning** comes from Radix's `hideOthers` mutating siblings of an open modal. No modal is open on a plain load, and the fresh dev run reported 0 occurrences. No product change was needed.
+- **React `eval()` warning — fixed.** The CSP lacked `unsafe-eval` in development. `next.config.ts` now adds it only when `NODE_ENV=development`; the production CSP is unchanged. Fresh run: 0 eval warnings.
+- **`The destination stream errored while writing data` — accepted boundary with proof.** The message exists once in this tree, in React DOM server's `createCancelHandler` (`react-dom-server.node.development.js:9338-9343, 11128-11134`). Next turns it into digest `4196242234` in `create-error-handler.js:166`. Route handlers return their body stream directly and never enter React, so `/api/events/stream` is adjacent, not causal. The SSE route already cancels correctly: `cancel()` and `request.signal` share one `close()` that clears both timers, sets `closed` before `controller.close()`, and removes its listener. The error fires when a Playwright navigation closes an in-flight page render; it is dev-only and absent from the standalone production build. No framework config exists to disable HTML streaming, so no app-code fix is available.
+
+### D6 motion and polish
+
+- Overlay durations moved from 100ms to 180ms in Dialog, Sheet and Dropdown Menu; a single `cubic-bezier(0.2, 0.8, 0.2, 1)` easing applies to every Tailwind transition via a base-layer rule. The existing reduced-motion override still wins.
+- Global loading skeleton now mirrors the shipped discovery page: 1480px canvas, horizontal filter skeleton, and a 1/2/3/4-column card grid. Shared empty states use 1.65 Thai line height.
+- Visual audit adds a per-path assertion that no rendered `a[href="/showcase"]` exists.
+
+### Before and after
+
+| Measure | Before | After |
+| --- | --- | --- |
+| Discovery canvas | 288px filter rail + 248px sidebar | full-width canvas + 228px sidebar |
+| Above-fold cards | 0 of first row visible | first row fully visible at 1440×900 |
+| Card tag rows | 2–3 stacked | 1 unified row with +N |
+| Add CTAs on `/` | 2–3 duplicates | 1 in the topbar |
+| Visual audit checks | 66 (incl. 6 showcase) | 72 (incl. authenticated home, CTA count, overflow, above-fold) |
+| Dev hydration/eval warnings | present | 0 |
+| Schema / migrations / tables | 14 / 36 | 14 / 36, unchanged |
+
+All six phases are VERIFIED. No database table, migration, checksum, or RLS policy was changed at any point.
