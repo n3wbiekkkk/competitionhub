@@ -7,21 +7,18 @@ interface CompetitionDetailTabsProps {
   details: ReactNode;
   team: ReactNode;
   community: ReactNode;
-  showcase: ReactNode;
 }
 
 const TAB_ITEMS = [
   { value: "details", label: "รายละเอียดและเกณฑ์" },
   { value: "team", label: "เพื่อนที่สนใจและหาทีม" },
   { value: "community", label: "ถาม-ตอบและประกาศ" },
-  { value: "showcase", label: "ผลงานรุ่นพี่" },
 ] as const;
 
 export function CompetitionDetailTabs({
   details,
   team,
   community,
-  showcase,
 }: CompetitionDetailTabsProps) {
   return (
     <Tabs defaultValue="details" className="gap-0">
@@ -63,13 +60,6 @@ export function CompetitionDetailTabs({
           className="mt-0 data-[state=inactive]:hidden"
         >
           {community}
-        </TabsContent>
-        <TabsContent
-          value="showcase"
-          forceMount
-          className="mt-0 data-[state=inactive]:hidden"
-        >
-          {showcase}
         </TabsContent>
       </div>
     </Tabs>

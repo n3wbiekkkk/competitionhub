@@ -27,11 +27,6 @@ import {
   isTechRole,
 } from "@/lib/constants/tech-taxonomy";
 import { withUserDb } from "@/lib/db/pool";
-import {
-  loadPublicShowcaseResults,
-  type ShowcaseResultItem,
-} from "@/lib/integrations/showcase";
-import { logError } from "@/lib/utils/logger";
 import { explainSkillMatch } from "@/lib/utils/skill-match";
 import {
   formatThaiDate,
@@ -227,16 +222,6 @@ export default async function CompetitionDetailPage({
     relatedCompetitions,
   } = data;
 
-  let showcaseResults: ShowcaseResultItem[] = [];
-  try {
-    showcaseResults = await withUserDb(user?.id ?? null, async (client) => {
-      const rows = await loadPublicShowcaseResults(client);
-      return rows.filter((row) => row.competitionId === id).slice(0, 3);
-    });
-  } catch (error) {
-    logError("[competitions/[id]] failed to load showcase results", error);
-  }
-
   const catMeta = TECH_CATEGORY_META[competition.category];
   const statusMeta = COMPETITION_STATUS_META[competition.status];
   const countdown = getDeadlineCountdown(competition.deadline, todayIso);
@@ -366,38 +351,6 @@ export default async function CompetitionDetailPage({
       <Button asChild variant="outline" className="gap-1.5 rounded-md">
         <Link href="/my-teams">
           ดูรายการที่ลงชื่อและทีมของฉัน
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
-      </Button>
-    </div>
-  );
-
-  const showcasePanel = (
-    <div className="space-y-5">
-      <p className="text-sm leading-[1.65] text-muted-foreground">
-        ผลงานจากรายการนี้ที่อาจารย์ตรวจสอบและเจ้าของผลงานอนุญาตให้เผยแพร่แล้ว
-      </p>
-      {showcaseResults.length > 0 ? (
-        <ul className="divide-y divide-border border-y border-border">
-          {showcaseResults.map((result) => (
-            <li key={result.id} className="py-4">
-              <p className="text-sm font-medium leading-[1.35] text-foreground">
-                {result.awardTitle}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {result.teamName} · {result.rankTier ?? "ผลงานที่เผยแพร่"}
-              </p>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="border border-dashed border-border px-5 py-8 text-center text-xs text-muted-foreground">
-          ยังไม่มีผลงานของรายการนี้ที่เปิดเผยต่อสาธารณะ
-        </p>
-      )}
-      <Button asChild variant="outline" className="gap-1.5 rounded-md">
-        <Link href="/showcase">
-          ดูผลงานนักเรียนทั้งหมด
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </Button>
@@ -535,7 +488,6 @@ export default async function CompetitionDetailPage({
             details={detailsPanel}
             team={teamPanel}
             community={<CompetitionCommunity competitionId={competition.id} />}
-            showcase={showcasePanel}
           />
         </article>
 

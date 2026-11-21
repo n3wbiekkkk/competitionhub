@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { withUserDb } from "@/lib/db/pool";
-import { loadCompetitionOgMeta } from "@/lib/integrations/showcase";
+import { loadCompetitionOgMeta } from "@/lib/integrations/competition-og";
 import { renderOgImage } from "@/lib/integrations/showcase-og";
 
 export const runtime = "nodejs";

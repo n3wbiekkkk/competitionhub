@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
-  BookOpenCheck,
   ChartNoAxesCombined,
   ClipboardCheck,
   Code2,
@@ -322,13 +321,6 @@ export function AppShellClient({
           detail: "ค้นหาเพื่อนร่วมทีม",
           icon: Users,
           show: Boolean(user),
-        },
-        {
-          href: "/showcase",
-          label: "หอเกียรติยศ",
-          detail: "ผลงานและรางวัล",
-          icon: BookOpenCheck,
-          show: true,
         },
       ],
     },

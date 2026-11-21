@@ -114,7 +114,7 @@ Defined in `src/lib/constants/classroom.ts`:
 | `src/lib/db/student-teams.ts`, `src/lib/utils/teammate-match.ts` | Student-led recruitment, invites, open roles, and explainable teammate ranking |
 | `src/lib/ai/prep-studio.ts`, `src/components/prep-studio/*` | AI roadmap, rubric review, deliverables, and submission readiness |
 | `src/lib/realtime/*`, `src/components/collab/*` | SSE transport, team chat, mentions, and weekly check-ins |
-| `src/lib/integrations/*`, `src/app/showcase/*` | Calendar feeds, signed webhooks, showcase projection, and OG images |
+| `src/lib/integrations/*` | Calendar feeds, signed webhooks, and OG images |
 | `src/lib/db/badges.ts`, `src/lib/reports/*` | Verified badges, skill evidence, and Thai academic-year reports |
 | `src/components/command/*`, `src/components/pwa/*`, `public/sw.js` | Command palette, installable PWA, and private-safe offline read cache |
 | `src/lib/ops/*`, `scripts/bench-queries.mjs`, `scripts/verify-backup.sh` | Ops telemetry, query benchmarks, and backup restore verification |

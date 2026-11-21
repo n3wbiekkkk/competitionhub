@@ -33,7 +33,6 @@ const competitionId = await findCompetitionId();
 const publicPaths = [
   "/",
   "/login",
-  "/showcase",
   ...(competitionId ? [`/competitions/${competitionId}`] : []),
 ];
 const privatePaths = [
@@ -85,12 +84,6 @@ async function assertLayout(page, path, scheme, viewport) {
     await requireVisible(page, path, 'button[aria-label="แสดงเป็นรายการ"]', "list view toggle");
     await requireVisible(page, path, 'aside[class*="xl:sticky"][class*="top-24"]', "sticky filter rail");
     await requireVisible(page, path, '[class*="2xl:grid-cols-3"]', "3-column card grid");
-  }
-  if (path === "/showcase") {
-    await requireVisible(page, path, '[aria-label="ภาพรวมผลงานที่เผยแพร่"]', "impact KPI strip");
-    const hasGallery = await page.locator('[aria-labelledby="showcase-gallery-heading"]').first().isVisible();
-    const hasEmpty = await page.getByText("ยังไม่มีผลงานที่เผยแพร่").first().isVisible();
-    if (!hasGallery && !hasEmpty) fail(`${path} missing gallery or empty state`);
   }
   if (path.startsWith("/competitions/")) {
     await requireVisible(page, path, '[class*="lg:col-span-8"]', "editorial main column");

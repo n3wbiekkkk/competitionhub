@@ -7,7 +7,7 @@ Semantic Versioning.
 ## [1.0.0] - 2026-11-21
 
 Wave 2 expands the verified Phases 1–8 tracker into a collaborative,
-AI-assisted, public-showcase-ready platform for Thai schools.
+AI-assisted platform for Thai schools.
 
 ### Added
 
@@ -20,9 +20,8 @@ AI-assisted, public-showcase-ready platform for Thai schools.
 - Team collaboration: team chat, @mention notifications, weekly check-ins,
   mentor triage and authenticated SSE updates without a new message broker
   (`0012_collab_checkins`).
-- Calendar and public integrations: revocable tokenized `.ics` subscriptions,
-  smart Discord/LINE/generic webhook routing, and an opt-in public showcase
-  with verified results only (`0013_integrations_showcase`).
+- Calendar and public integrations: revocable tokenized `.ics` subscriptions
+  and smart Discord/LINE/generic webhook routing (`0013_integrations_showcase`).
 - Achievement badges, skill evidence counts and academic-year impact reports
   for school leadership (`0014_badges_reports`).
 - Installable PWA, safe offline competition reading, mobile bottom navigation

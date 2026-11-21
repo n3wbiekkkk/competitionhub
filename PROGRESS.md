@@ -120,3 +120,69 @@ Baseline for visual work: commit `1a536e3`, baseline gate `/tmp/competition-hub-
 - After: grouped 248px sidebar, h-16 topbar, 1680px canvas, sticky filter rail, 2–3 column competition grid, 12-column detail split, full-width workspaces, master-detail review, and bento KPIs.
 - Thai typography uses 1.65 body line-height and 1.35 heading line-height with a Thai fallback for mono.
 - Dev-only React warning about Radix `aria-hidden` hydration attributes is an accepted boundary. CI and all 13 E2E routes pass, and no user-visible failure was observed.
+
+## World-Class Design Overhaul (Phases D1–D6)
+
+Goal: elevate TechComp Hub from commit `2ea7f5d` to world-class visual craft across six phases. Zero backend, schema, migration, or RLS changes. Thai typography and the existing feature set stay intact. Each phase ends with a full verification gate and one clean commit.
+
+| Phase | Focus | Status | Evidence |
+| --- | --- | --- | --- |
+| D1 | Remove /showcase and establish surface/color/typography tokens | VERIFIED | All gates green; 12 E2E pass; 66 visual checks; commit on branch |
+| D2 | Linear-grade app shell: single-line sidebar and quiet topbar | NOT STARTED | — |
+| D3 | Flagship discovery page: full-width grid and horizontal filter bar | NOT STARTED | — |
+| D4 | Editorial detail and student workspaces | NOT STARTED | — |
+| D5 | Teacher studio and admin console | NOT STARTED | — |
+| D6 | Motion, dev-warning fixes, visual audit and full gate | NOT STARTED | — |
+
+### Baseline evidence (pre-change, commit `2ea7f5d`)
+
+- `npm run lint` — PASS, 0 errors, 0 warnings.
+- `npm run typecheck` — PASS, 0 errors.
+- `npm test` — PASS, 135/135 tests, 0 skipped.
+- `npm run check:schema` — PASS, `migrations=14 objects=96`.
+- `npm run test:integration` — PASS, `tables=36 migrations=14`.
+
+### Environment decision
+
+Local Postgres and Docker were down, so the DB-backed gates could not run from the workstation. An SSH forward `localhost:5432 -> newbie:127.0.0.1:5432` was opened. `check:schema` and `test:integration` then passed against the real migrated schema. No local database, schema, or migration was created or changed.
+
+### Ownership map for D1
+
+- Writer A owns app-shell nav, competition detail page and tabs, the shared OG-meta module split, showcase route deletion, and README/CHANGELOG/AGENTS prose.
+- Writer B owns `scripts/visual-audit.mjs`, the E2E spec split and rename, and `docs/ux-overhaul-decisions.tsv`.
+- Writer C owns `src/app/globals.css` token values only.
+- Root owns `PROGRESS.md`, verification, and the commit.
+
+Writers have disjoint file sets. Shared state is eliminated structurally rather than serialized.
+
+### Tooling gap
+
+`/deslop` from `cursor-team-kit` is not installed in this environment. A manual code-noise pass replaces it before each commit. `unslop` covers prose.
+
+### D1 verification evidence
+
+- `npm run lint` — PASS, 0 errors, 0 warnings.
+- `npm run typecheck` — PASS after clearing stale `.next` generated route types that still referenced the deleted page. Source was never at fault.
+- `npm test` — PASS, 135/135.
+- `npm run check:schema` — PASS, `migrations=14 objects=96`.
+- `npm run test:integration` — PASS, `tables=36 migrations=14`.
+- `npm run build` — PASS, compiled and 29 static pages generated, no warnings.
+- `npm run test:e2e` — PASS, 12/12 including the renamed `.ics` spec `tests/e2e/public-ics-feed.spec.ts`.
+- `npm run test:visual` — PASS, 66 checks. Geometry at 1920 light: sidebar 247px, topbar 65px, main left 248px. The 6 removed checks are the `/showcase` assertions across 3 viewports and 2 themes.
+
+### D1 removal scope
+
+- Deleted the `/showcase` route, its OG image, gallery component, and the public-results loader.
+- Kept `loadCompetitionOgMeta` by moving it to `src/lib/integrations/competition-og.ts`; the shared `showcase-og.tsx` renderer and the competition detail OG route are untouched.
+- Kept the `.ics` feed verbatim. The badge "showcase" feature and migration 0013 DDL are a different feature and were not touched.
+- No schema, migration, RLS, or database object changed.
+
+### E2E environment harness
+
+The live database was not used for E2E writes. A throwaway database `tech_competition_hub_e2e` was restored from the live one through `pg_dump`/`pg_restore`, the two E2E accounts and one `E2E Hackathon` seed row were added there, and the local dev server was pointed at it. `E2E_BYPASS_RATE_LIMIT=true` prevented the shared-IP login bucket from causing false failures. A superuser `MIGRATION_DATABASE_URL` was used only for the direct-SQL seeding inside the collaboration and auth-recovery specs. The live app and its data were never modified.
+
+### Dev warning evidence captured for D6
+
+- Hydration mismatch: `data-aria-hidden="true"` / `aria-hidden="true"` on the competition feed filter rail, plus Radix `SwitchBubbleInput` style serialization differences (`caret-color: transparent`, `pointer-events`, margins) on `/profile` and `/settings`.
+- Stream error: `Error: The destination stream errored while writing data.` at `GET /api/events/stream`, digest `4196242234`.
+- Browser console also reports React dev `eval()` unsupported under the current CSP. This is development-only and does not occur in production.
