@@ -190,9 +190,6 @@ test("LFG → เชิญเพื่อน → AI roadmap → แชท → me
     }
     expect(teamId).toBeTruthy();
     if (!teamId) return;
-    await pool.query("update public.teams set status = 'confirmed' where id = $1", [
-      teamId,
-    ]);
 
     const invited = await postJson(
       page,
@@ -239,6 +236,9 @@ test("LFG → เชิญเพื่อน → AI roadmap → แชท → me
         [invitationId.data.invitation.id],
       );
       expect(finalInvitation.rows[0]?.status).toBe("accepted");
+      await pool.query("update public.teams set status = 'confirmed' where id = $1", [
+        teamId,
+      ]);
     } finally {
       await peerContext.close();
     }
