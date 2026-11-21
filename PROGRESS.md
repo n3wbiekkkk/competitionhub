@@ -97,9 +97,24 @@ Baseline for visual work: commit `1a536e3`, baseline gate `/tmp/competition-hub-
 
 | Phase | Focus | Status | Evidence |
 | --- | --- | --- | --- |
-| U1 | Design tokens and full-viewport app shell | IMPLEMENTED | Surface tokens, Thai line-height, collapsible sidebar, h-16 topbar, full-width content shell. Pending phase gate. |
-| U2 | Competition feed and discovery | PLANNED | Sticky filter rail, card grid, grid/list toggle, compact discovery bar. |
-| U3 | Competition detail and public showcase | PLANNED | 12-column detail split, sticky action rail, editorial showcase. |
-| U4 | Student workspace | PLANNED | Team split pane, directory grid, profile and settings subnav. |
-| U5 | Teacher studio and admin console | PLANNED | Edge-to-edge board, master-detail review, KPI bento, sticky tables. |
-| U6 | Visual polish and multi-viewport audit | PLANNED | Skeletons, empty states, 1920/1440/390 light and dark audit, full E2E gate. |
+| U1 | Design tokens and full-viewport app shell | VERIFIED | Surface tokens, Thai line-height, collapsible sidebar, h-16 topbar, full-width content shell. Final check and visual audit green. |
+| U2 | Competition feed and discovery | VERIFIED | Sticky filter rail, card grid, grid/list toggle, compact discovery bar, mobile filter sheet. Final check and E2E green. |
+| U3 | Competition detail and public showcase | VERIFIED | 12-column detail split, sticky action rail, editorial showcase with KPI strip and gallery. Final check and E2E green. |
+| U4 | Student workspace | VERIFIED | Team split pane, directory grid, profile and settings subnav. Final check and E2E green. |
+| U5 | Teacher studio and admin console | VERIFIED | Edge-to-edge board, master-detail review, KPI bento, sticky table rows, scrollable tabs. Final check and E2E green. |
+| U6 | Visual polish and multi-viewport audit | VERIFIED | Skeletons, empty states, 24 visual checks across 1920/1440/390 in light and dark, 13 E2E pass, full local gate green. |
+
+### UX/UI verification notes
+
+- Full local gate: `/tmp/competition-hub-ux/final-check.log`, all checks passed.
+- Playwright: 13 passed in `/tmp/competition-hub-ux/e2e6.log`.
+- Visual audit: 24 checks pass in `/tmp/competition-hub-ux/visual-final.log`. Screenshots in `/tmp/competition-hub-ux/final/visual`.
+- 1920px light shell metric: sidebar 247px, topbar 65px, main starts at 248px, no horizontal overflow.
+- 390px metric: sidebar hidden, bottom navigation visible, no horizontal overflow.
+- Decision trail: `docs/ux-overhaul-decisions.tsv`.
+
+### Before and after
+
+- Before: max-w-7xl topbar-only shell, dense single-column feed, narrow stacked page wrappers.
+- After: grouped 248px sidebar, h-16 topbar, 1680px canvas, sticky filter rail, 2–3 column competition grid, 12-column detail split, full-width workspaces, master-detail review, and bento KPIs.
+- Thai typography uses 1.65 body line-height and 1.35 heading line-height with a Thai fallback for mono.

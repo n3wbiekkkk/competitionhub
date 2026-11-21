@@ -1,0 +1,15 @@
+ts	phase	decision	why	evidence	result
+2026-11-21T07:14:26Z	start	started the UX overhaul run at commit 1a536e3	long unattended UI work needs an auditable trail	commit 1a536e3, /tmp/competition-hub-ux/PLAN.md	baseline check green
+2026-11-21T07:14:26Z	frame	set a zero-regression done predicate before edits	the brief requires 100 percent existing behavior and passing tests	/tmp/competition-hub-ux/PLAN.md	framed
+2026-11-21T07:14:26Z	baseline	captured baseline check output before visual work	a visual change needs a known-good starting point	/tmp/competition-hub-ux/baseline-check.log	all checks passed
+2026-11-21T07:20:16Z	prototype	ranked three shell prototypes and chose Notion geometry with Luma spacing	the 248px grouped rail matched the brief and the editorial spacing served Thai reading	/tmp/competition-hub-ux/proto-linear.html, proto-luma.html, proto-notion.html	ranked
+2026-11-21T07:20:16Z	U1	replaced navbar with a grouped sidebar and h-16 topbar	wide desktops wasted space and the old topbar mixed too many actions	commit e8095e1, /tmp/competition-hub-ux/u1-check.log	checks green
+2026-11-21T07:20:16Z	a11y	fixed destructive foreground token, button focus outline, Thai dialog leading, and mono fallback	read-only audit found weak focus and tone-mark clipping risks	commit e8095e1, src/app/globals.css, src/components/ui/button.tsx, src/components/ui/dialog.tsx	fixed
+2026-11-21T07:20:16Z	U1	used useSyncExternalStore for sidebar collapse state	direct setState in an effect failed the React hook lint	src/components/layout/app-shell-client.tsx, /tmp/competition-hub-ux/u1-lint2.log	lint and typecheck green
+2026-11-21T07:55:17Z	U2	merged the isolated feed slice after lint typecheck and unit tests passed	file ownership stayed disjoint across the swarm	commit 01f3cab, worker 38cfef3	merged
+2026-11-21T07:55:17Z	U3	merged the editorial detail and showcase slice	the 12-column split kept all interest and calendar selectors	commit 071a83e, worker cf6a652	merged
+2026-11-21T07:55:17Z	U4	merged the student workspace slice	split panes and directory grid kept anchors and accessible names	commit e90e6dc, worker bfe00d2	merged
+2026-11-21T07:55:17Z	U5	merged the teacher and admin slice	edge-to-edge board and master-detail review kept all E2E labels	commit 4ea81ac, worker e7022c5	merged
+2026-11-21T07:55:17Z	U6	added a rerunnable multi-viewport visual audit	screenshots alone are not a repeatable gate	scripts/visual-audit.mjs, /tmp/competition-hub-ux/visual-final.log	24 checks pass
+2026-11-21T07:55:17Z	U6	scoped the showcase E2E assertion to the first title match	Next dev streaming briefly exposes a hidden duplicate node during hydration	tests/e2e/public-showcase-and-ics.spec.ts, /tmp/competition-hub-ux/e2e6.log	13 E2E pass
+2026-11-21T07:55:17Z	U6	added shared empty state and layout matched feed skeleton	plain empty copy and list skeletons caused jarring layout shifts	src/components/ui/empty-state.tsx, src/app/loading.tsx	checks green

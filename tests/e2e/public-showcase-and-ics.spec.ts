@@ -152,7 +152,7 @@ test("showcase เฉพาะผลงานที่ opt-in และไม่
     const page = await context.newPage();
     const response = await page.goto("/showcase");
     expect(response?.status()).toBe(200);
-    await expect(page.getByText(fixture.publicTitle)).toBeVisible();
+    await expect(page.getByText(fixture.publicTitle).first()).toBeVisible();
     await expect(page.getByText(fixture.privateTitle)).toHaveCount(0);
     await expect(page.getByText(fixture.privateName)).toHaveCount(0);
     await expect(page.getByText(fixture.privateEmail)).toHaveCount(0);

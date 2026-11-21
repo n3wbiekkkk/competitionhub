@@ -18,7 +18,6 @@ import {
   Search,
   Settings,
   ShieldCheck,
-  Sparkles,
   Trophy,
   UserCircle2,
   Users,
@@ -483,7 +482,7 @@ export function AppShellClient({
               collapsed ? "justify-center" : ""
             }`}
           >
-            <Sparkles className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+            <span className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden="true" />
             {!collapsed ? (
               <p className="text-[11px] leading-snug text-muted-foreground">
                 ข้อมูลการแข่งขันในประเทศไทย อัปเดตโดยทีมและอาจารย์
