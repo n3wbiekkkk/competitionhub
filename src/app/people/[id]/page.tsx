@@ -51,9 +51,11 @@ export default async function PersonPage({
   });
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-      <BadgeShowcase badges={badges} compact />
-      <ProfileView profile={profile} />
+    <main className="mx-auto w-full max-w-[1680px] px-4 py-8 sm:px-6 lg:px-8 xl:px-10">
+      <div className="mx-auto max-w-3xl">
+        <BadgeShowcase badges={badges} compact />
+        <ProfileView profile={profile} />
+      </div>
     </main>
   );
 }

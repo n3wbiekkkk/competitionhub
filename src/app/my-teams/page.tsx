@@ -1,59 +1,19 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  Check,
-  Clock,
-  ExternalLink,
-  GitBranch,
-  Mail,
-  MessageSquare,
-} from "lucide-react";
+import { ExternalLink, GitBranch, Mail, MessageSquare } from "lucide-react";
+import { MyTeamCard } from "@/components/account/my-team-card";
+import type {
+  ConfirmedMemberRow,
+  ConfirmedTeamRow,
+  MyInterestRow,
+} from "@/components/account/my-team-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getAuthenticatedProfile } from "@/lib/auth/cookies";
-import {
-  COMPETITION_STATUS_META,
-  STUDENT_TEAM_PROGRESS_LABELS_TH,
-  TECH_CATEGORY_META,
-  type CompetitionStatus,
-  type TechCategory,
-} from "@/lib/constants/tech-taxonomy";
+import { COMPETITION_STATUS_META } from "@/lib/constants/tech-taxonomy";
 import { withUserDb } from "@/lib/db/pool";
 import { formatThaiDate } from "@/lib/utils/thai-date";
 import type { Competition } from "@/types/database";
-
-interface MyInterestRow {
-  competition_id: string;
-  preferred_role: string;
-  note: string | null;
-  title: string;
-  category: TechCategory;
-  deadline: string | null;
-  comp_status: CompetitionStatus;
-}
-
-interface ConfirmedTeamRow {
-  team_id: string;
-  team_name: string;
-  competition_id: string;
-  advisor_name: string | null;
-  advisor_email: string | null;
-  advisor_contact: string | null;
-}
-
-interface ConfirmedMemberRow {
-  team_id: string;
-  user_id: string;
-  assigned_role: string;
-  full_name: string;
-  nickname: string | null;
-  grade: string | null;
-  skills: string[];
-  contact: string | null;
-  github_url: string | null;
-  portfolio_url: string | null;
-  email: string;
-}
 
 function TeamMembers({
   team,
@@ -213,14 +173,13 @@ export default async function MyTeamsPage() {
   const waitingCount = interests.length - assignedCount;
 
   return (
-    <main className="mx-auto max-w-5xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-      {/* Canvas Header */}
+    <main className="w-full space-y-8 px-4 py-8 sm:px-6 lg:px-8 xl:px-10">
       <section className="flex flex-col gap-5 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-1.5">
+        <div className="max-w-2xl space-y-1.5">
           <p className="text-xs font-medium tracking-wide text-muted-foreground">
             ติดตามสถานะการเข้าร่วม
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
             รายการที่ลงชื่อและทีมของฉัน
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -275,187 +234,30 @@ export default async function MyTeamsPage() {
       ) : (
         <div className="space-y-8">
           {interests.length > 0 ? (
-        <section className="divide-y divide-border" aria-label="รายการที่ลงชื่อสนใจ">
-          <div className="flex items-baseline justify-between pb-3">
-            <h2 className="text-xs font-medium tracking-wide text-muted-foreground">
-              รายการที่คุณลงชื่อสนใจ
-            </h2>
-            <span className="font-mono text-xs tabular-nums text-muted-foreground">
-              {interests.length} รายการ
-            </span>
-          </div>
-          {interests.map((item) => {
-            const confirmedTeam = teamByCompetition.get(item.competition_id);
-            const teammates = confirmedTeam
-              ? (membersByTeam.get(confirmedTeam.team_id) ?? [])
-              : [];
-            const catMeta = TECH_CATEGORY_META[item.category];
-
-            return (
-              <article key={item.competition_id} className="space-y-4 py-6">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="space-y-1.5">
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground/80">
-                        {catMeta.shortLabel}
-                      </span>
-                      <span aria-hidden="true">·</span>
-                      <span>บทบาท: {item.preferred_role}</span>
-                      <span aria-hidden="true">·</span>
-                      {confirmedTeam ? (
-                        <span className="inline-flex items-center gap-1 font-medium text-primary">
-                          <Check className="h-3 w-3" />
-                          {STUDENT_TEAM_PROGRESS_LABELS_TH.assigned}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {STUDENT_TEAM_PROGRESS_LABELS_TH.waiting}
-                        </span>
-                      )}
-                    </div>
-
-                    <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
-                      <Link
-                        href={`/competitions/${item.competition_id}`}
-                        className="transition-colors hover:text-primary"
-                      >
-                        {item.title}
-                      </Link>
-                    </h2>
-                    <Link
-                      href={`/my-teams/${item.competition_id}`}
-                      className="inline-flex text-xs font-medium text-primary hover:underline"
-                    >
-                      จัดทีมและหาเพื่อนร่วมทีม
-                    </Link>
-                  </div>
-
-                  <p className="shrink-0 text-xs tabular-nums text-muted-foreground sm:pt-1">
-                    ปิดรับ {formatThaiDate(item.deadline, "long")}
-                  </p>
-                </div>
-
-                {confirmedTeam ? (
-                  <div className="space-y-4 border-l-2 border-primary bg-muted/30 px-4 py-4">
-                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">
-                          ทีม: {confirmedTeam.team_name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          อาจารย์ที่ปรึกษา:{" "}
-                          {confirmedTeam.advisor_name ?? "ยังไม่ระบุ"}
-                          {confirmedTeam.advisor_contact
-                            ? ` (${confirmedTeam.advisor_contact})`
-                            : confirmedTeam.advisor_email
-                              ? ` (${confirmedTeam.advisor_email})`
-                              : ""}
-                        </p>
-                      </div>
-                      <span className="text-xs font-medium tabular-nums text-muted-foreground">
-                        สมาชิก {teammates.length} คน
-                      </span>
-                    </div>
-
-                    <div className="grid gap-x-6 border-t border-border sm:grid-cols-2">
-                      {teammates.map((member) => (
-                        <div
-                          key={member.user_id}
-                          className="space-y-1.5 border-b border-border py-3"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <p className="text-sm font-medium text-foreground">
-                                {member.user_id === user.id ? (
-                                  member.full_name
-                                ) : (
-                                  <Link
-                                    href={`/people/${member.user_id}`}
-                                    className="hover:text-primary hover:underline underline-offset-4"
-                                  >
-                                    {member.full_name}
-                                  </Link>
-                                )}
-                                {member.nickname
-                                  ? ` (${member.nickname})`
-                                  : ""}
-                                {member.user_id === user.id ? (
-                                  <span className="ml-1.5 text-xs font-normal text-primary">
-                                    (คุณ)
-                                  </span>
-                                ) : null}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {member.grade || "ไม่ระบุชั้นปี"}
-                              </p>
-                            </div>
-                            <span className="shrink-0 rounded border border-border bg-background px-2 py-0.5 text-[11px] font-medium text-foreground/80">
-                              {member.assigned_role}
-                            </span>
-                          </div>
-
-                          {member.skills.length > 0 ? (
-                            <div className="flex flex-wrap gap-1">
-                              {member.skills.slice(0, 6).map((skill) => (
-                                <span
-                                  key={skill}
-                                  className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
-                                >
-                                  {skill}
-                                </span>
-                              ))}
-                            </div>
-                          ) : null}
-
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                            {member.contact ? (
-                              <span className="inline-flex items-center gap-1">
-                                <MessageSquare className="h-3 w-3" />
-                                {member.contact}
-                              </span>
-                            ) : null}
-                            <span className="inline-flex items-center gap-1">
-                              <Mail className="h-3 w-3" />
-                              {member.email}
-                            </span>
-                            {member.github_url ? (
-                              <a
-                                href={member.github_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-primary hover:underline"
-                              >
-                                <GitBranch className="h-3 w-3" />
-                                GitHub
-                              </a>
-                            ) : null}
-                            {member.portfolio_url ? (
-                              <a
-                                href={member.portfolio_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-primary hover:underline"
-                              >
-                                <ExternalLink className="h-3 w-3" />
-                                Portfolio
-                              </a>
-                            ) : null}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    อาจารย์กำลังรวบรวมรายชื่อผู้สนใจเพื่อจัดทีมที่ลงตัว
-                    เมื่อยืนยันทีมแล้วรายชื่อเพื่อนร่วมทีมจะแสดงที่นี่ทันที
-                  </p>
-                )}
-              </article>
-            );
-          })}
-        </section>
+            <section className="space-y-4" aria-label="รายการที่ลงชื่อสนใจ">
+              <div className="flex items-baseline justify-between border-b border-border pb-3">
+                <h2 className="text-xs font-medium tracking-wide text-muted-foreground">
+                  รายการที่คุณลงชื่อสนใจ
+                </h2>
+                <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                  {interests.length} รายการ
+                </span>
+              </div>
+              <div className="grid gap-4">
+                {interests.map((item) => {
+                  const confirmedTeam = teamByCompetition.get(item.competition_id);
+                  return (
+                    <MyTeamCard
+                      key={item.competition_id}
+                      interest={item}
+                      confirmedTeam={confirmedTeam}
+                      members={confirmedTeam ? (membersByTeam.get(confirmedTeam.team_id) ?? []) : []}
+                      viewerId={user.id}
+                    />
+                  );
+                })}
+              </div>
+            </section>
           ) : null}
         </div>
       )}

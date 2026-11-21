@@ -7,9 +7,11 @@ import { WeeklyCheckinForm } from "@/components/collab/weekly-checkin-form";
 import { PrepStudio } from "@/components/prep-studio/prep-studio";
 import { StudentTeamsControls } from "@/components/teacher/student-teams-controls";
 import { RecruitmentLfgPanel } from "@/components/teams/recruitment-lfg-panel";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { getAuthenticatedProfile } from "@/lib/auth/cookies";
 import { withUserDb } from "@/lib/db/pool";
+import { getInitials } from "@/lib/utils/initials";
 import { logError } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
@@ -107,7 +109,7 @@ export default async function CompetitionTeamWorkspace({
   }
 
   return (
-    <main className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+    <main className="w-full space-y-6 px-4 py-8 sm:px-6 lg:px-8 xl:px-10">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-5">
         <div className="space-y-1.5">
           <Button
@@ -135,34 +137,88 @@ export default async function CompetitionTeamWorkspace({
         </Button>
       </div>
 
-      {user.role === "teacher" ? (
-        <>
-          <StudentTeamsControls competitionId={competition.id} />
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+        <div className="min-w-0 space-y-6 xl:col-span-8">
+          {user.role === "teacher" ? (
+            <StudentTeamsControls competitionId={competition.id} />
+          ) : null}
           <RecruitmentLfgPanel competitionId={competition.id} />
-        </>
-      ) : (
-        <RecruitmentLfgPanel competitionId={competition.id} />
-      )}
 
-      {workspaceTeam ? (
-        <>
-          <PrepStudio teamId={workspaceTeam.id} teamName={workspaceTeam.name} />
-          <TeamChat
-            teamId={workspaceTeam.id}
-            currentUserId={user.id}
-            members={members.map((member) => ({
-              id: member.id,
-              fullName: member.full_name,
-              nickname: member.nickname,
-            }))}
-          />
-          <WeeklyCheckinForm teamId={workspaceTeam.id} currentUserId={user.id} />
-        </>
-      ) : (
-        <p className="border-t border-border pt-6 text-sm text-muted-foreground">
-          เมื่อมีทีมของคุณในรายการนี้ ระบบจะแสดงพื้นที่เตรียมแข่ง แชททีม และรายงานความคืบหน้าที่นี่
-        </p>
-      )}
+          {workspaceTeam ? (
+            <>
+              <PrepStudio teamId={workspaceTeam.id} teamName={workspaceTeam.name} />
+              <WeeklyCheckinForm teamId={workspaceTeam.id} currentUserId={user.id} />
+            </>
+          ) : (
+            <p className="border-t border-border pt-6 text-sm text-muted-foreground">
+              เมื่อมีทีมของคุณในรายการนี้ ระบบจะแสดงพื้นที่เตรียมแข่ง แชททีม และรายงานความคืบหน้าที่นี่
+            </p>
+          )}
+        </div>
+
+        <aside className="min-w-0 xl:col-span-4">
+          <div className="space-y-6 rounded-xl border border-border bg-background p-5 xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
+            {workspaceTeam ? (
+              <>
+                <section className="space-y-3" aria-label="รายชื่อสมาชิกทีม">
+                  <div className="flex items-baseline justify-between gap-3 border-b border-border pb-3">
+                    <h2 className="text-sm font-semibold text-foreground">สมาชิกทีม</h2>
+                    <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                      {members.length} คน
+                    </span>
+                  </div>
+                  <ul className="space-y-2">
+                    {members.map((member) => {
+                      const isSelf = member.id === user.id;
+                      const displayName = `${member.full_name}${member.nickname ? ` (${member.nickname})` : ""}${isSelf ? " (คุณ)" : ""}`;
+                      return (
+                        <li key={member.id} className="flex items-center gap-2.5">
+                          <Avatar className="size-8">
+                            <AvatarFallback className="bg-sage font-mono text-[11px] font-semibold tabular-nums text-sage-foreground">
+                              {getInitials(member.full_name, member.nickname ?? "")}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            {isSelf ? (
+                              <p className="truncate text-xs font-medium text-foreground">{displayName}</p>
+                            ) : (
+                              <Link
+                                href={`/people/${member.id}`}
+                                className="block truncate text-xs font-medium text-foreground hover:text-primary hover:underline"
+                              >
+                                {displayName}
+                              </Link>
+                            )}
+                            <p className="text-[11px] text-muted-foreground">สมาชิกในทีม</p>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+
+                <TeamChat
+                  teamId={workspaceTeam.id}
+                  currentUserId={user.id}
+                  members={members.map((member) => ({
+                    id: member.id,
+                    fullName: member.full_name,
+                    nickname: member.nickname,
+                  }))}
+                />
+              </>
+            ) : (
+              <section className="space-y-2" aria-label="พื้นที่ทีม">
+                <h2 className="text-sm font-semibold text-foreground">พื้นที่ทีม</h2>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  เมื่อมีทีมของคุณในรายการนี้ รายชื่อสมาชิกและแชททีมจะแสดงในแผงนี้
+                  เพื่อให้ติดตามงานได้โดยไม่ต้องเลื่อนผ่านเนื้อหาหลัก
+                </p>
+              </section>
+            )}
+          </div>
+        </aside>
+      </div>
     </main>
   );
 }

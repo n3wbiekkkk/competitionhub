@@ -16,8 +16,8 @@ export function AccountSection({
   children,
 }: AccountSectionProps) {
   return (
-    <section id={id} className="scroll-mt-20 border-t border-border pt-8">
-      <div className="grid gap-6 lg:grid-cols-12">
+    <section id={id} className="scroll-mt-24 border-t border-border pt-10">
+      <div className="grid gap-8 lg:grid-cols-12">
         <div className="space-y-1.5 lg:col-span-4">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-sm font-semibold text-foreground">{title}</h2>

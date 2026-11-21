@@ -29,7 +29,7 @@ export default async function PeoplePage({
       });
 
   return (
-    <main className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+    <main className="w-full space-y-8 px-4 py-8 sm:px-6 lg:px-8 xl:px-10">
       <section className="space-y-2 border-b border-border pb-6">
         <p className="text-xs font-medium uppercase tracking-widest text-primary">
           ค้นหาคนทำทีม

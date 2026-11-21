@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Settings2 } from "lucide-react";
 import { AccountPageHeader } from "@/components/account/account-page-header";
+import { AccountSubNav } from "@/components/account/account-sub-nav";
 import { ProfileBadges } from "@/components/badges/profile-badges";
 import { VerifiedSkillEvidencePanel } from "@/components/badges/verified-skill-evidence";
 import { ProfileForm } from "@/components/profile/profile-form";
@@ -20,7 +21,7 @@ export default async function ProfilePage() {
   ]);
 
   return (
-    <main className="mx-auto max-w-5xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+    <main className="mx-auto w-full max-w-[1680px] space-y-8 px-4 py-8 sm:px-6 lg:px-8 xl:px-10">
       <AccountPageHeader
         eyebrow="โปรไฟล์สำหรับจัดทีม"
         title="โปรไฟล์ของฉัน"
@@ -32,9 +33,24 @@ export default async function ProfilePage() {
           </ButtonLink>
         }
       />
-      <ProfileBadges badges={badges} />
-      <VerifiedSkillEvidencePanel skills={skillEvidence} />
-      <ProfileForm initialProfile={auth.user} />
+
+      <div className="grid gap-10 lg:grid-cols-[15rem_minmax(0,1fr)] xl:gap-14">
+        <AccountSubNav
+          label="เมนูโปรไฟล์"
+          items={[
+            { href: "#identity", label: "ตัวตนของฉัน" },
+            { href: "#readiness", label: "ความพร้อมสำหรับจับคู่ทีม" },
+            { href: "#skills", label: "ทักษะและเครื่องมือ" },
+            { href: "#links", label: "ผลงานและลิงก์" },
+            { href: "#contact", label: "การติดต่อและการเปิดเผย" },
+          ]}
+        />
+        <div className="min-w-0 space-y-10">
+          <ProfileBadges badges={badges} />
+          <VerifiedSkillEvidencePanel skills={skillEvidence} />
+          <ProfileForm initialProfile={auth.user} />
+        </div>
+      </div>
     </main>
   );
 }
