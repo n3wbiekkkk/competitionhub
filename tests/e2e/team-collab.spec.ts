@@ -287,10 +287,11 @@ test("LFG → เชิญเพื่อน → AI roadmap → แชท → me
       page,
       `/api/teams/${teamId}/checkins`,
       {
-        status: "at_risk",
-        progress_summary: "ยังหาข้อมูลไม่ครบ",
+        weekStart: new Date().toISOString().slice(0, 10),
+        progress: "ยังหาข้อมูลไม่ครบ",
         blockers: "ต้องการที่ปรึกษา",
-        next_steps: "นัดครูวันพุธ",
+        nextSteps: "นัดครูวันพุธ",
+        riskLevel: "at_risk",
       },
     );
     expect([200, 201]).toContain(checkIn.status);
