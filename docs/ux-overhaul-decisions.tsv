@@ -23,3 +23,4 @@ ts	phase	decision	why	evidence	result
 2026-11-21T08:14:16Z	review	added integration schema and RLS to the local check gate	the pre-deploy gate should not omit an explicit phase requirement	scripts/check.sh	gate added
 2026-11-21T08:14:17Z	review	computed scout log ids before the state updater	React strict mode double-invoked the updater and reused the incremented id	src/components/teacher/scout-runner-dialog.tsx	duplicate key warning removed
 2026-11-21T08:14:17Z	review	logged the destination stream dev warning as pre-existing	the warning appears at the base and does not fail any gate	/tmp/competition-hub-ux/e2e8.log, /tmp/competition-hub-ux/e2e6.log	accepted boundary
+2026-11-21T08:17:50Z	close	recorded the final green CI run at head	the trail should point to the last remote verification	CI 44883959997, commit 307d686	13 E2E pass
