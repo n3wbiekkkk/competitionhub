@@ -69,6 +69,20 @@ test("CSRF accepts same-origin and non-browser writes", () => {
   );
 });
 
+test("CSRF ignores a spoofed forwarded host", () => {
+  assert.equal(
+    isAllowedMutationOrigin(new Request("http://localhost:3000/api/profile", {
+      method: "POST",
+      headers: {
+        host: "localhost:3000",
+        "x-forwarded-host": "evil.example",
+        origin: "http://evil.example",
+      },
+    })),
+    false,
+  );
+});
+
 test("CSRF rejects cross-origin and null-origin writes", () => {
   assert.equal(
     isAllowedMutationOrigin(new Request("http://localhost:3000/api/profile", {

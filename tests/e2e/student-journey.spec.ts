@@ -41,7 +41,9 @@ test("นักเรียนลงชื่อสนใจการแข่�
     page.getByRole("dialog", { name: "ลงชื่อสนใจเข้าร่วมการแข่งขัน" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "ยืนยันลงชื่อสนใจแข่ง" }).click();
-  await expect(page.getByText("ลงชื่อสนใจแข่งขันเรียบร้อย!")).toBeVisible();
+  await expect(
+    page.getByRole("dialog", { name: "ลงชื่อสนใจเข้าร่วมการแข่งขัน" }),
+  ).toBeHidden();
 
   await page.goto("/my-teams");
   await expect(
