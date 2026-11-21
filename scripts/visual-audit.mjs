@@ -130,9 +130,9 @@ async function assertLayout(page, path, scheme, viewport) {
       };
     });
     geometry.push({ scheme, viewport: viewport.name, ...metrics });
-    if (metrics.sidebar < 240 || metrics.sidebar > 260) fail(`sidebar width ${metrics.sidebar}`);
-    if (metrics.topbar < 62 || metrics.topbar > 68) fail(`topbar height ${metrics.topbar}`);
-    if (metrics.mainLeft < 240) fail(`main left ${metrics.mainLeft}`);
+    if (metrics.sidebar < 220 || metrics.sidebar > 236) fail(`sidebar width ${metrics.sidebar}`);
+    if (metrics.topbar < 56 || metrics.topbar > 64) fail(`topbar height ${metrics.topbar}`);
+    if (metrics.mainLeft < 220) fail(`main left ${metrics.mainLeft}`);
   }
 }
 

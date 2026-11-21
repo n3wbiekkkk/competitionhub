@@ -78,6 +78,7 @@ interface AppShellClientProps {
 }
 
 const SIDEBAR_STORAGE_KEY = "techcomp-sidebar-collapsed";
+const ADD_ITEM_LABEL = "เพิ่มรายการ";
 
 function NotificationList({
   notifications,
@@ -149,24 +150,28 @@ function SidebarLink({
       aria-label={item.label}
       title={collapsed ? item.label : undefined}
       onClick={onNavigate}
-      className={`group flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors ${
+      className={`group relative flex h-9 items-center gap-2.5 rounded-lg px-3 text-[13.5px] font-medium transition-colors ${
         collapsed ? "lg:justify-center lg:px-0" : ""
       } ${
         active
-          ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+          ? "bg-sidebar-accent text-sidebar-accent-foreground"
           : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
       }`}
     >
-      <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+      {active ? (
+        <span
+          className="absolute inset-y-1 left-0 w-0.5 rounded-full bg-primary"
+          aria-hidden="true"
+        />
+      ) : null}
+      <Icon
+        className={`h-4 w-4 shrink-0 ${
+          active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+        }`}
+        aria-hidden="true"
+      />
       {!collapsed ? (
-        <span className="min-w-0 flex-1">
-          <span className="block truncate">{item.label}</span>
-          {item.detail ? (
-            <span className="block truncate text-[11px] text-muted-foreground">
-              {item.detail}
-            </span>
-          ) : null}
-        </span>
+        <span className="min-w-0 flex-1 truncate">{item.label}</span>
       ) : null}
       {item.badge && item.badge > 0 ? (
         <span className="rounded-full bg-primary/12 px-1.5 font-mono text-[10px] font-semibold tabular-nums text-primary">
@@ -228,7 +233,7 @@ export function AppShellClient({
     })();
   }, [user]);
 
-  function toggleSidebar() {
+  const toggleSidebar = useCallback(() => {
     const next = !collapsed;
     try {
       localStorage.setItem(SIDEBAR_STORAGE_KEY, next ? "1" : "0");
@@ -237,7 +242,24 @@ export function AppShellClient({
     }
     setCollapseOverride(next);
     window.dispatchEvent(new Event("storage"));
-  }
+  }, [collapsed]);
+
+  useEffect(() => {
+    function handleSidebarShortcut(event: KeyboardEvent) {
+      if (event.key !== "[") return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target;
+      if (target instanceof HTMLElement) {
+        if (target.isContentEditable) return;
+        const tag = target.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      }
+      event.preventDefault();
+      toggleSidebar();
+    }
+    window.addEventListener("keydown", handleSidebarShortcut);
+    return () => window.removeEventListener("keydown", handleSidebarShortcut);
+  }, [toggleSidebar]);
 
   async function markAllRead() {
     try {
@@ -351,7 +373,7 @@ export function AppShellClient({
       ],
     },
     {
-      label: "สตูดิโออาจารย์",
+      label: "อาจารย์",
       items: [
         {
           href: "/teacher/review",
@@ -409,7 +431,7 @@ export function AppShellClient({
     "TechComp Hub";
 
   const shellStyle = {
-    "--sidebar-width": collapsed ? "4.5rem" : "15.5rem",
+    "--sidebar-width": collapsed ? "4rem" : "14.25rem",
   } as CSSProperties;
 
   return (
@@ -424,12 +446,12 @@ export function AppShellClient({
 
       <aside
         aria-label="เมนูหลัก"
-        className={`fixed inset-y-0 left-0 z-40 hidden w-[var(--sidebar-width,15.5rem)] flex-col border-r border-border/60 bg-sidebar transition-[width] duration-200 lg:flex ${
+        className={`fixed inset-y-0 left-0 z-40 hidden w-[var(--sidebar-width,14.25rem)] flex-col border-r border-border/60 bg-sidebar transition-[width] duration-200 lg:flex ${
           collapsed ? "items-center" : ""
         }`}
       >
         <div
-          className={`flex h-16 shrink-0 items-center border-b border-border/60 ${
+          className={`flex h-[60px] shrink-0 items-center border-b border-border/60 ${
             collapsed ? "justify-center px-2" : "gap-2.5 px-4"
           }`}
         >
@@ -444,12 +466,12 @@ export function AppShellClient({
         </div>
         <nav
           aria-label="เมนูหลัก"
-          className={`flex-1 space-y-6 overflow-y-auto py-5 ${collapsed ? "px-2" : "px-3"}`}
+          className={`flex-1 space-y-5 overflow-y-auto py-4 ${collapsed ? "px-2" : "px-3"}`}
         >
           {navGroups.map((group) => (
             <div key={group.label}>
               {!collapsed ? (
-                <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/80">
+                <p className="mb-2 px-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
                   {group.label}
                 </p>
               ) : (
@@ -468,45 +490,39 @@ export function AppShellClient({
             </div>
           ))}
         </nav>
-        <div className="border-t border-border/60 p-3">
-          <div
-            className={`flex items-center gap-2 rounded-xl bg-sidebar-accent/60 p-2 ${
-              collapsed ? "justify-center" : ""
-            }`}
+        <div
+          className={`flex shrink-0 items-center gap-2 border-t border-border/60 p-2 ${
+            collapsed ? "flex-col justify-center" : "justify-between"
+          }`}
+        >
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            aria-label={collapsed ? "ขยายแผงนำทาง" : "ยุบแผงนำทาง"}
+            className="h-9 w-9 shrink-0 rounded-lg"
           >
-            <span className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden="true" />
-            {!collapsed ? (
-              <p className="text-[11px] leading-snug text-muted-foreground">
-                ข้อมูลการแข่งขันในประเทศไทย อัปเดตโดยทีมและอาจารย์
-              </p>
-            ) : null}
-          </div>
+            {collapsed ? (
+              <PanelLeftOpen className="h-4 w-4" />
+            ) : (
+              <PanelLeftClose className="h-4 w-4" />
+            )}
+          </Button>
+          <kbd className="rounded border border-border/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+            [
+          </kbd>
         </div>
       </aside>
 
-      <div className="flex min-h-screen flex-col lg:pl-[var(--sidebar-width,15.5rem)]">
-        <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur-md">
-          <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8 xl:px-10">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={toggleSidebar}
-              aria-label={collapsed ? "ขยายแผงนำทาง" : "ยุบแผงนำทาง"}
-              className="hidden h-10 w-10 shrink-0 rounded-xl lg:inline-flex"
-            >
-              {collapsed ? (
-                <PanelLeftOpen className="h-5 w-5" />
-              ) : (
-                <PanelLeftClose className="h-5 w-5" />
-              )}
-            </Button>
-
+      <div className="flex min-h-screen flex-col lg:pl-[var(--sidebar-width,14.25rem)]">
+        <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
+          <div className="flex h-[60px] items-center gap-2 px-4 sm:px-6 lg:px-8 xl:px-10">
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                 {user?.role === "teacher" ? "TechComp Studio" : "TechComp Hub"}
               </p>
-              <p className="truncate text-sm font-semibold text-foreground">
+              <p className="truncate text-[13px] font-semibold leading-tight text-foreground">
                 {currentTitle}
               </p>
             </div>
@@ -522,7 +538,7 @@ export function AppShellClient({
                       variant="ghost"
                       size="icon"
                       aria-label="การแจ้งเตือน"
-                      className="relative h-10 w-10 rounded-xl"
+                      className="relative h-9 w-9 rounded-lg border border-border/60"
                     >
                       <Bell className="h-4 w-4" />
                       {unreadCount > 0 ? (
@@ -532,7 +548,10 @@ export function AppShellClient({
                       ) : null}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-80">
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-80 rounded-lg border-border/60"
+                  >
                     <NotificationList
                       notifications={notifications}
                       unreadCount={unreadCount}
@@ -548,26 +567,29 @@ export function AppShellClient({
                 variant="outline"
                 onClick={() => openPalette()}
                 aria-label="เปิดคำสั่งด่วน (Ctrl+K)"
-                className="hidden h-10 items-center gap-2 rounded-xl border-border/60 bg-surface-subtle px-3 text-muted-foreground hover:text-foreground sm:inline-flex"
+                className="hidden h-9 items-center gap-2 rounded-lg border-border/60 bg-surface-subtle px-2.5 text-muted-foreground hover:text-foreground sm:inline-flex"
               >
                 <Search className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden max-w-[260px] truncate text-xs lg:inline">
-                  ค้นหาการแข่งขัน ทีม หรือเพื่อน...
-                </span>
-                <kbd className="font-mono text-[10px]">⌘K</kbd>
+                <span className="max-w-[160px] truncate text-xs">ค้นหา...</span>
+                <kbd className="rounded border border-border/60 bg-background/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                  ⌘K
+                </kbd>
               </Button>
 
-              <ThemeToggle />
+              <div className="shrink-0 [&>button]:h-9 [&>button]:w-9 [&>button]:rounded-lg [&>button]:border [&>button]:border-border/60">
+                <ThemeToggle />
+              </div>
 
               {user ? (
                 <>
                   <Button
                     size="sm"
-                    className="hidden h-10 gap-1.5 rounded-xl bg-primary px-4 text-primary-foreground hover:bg-primary/90 sm:inline-flex"
+                    aria-label={ADD_ITEM_LABEL}
+                    className="h-9 gap-1.5 rounded-lg bg-primary px-2.5 text-primary-foreground hover:bg-primary/90 sm:px-4"
                     onClick={() => setSmartModalOpen(true)}
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    เพิ่มรายการ
+                    <span className="hidden sm:inline">{ADD_ITEM_LABEL}</span>
                   </Button>
 
                   <DropdownMenu>
@@ -576,7 +598,7 @@ export function AppShellClient({
                         variant="outline"
                         size="sm"
                         aria-label={`บัญชีของ ${user.full_name || user.email}`}
-                        className="h-10 gap-2 rounded-xl border-border/60 bg-background pl-1.5 pr-2.5 hover:bg-muted/50"
+                        className="h-9 gap-2 rounded-lg border-border/60 bg-background pl-1 pr-2 hover:bg-muted/50"
                       >
                         <Avatar className="h-6 w-6">
                           <AvatarFallback className="bg-muted text-[10px] font-semibold text-foreground">
@@ -591,7 +613,10 @@ export function AppShellClient({
                         </span>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-56 rounded-lg border-border/60"
+                    >
                       <DropdownMenuLabel className="space-y-0.5">
                         <p className="truncate text-sm font-medium">
                           {user.full_name}
@@ -671,7 +696,7 @@ export function AppShellClient({
                 <Button
                   asChild
                   size="sm"
-                  className="h-10 gap-1.5 rounded-xl bg-primary px-4 text-primary-foreground hover:bg-primary/90"
+                  className="h-9 gap-1.5 rounded-lg bg-primary px-4 text-primary-foreground hover:bg-primary/90"
                 >
                   <Link href="/login">
                     <LogIn className="h-3.5 w-3.5" />
@@ -685,7 +710,7 @@ export function AppShellClient({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-10 w-10 rounded-xl lg:hidden"
+                    className="h-9 w-9 rounded-lg lg:hidden"
                     aria-label="เปิดเมนูนำทาง"
                   >
                     <Menu className="h-5 w-5" />
@@ -717,18 +742,6 @@ export function AppShellClient({
                       />
                     ))}
                   </nav>
-                  {user ? (
-                    <Button
-                      className="mt-4 w-full gap-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
-                      onClick={() => {
-                        setMobileOpen(false);
-                        setSmartModalOpen(true);
-                      }}
-                    >
-                      <Plus className="h-4 w-4" />
-                      เพิ่มรายการ
-                    </Button>
-                  ) : null}
                 </SheetContent>
               </Sheet>
 

@@ -128,7 +128,7 @@ Goal: elevate TechComp Hub from commit `2ea7f5d` to world-class visual craft acr
 | Phase | Focus | Status | Evidence |
 | --- | --- | --- | --- |
 | D1 | Remove /showcase and establish surface/color/typography tokens | VERIFIED | All gates green; 12 E2E pass; 66 visual checks; commit on branch |
-| D2 | Linear-grade app shell: single-line sidebar and quiet topbar | NOT STARTED | — |
+| D2 | Linear-grade app shell: single-line sidebar and quiet topbar | VERIFIED | All gates green; 12 E2E pass; geometry 227/61/228; commit on branch |
 | D3 | Flagship discovery page: full-width grid and horizontal filter bar | NOT STARTED | — |
 | D4 | Editorial detail and student workspaces | NOT STARTED | — |
 | D5 | Teacher studio and admin console | NOT STARTED | — |
@@ -186,3 +186,25 @@ The live database was not used for E2E writes. A throwaway database `tech_compet
 - Hydration mismatch: `data-aria-hidden="true"` / `aria-hidden="true"` on the competition feed filter rail, plus Radix `SwitchBubbleInput` style serialization differences (`caret-color: transparent`, `pointer-events`, margins) on `/profile` and `/settings`.
 - Stream error: `Error: The destination stream errored while writing data.` at `GET /api/events/stream`, digest `4196242234`.
 - Browser console also reports React dev `eval()` unsupported under the current CSP. This is development-only and does not occur in production.
+
+### D2 verification evidence
+
+- `npm run lint` — PASS, 0 errors, 0 warnings.
+- `npm run typecheck` — PASS, 0 errors.
+- `npm test` — PASS, 135/135.
+- `npm run check:schema` — PASS, `migrations=14 objects=96`.
+- `npm run test:integration` — PASS, `tables=36 migrations=14`.
+- `npm run build` — PASS, compiled and 29 static pages generated, no warnings.
+- `npm run test:visual` — PASS, 66 checks. Geometry at 1920 light: sidebar 227px, topbar 61px, main left 228px. The audit contract was widened from 240–260/62–68/240 to 220–236/56–64/220 to match the new 228/60 targets.
+- `npm run test:e2e` — PASS, 12/12.
+
+### D2 shell changes
+
+- Sidebar 228px expanded / 64px collapsed, single-line 36px nav rows, 2px primary active accent bar, quiet 11px section labels, filler box replaced by a collapse toggle and `[` shortcut. The `[` handler ignores typing in inputs, textareas, selects, and contenteditable targets.
+- Topbar 60px with `bg-background/80 backdrop-blur-xl`, crisp 9px-radius controls, compact command trigger showing `ค้นหา...` plus a ⌘K chip.
+- Exactly one `เพิ่มรายการ` primary CTA remains. The mobile navigation Sheet duplicate and its extra modal mount were deleted; the topbar button is icon-only below `sm` with a fixed accessible name.
+- Every E2E-coupled accessible name was preserved, including `ผู้ดูแลระบบ`, `คิวตรวจรายการ`, `ทีมของฉัน`, `การแจ้งเตือน`, the avatar `/บัญชีของ/` pattern, and `เพิ่มรายการ`.
+
+### E2E harness note
+
+A second E2E run initially failed because earlier runs had left team rows in the throwaway DB, so the admin empty state no longer appeared. The isolated DB was recreated, reseeded with the two accounts and one seed competition, and the suite then passed 12/12. No live data was touched.
