@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { z } from "zod";
 import { CompetitionActions } from "@/components/competitions/competition-actions";
+import { CompetitionCommunity } from "@/components/competitions/competition-community";
 import { InterestDrawer } from "@/components/competitions/interest-drawer";
 import { TeacherQuickStatusButton } from "@/components/competitions/teacher-quick-status";
 import { Badge } from "@/components/ui/badge";
@@ -345,6 +346,8 @@ export default async function CompetitionDetailPage({
               </div>
             </section>
           ) : null}
+
+          <CompetitionCommunity competitionId={competition.id} />
         </article>
 
         {/* Right Sticky Action Sidebar separated by hairline */}

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Bell,
   ClipboardCheck,
   Code2,
   LogIn,
@@ -38,6 +39,8 @@ import {
 } from "@/components/ui/sheet";
 import type { Profile } from "@/types/database";
 
+import type { NotificationItem } from "@/types/database";
+
 interface NavbarClientProps {
   user: Profile | null;
   pendingReviewCount: number;
@@ -49,6 +52,37 @@ export function NavbarClient({ user, pendingReviewCount }: NavbarClientProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [smartModalOpen, setSmartModalOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    void (async () => {
+      try {
+        const response = await fetch("/api/notifications");
+        if (!response.ok) return;
+        const data = (await response.json()) as { notifications: NotificationItem[] };
+        setNotifications(data.notifications);
+      } catch {
+        // Bell remains usable after a page refresh.
+      }
+    })();
+  }, [user]);
+
+  async function markAllRead() {
+    try {
+      const response = await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ all: true }),
+      });
+      if (!response.ok) throw new Error("mark failed");
+      setNotifications((prev) => prev.map((item) => ({ ...item, read_at: new Date().toISOString() })));
+    } catch {
+      toast.error("ไม่สามารถอัปเดตการแจ้งเตือนได้");
+    }
+  }
+
+  const unreadCount = notifications.filter((item) => !item.read_at).length;
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -148,6 +182,44 @@ export function NavbarClient({ user, pendingReviewCount }: NavbarClientProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="การแจ้งเตือน" className="relative">
+                  <Bell className="h-4 w-4" />
+                  {unreadCount > 0 ? (
+                    <span className="absolute -right-1 -top-1 rounded-full bg-destructive px-1 font-mono text-[10px] font-semibold text-destructive-foreground tabular-nums">
+                      {unreadCount}
+                    </span>
+                  ) : null}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                <div className="flex items-center justify-between px-3 py-2">
+                  <p className="text-sm font-medium">การแจ้งเตือน</p>
+                  {unreadCount > 0 ? (
+                    <button type="button" onClick={() => void markAllRead()} className="text-xs text-primary hover:underline">
+                      อ่านทั้งหมด
+                    </button>
+                  ) : null}
+                </div>
+                {notifications.slice(0, 8).map((item) => (
+                  <DropdownMenuItem key={item.id} asChild>
+                    <Link href={item.href ?? "/"} className="cursor-pointer">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm">{item.title}</p>
+                        {item.body ? <p className="truncate text-xs text-muted-foreground">{item.body}</p> : null}
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+                {notifications.length === 0 ? (
+                  <p className="px-3 py-4 text-xs text-muted-foreground">ยังไม่มีการแจ้งเตือน</p>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
+
           <ThemeToggle />
 
           {user ? (

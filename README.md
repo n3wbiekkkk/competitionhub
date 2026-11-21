@@ -26,7 +26,7 @@ npm run dev
 ## AI features
 
 - **ค้นหาด้วย AI (`POST /api/discovery`):** นักเรียนพิมพ์เป็นภาษาธรรมชาติได้ เช่น “อยากแข่ง AI หุ่นยนต์ ทีม 3 คน” ระบบแปลงคำขอเป็นหมวด/ขนาดทีม/ระดับชั้น กรองเฉพาะรายการ `open` ที่ยังไม่หมดอายุจาก PostgreSQL ผ่าน RLS แล้วให้บริการวิเคราะห์อัตโนมัติจัดอันดับ **เฉพาะ ID ที่มีอยู่จริง**; ทุกฟิลด์ที่แสดงมาจากแถวฐานข้อมูล ถ้า AI ไม่พร้อมหรือตอบไม่ตรงรูปแบบจะฟอลแบ็กเป็นผลลัพธ์แบบคะแนนและบอกเหตุผลเป็นภาษาไทย
-- **Smart Add / Auto Scout:** สกัดข้อมูลจากลิงก์ ข้อความ และโปสเตอร์ ตรวจ URL สาธารณะและแหล่งที่มา ไม่สร้างรายการจากพาดหัวข่าวอย่างเดียว และรองรับการยกเลิกกลางทาง
+- **Smart Add / Auto Scout:** สกัดข้อมูลจากลิงก์ ข้อความ และโปสเตอร์ ตรวจ URL สาธารณะและแหล่งที่มา ไม่สร้างรายการจากพาดหัวข่าวอย่างเดียว และรองรับการยกเลิกกลางทาง Auto Scout ยังค้นหาเว็บจากแหล่งข่าวสาธารณะเพื่อหาลิงก์ใหม่ ก่อนกรอง URL สาธารณะและส่งให้ตัววิเคราะห์อัตโนมัติ รายการที่พบยังเข้าสู่สถานะ `pending_review` เสมอ
 
 ## Verification (must pass before deploy)
 
@@ -100,4 +100,5 @@ ssh "$DEPLOY_HOST" "cd \"$DEPLOY_DIR\" && \
 - Sessions are revoked on password or role changes through `auth_security.session_version`; the acting device receives a fresh cookie.
 - Confirmed teams must hold `min_size`–`max_size` members. The rule is enforced in the API **and** by a deferred constraint trigger in PostgreSQL.
 - `POST /api/cron/discover` requires `Authorization: Bearer $CRON_SECRET`.
+- Web search discovery is optional. Set `SEARCH_PROVIDER=auto` and one provider key, or name a provider explicitly. Keys are read only by server code. See `.env.example` for variable names.
 - `COOKIE_SECURE=true` only behind HTTPS; the LAN/Tailscale HTTP setup must keep it `false`.

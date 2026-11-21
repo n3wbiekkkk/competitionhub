@@ -60,6 +60,37 @@ export interface DirectoryPersonProfile extends DirectoryProfile {
   contact: string | null;
 }
 
+export interface NotificationItem {
+  id: string;
+  kind: string;
+  title: string;
+  body: string | null;
+  href: string | null;
+  read_at: string | null;
+  created_at: string;
+}
+
+export interface CompetitionComment {
+  id: string;
+  competition_id: string;
+  author_id: string | null;
+  body: string;
+  is_pinned: boolean;
+  is_official: boolean;
+  created_at: string;
+}
+
+export interface CompetitionResult {
+  id: string;
+  competition_id: string;
+  team_id: string | null;
+  award_title: string;
+  rank_tier: string | null;
+  certificate_url: string | null;
+  reflection: string | null;
+  created_at: string;
+}
+
 export interface OutboxItem {
   id: string;
   to_email: string;

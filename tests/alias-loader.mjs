@@ -5,5 +5,10 @@ export async function resolve(specifier, context, nextResolve) {
       context,
     );
   }
+  const isRelative = specifier.startsWith("./") || specifier.startsWith("../");
+  const hasExtension = /\.(?:[cm]?js|mjs|json|ts|tsx)$/.test(specifier);
+  if (isRelative && !hasExtension && context.parentURL) {
+    return nextResolve(new URL(`${specifier}.ts`, context.parentURL).href, context);
+  }
   return nextResolve(specifier, context);
 }

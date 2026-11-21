@@ -64,6 +64,7 @@ import type {
   TeamDetail,
   TeamMemberDetail,
 } from "@/lib/db/team-builder";
+import { scoreTeam } from "@/lib/utils/team-optimizer";
 import type { Competition } from "@/types/database";
 
 interface TeamBuilderBoardProps {
@@ -686,17 +687,38 @@ export function TeamBuilderBoard({
           recommendedLower.filter((r) => !currentRoles.has(r)),
         );
 
-        let chosenIndex = remaining.findIndex((candidate) =>
-          missingRecommended.has(candidate.preferred_role.toLowerCase()),
-        );
-        if (chosenIndex === -1) {
-          chosenIndex = remaining.findIndex(
-            (candidate) =>
-              !currentRoles.has(candidate.preferred_role.toLowerCase()),
-          );
-        }
-        if (chosenIndex === -1) {
-          chosenIndex = 0;
+        let chosenIndex = 0;
+        let bestScore = Number.NEGATIVE_INFINITY;
+        for (let index = 0; index < remaining.length; index += 1) {
+          const candidate = remaining[index];
+          const simulated = [
+            ...team.members.map((m) => ({
+              user_id: m.user_id,
+              assigned_role: m.assigned_role,
+              grade: m.grade,
+              skills: m.skills,
+            })),
+            {
+              user_id: candidate.user_id,
+              assigned_role: candidate.preferred_role,
+              grade: candidate.grade,
+              skills: candidate.skills,
+            },
+          ];
+          const score = scoreTeam({
+            members: simulated,
+            competition: {
+              min_size: competition.min_size,
+              max_size: competition.max_size,
+              recommended_roles: competition.recommended_roles,
+              tech_stack_hints: competition.tech_stack_hints,
+            },
+          }).weighted;
+          const roleBonus = missingRecommended.has(candidate.preferred_role.toLowerCase()) ? 0.2 : 0;
+          if (score + roleBonus > bestScore) {
+            bestScore = score + roleBonus;
+            chosenIndex = index;
+          }
         }
 
         const [picked] = remaining.splice(chosenIndex, 1);

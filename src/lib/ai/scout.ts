@@ -5,6 +5,7 @@ import {
 import { isTyphoonConfigured } from "@/lib/ai/opentyphoon";
 import { TECH_CATEGORY_META } from "@/lib/constants/tech-taxonomy";
 import { withSystemDb } from "@/lib/db/pool";
+import { searchCompetitionListings } from "@/lib/search/index";
 import { formatThaiDate, getTodayIsoBangkok } from "@/lib/utils/thai-date";
 import { validatePublicHttpUrl } from "@/lib/utils/url-safety";
 import type { Competition } from "@/types/database";
@@ -53,6 +54,11 @@ export const SCOUT_SOURCES: readonly ScoutSourceDescriptor[] = [
     name: "Google News Thailand",
     target:
       "hackathon OR CTF OR NSC OR แข่งขันเขียนโปรแกรม / AI / Robotics / Cyber Top Talent",
+  },
+  {
+    id: "web_search",
+    name: "การค้นหาเว็บ",
+    target: "การแข่งขันเทคโนโลยีในประเทศไทยที่ยังเปิดรับสมัคร",
   },
 ];
 
@@ -439,6 +445,47 @@ async function fetchGoogleNewsThaiTechCandidates(): Promise<
   return items;
 }
 
+async function fetchWebSearchCandidates(
+  today: string,
+  signal?: AbortSignal,
+): Promise<CandidateSourceItem[]> {
+  const year = today.slice(0, 4);
+  const queries = [
+    `hackathon OR CTF OR "แข่งขันเขียนโปรแกรม" OR AI OR robotics Thailand ${year} เปิดรับสมัคร`,
+    `แฮกกาธอน OR CTF OR "การแข่งขันหุ่นยนต์" OR "Cyber Top Talent" ประเทศไทย ${year}`,
+  ];
+
+  const batches = await Promise.all(
+    queries.map((query) =>
+      searchCompetitionListings(query, { limit: 5, signal }),
+    ),
+  );
+
+  const items: CandidateSourceItem[] = [];
+  const seen = new Set<string>();
+  for (const batch of batches) {
+    for (const result of batch) {
+      const url = normalizeCandidateUrl(result.url);
+      if (!url || seen.has(url)) continue;
+      seen.add(url);
+      items.push({
+        url,
+        sourceName: "การค้นหาเว็บ",
+        hintText: [
+          `ชื่อจากผลการค้นหา: ${result.title}`,
+          result.snippet ? `สรุป: ${result.snippet}` : null,
+          result.publishedAt ? `วันที่เผยแพร่: ${result.publishedAt}` : null,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+        requireFetchedContent: true,
+      });
+      if (items.length >= 10) return items;
+    }
+  }
+  return items;
+}
+
 async function sendDiscordDigest(
   inserted: ScoutRunSummary["inserted"],
 ): Promise<void> {
@@ -547,7 +594,7 @@ export async function runAutoTechScout(options?: {
   }
 
   // 2. Gather Thailand-only tech competition URLs from verified Thai feeds
-  const [hackza, thHack, portcas, contester, ctfTh, gnews] =
+  const [hackza, thHack, portcas, contester, ctfTh, gnews, webSearch] =
     await Promise.all([
       trackSourceFetch(SCOUT_SOURCES[0], fetchHackzaThailandCandidates, emit),
       trackSourceFetch(
@@ -563,9 +610,22 @@ export async function runAutoTechScout(options?: {
       ),
       trackSourceFetch(SCOUT_SOURCES[4], fetchCtfThailandCandidates, emit),
       trackSourceFetch(SCOUT_SOURCES[5], fetchGoogleNewsThaiTechCandidates, emit),
+      trackSourceFetch(
+        SCOUT_SOURCES[6],
+        () => fetchWebSearchCandidates(today, signal),
+        emit,
+      ),
     ]);
 
-  const sourceBuckets = [hackza, thHack, portcas, contester, ctfTh, gnews];
+  const sourceBuckets = [
+    hackza,
+    thHack,
+    portcas,
+    contester,
+    ctfTh,
+    gnews,
+    webSearch,
+  ];
   const maxLen = Math.max(...sourceBuckets.map((b) => b.length));
   const allCandidatesRaw: CandidateSourceItem[] = [];
   for (let i = 0; i < maxLen; i += 1) {

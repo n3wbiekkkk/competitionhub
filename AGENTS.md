@@ -75,6 +75,7 @@ Defined in `src/lib/constants/classroom.ts`:
 - **Auto Tech Scout & Streaming Progress (`src/lib/ai/scout.ts`):**
   - Auto-closes expired `open` competitions (`deadline < today`), scans 6 verified Thai sources (`Hackza Thailand`, `Hackathon Thailand`, `PorTCAS Thailand`, `Contester Thailand`, `CTF Thailand`, `Google News Thailand`), deduplicates against `competitions.source_url`, extracts via OpenTyphoon (`thailandOnly: true`), and inserts new items as `pending_review`.
   - `POST /api/teacher/scout?stream=1` streams newline-delimited JSON (`ScoutProgressEvent` over `application/x-ndjson`) rendered in `<ScoutRunnerDialog />` (`src/components/teacher/scout-runner-dialog.tsx`) with live source status, progress bar, abort support, and activity log.
+  - **Web Search Discovery (`src/lib/search/*`):** One provider module owns each external search wire format. `resolveSearchProvider` reads `SEARCH_PROVIDER` and one server-only provider key. `searchCompetitionListings` returns a common `WebSearchResult[]`. Scout adds these URLs as candidates only after `toWebSearchResult` rejects private targets. Search snippets never become competition fields.
   - **Bundling Rule:** Client components must import types from `@/lib/ai/scout` strictly via `import type { ... }` so `pg` and server modules are never dragged into the client bundle.
 
 ---
@@ -109,6 +110,7 @@ Defined in `src/lib/constants/classroom.ts`:
 | `src/lib/constants/tech-taxonomy.ts`, `classroom.ts` | Canonical 8 categories, 13 roles, 16 skills, status metadata, `ม.1`–`ม.6` & room `1`–`14` helpers |
 | `src/lib/utils/thai-date.ts`, `url-safety.ts` | Thai Buddhist Era date formatting, UTC countdowns, public HTTP URL SSRF validation |
 | `src/lib/ai/opentyphoon.ts`, `extract-competition.ts`, `scout.ts` | OpenTyphoon client, URL/text/OCR extractor, streaming Thailand tech scout |
+| `src/lib/search/*` | Server-only web search providers, provider selection, and common result normalization |
 | `src/types/database.ts` | Shared database & admin view TypeScript interfaces |
 | `src/components/theme/*` | `ThemeProvider`, `ThemedToaster`, and SSR-safe `<ThemeToggle />` |
 | `src/components/competitions/*` | `CompetitionFeed` (SSR query sync + skill matching), `CompetitionActions` (share + `.ics`), `InterestDrawer`, `SmartAddModal` |

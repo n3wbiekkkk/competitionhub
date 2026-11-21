@@ -693,6 +693,286 @@ begin
   end if;
 end $$;
 
+create table if not exists public.scout_sources (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  base_url text not null,
+  adapter_type text not null check (adapter_type in ('html-list','rss-feed','json-api')),
+  config jsonb not null default '{}'::jsonb,
+  enabled boolean not null default true,
+  last_status text,
+  consecutive_failures integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.scout_runs (
+  id uuid primary key default gen_random_uuid(),
+  started_at timestamptz not null default now(),
+  finished_at timestamptz,
+  status text not null default 'running' check (status in ('running','completed','failed','cancelled')),
+  found_count integer not null default 0,
+  inserted_count integer not null default 0,
+  duplicate_count integer not null default 0,
+  error_log jsonb not null default '[]'::jsonb,
+  triggered_by uuid references public.profiles(id) on delete set null
+);
+
+create table if not exists public.scout_run_sources (
+  id uuid primary key default gen_random_uuid(),
+  run_id uuid not null references public.scout_runs(id) on delete cascade,
+  source_id uuid references public.scout_sources(id) on delete set null,
+  source_name text not null,
+  status text not null check (status in ('ok','failed','skipped')),
+  found_count integer not null default 0,
+  error text
+);
+
+alter table public.scout_sources enable row level security;
+alter table public.scout_sources force row level security;
+alter table public.scout_runs enable row level security;
+alter table public.scout_runs force row level security;
+alter table public.scout_run_sources enable row level security;
+alter table public.scout_run_sources force row level security;
+
+drop policy if exists scout_sources_teacher_all on public.scout_sources;
+create policy scout_sources_teacher_all on public.scout_sources for all
+  using (public.is_teacher() or public.app_is_system())
+  with check (public.is_teacher() or public.app_is_system());
+
+drop policy if exists scout_runs_teacher_all on public.scout_runs;
+create policy scout_runs_teacher_all on public.scout_runs for all
+  using (public.is_teacher() or public.app_is_system())
+  with check (public.is_teacher() or public.app_is_system());
+
+drop policy if exists scout_run_sources_teacher_all on public.scout_run_sources;
+create policy scout_run_sources_teacher_all on public.scout_run_sources for all
+  using (public.is_teacher() or public.app_is_system())
+  with check (public.is_teacher() or public.app_is_system());
+
+do $$
+begin
+  if exists (select 1 from pg_roles where rolname = 'techhub_app') then
+    grant select, insert, update, delete on table
+      public.scout_sources, public.scout_runs, public.scout_run_sources to techhub_app;
+  end if;
+end $$;
+
+
+create table if not exists public.competition_bookmarks (
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  competition_id uuid not null references public.competitions(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (user_id, competition_id)
+);
+
+create table if not exists public.competition_comments (
+  id uuid primary key default gen_random_uuid(),
+  competition_id uuid not null references public.competitions(id) on delete cascade,
+  author_id uuid references public.profiles(id) on delete set null,
+  body text not null check (btrim(body) <> ''),
+  is_pinned boolean not null default false,
+  is_official boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.competition_results (
+  id uuid primary key default gen_random_uuid(),
+  competition_id uuid not null references public.competitions(id) on delete cascade,
+  team_id uuid references public.teams(id) on delete set null,
+  award_title text not null,
+  rank_tier text,
+  certificate_url text,
+  reflection text,
+  verified_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.competition_bookmarks enable row level security;
+alter table public.competition_bookmarks force row level security;
+alter table public.competition_comments enable row level security;
+alter table public.competition_comments force row level security;
+alter table public.competition_results enable row level security;
+alter table public.competition_results force row level security;
+
+drop policy if exists bookmarks_self_all on public.competition_bookmarks;
+create policy bookmarks_self_all on public.competition_bookmarks for all
+  using (user_id = public.app_uid() or public.app_is_system())
+  with check (user_id = public.app_uid() or public.app_is_system());
+
+drop policy if exists comments_select_visible on public.competition_comments;
+create policy comments_select_visible on public.competition_comments for select
+  using (
+    public.app_is_system() or public.is_teacher() or
+    exists (select 1 from public.competitions c where c.id = competition_id and c.status in ('open','closed'))
+  );
+
+drop policy if exists comments_insert_own on public.competition_comments;
+create policy comments_insert_own on public.competition_comments for insert
+  with check (author_id = public.app_uid() or public.is_teacher() or public.app_is_system());
+
+drop policy if exists comments_update_teacher on public.competition_comments;
+create policy comments_update_teacher on public.competition_comments for update
+  using (public.is_teacher() or public.app_is_system())
+  with check (public.is_teacher() or public.app_is_system());
+
+drop policy if exists results_select_visible on public.competition_results;
+create policy results_select_visible on public.competition_results for select
+  using (public.app_is_system() or public.is_teacher() or exists (select 1 from public.competitions c where c.id = competition_id and c.status in ('open','closed')));
+
+drop policy if exists results_write_teacher on public.competition_results;
+create policy results_write_teacher on public.competition_results for all
+  using (public.is_teacher() or public.app_is_system())
+  with check (public.is_teacher() or public.app_is_system());
+
+do $$
+begin
+  if exists (select 1 from pg_roles where rolname = 'techhub_app') then
+    grant select, insert, update, delete on table
+      public.competition_bookmarks, public.competition_comments, public.competition_results to techhub_app;
+  end if;
+end $$;
+
+
+create table if not exists public.team_tasks (
+  id uuid primary key default gen_random_uuid(),
+  team_id uuid not null references public.teams(id) on delete cascade,
+  title text not null check (btrim(title) <> ''),
+  assignee_id uuid references public.profiles(id) on delete set null,
+  due_date date,
+  status text not null default 'todo' check (status in ('todo','doing','done')),
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.team_activity_logs (
+  id uuid primary key default gen_random_uuid(),
+  team_id uuid not null references public.teams(id) on delete cascade,
+  actor_id uuid references public.profiles(id) on delete set null,
+  action text not null,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+alter table public.team_tasks enable row level security;
+alter table public.team_tasks force row level security;
+alter table public.team_activity_logs enable row level security;
+alter table public.team_activity_logs force row level security;
+
+drop policy if exists team_tasks_member_all on public.team_tasks;
+create policy team_tasks_member_all on public.team_tasks for all
+  using (
+    public.app_is_system() or public.is_teacher() or
+    exists (
+      select 1 from public.team_members tm
+      join public.teams t on t.id = tm.team_id
+      where tm.team_id = team_id and t.status = 'confirmed' and tm.user_id = public.app_uid()
+    )
+  )
+  with check (public.app_is_system() or public.is_teacher());
+
+drop policy if exists team_activity_select on public.team_activity_logs;
+create policy team_activity_select on public.team_activity_logs for select
+  using (
+    public.app_is_system() or public.is_teacher() or
+    exists (
+      select 1 from public.team_members tm
+      join public.teams t on t.id = tm.team_id
+      where tm.team_id = team_id and t.status = 'confirmed' and tm.user_id = public.app_uid()
+    )
+  );
+
+drop policy if exists team_activity_insert_teacher on public.team_activity_logs;
+create policy team_activity_insert_teacher on public.team_activity_logs for insert
+  with check (public.app_is_system() or public.is_teacher());
+
+do $$
+begin
+  if exists (select 1 from pg_roles where rolname = 'techhub_app') then
+    grant select, insert, update, delete on table public.team_tasks to techhub_app;
+    grant select, insert on table public.team_activity_logs to techhub_app;
+  end if;
+end $$;
+
+
+-- In-app notifications and per-user notification preferences.
+-- Both tables are system-only under FORCE RLS. Authenticated request code must
+-- authorize in the application layer, then use withSystemDb for these tables.
+
+create table if not exists public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.auth_accounts(id) on delete cascade,
+  kind text not null check (char_length(kind) between 1 and 40),
+  title text not null check (char_length(title) between 1 and 200),
+  body text,
+  href text check (href is null or (href like '/%' and href not like '//%')),
+  competition_id uuid references public.competitions(id) on delete set null,
+  team_id uuid references public.teams(id) on delete set null,
+  dedupe_key text not null check (char_length(dedupe_key) between 1 and 200),
+  read_at timestamptz,
+  created_at timestamptz not null default now(),
+  constraint notifications_user_dedupe_key unique (user_id, dedupe_key)
+);
+
+create index if not exists notifications_user_created_at_idx
+  on public.notifications (user_id, created_at desc);
+
+create table if not exists public.notification_preferences (
+  user_id uuid primary key references public.auth_accounts(id) on delete cascade,
+  deadline_reminders boolean not null default true,
+  team_assigned_notices boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+drop trigger if exists notification_preferences_set_updated_at on public.notification_preferences;
+create trigger notification_preferences_set_updated_at
+  before update on public.notification_preferences
+  for each row execute function public.handle_updated_at();
+
+insert into public.notification_preferences (user_id)
+select id from public.auth_accounts
+on conflict (user_id) do nothing;
+
+alter table public.notifications enable row level security;
+alter table public.notifications force row level security;
+alter table public.notification_preferences enable row level security;
+alter table public.notification_preferences force row level security;
+
+do $$
+declare
+  v_policy record;
+begin
+  for v_policy in
+    select policyname, tablename
+    from pg_policies
+    where schemaname = 'public'
+      and tablename in ('notifications', 'notification_preferences')
+  loop
+    execute format('drop policy %I on public.%I', v_policy.policyname, v_policy.tablename);
+  end loop;
+end $$;
+
+create policy notifications_system_all
+  on public.notifications for all
+  using (public.app_is_system()) with check (public.app_is_system());
+
+create policy notification_preferences_system_all
+  on public.notification_preferences for all
+  using (public.app_is_system()) with check (public.app_is_system());
+
+revoke all on table public.notifications, public.notification_preferences from public;
+
+do $$
+begin
+  if exists (select 1 from pg_roles where rolname = 'techhub_app') then
+    grant usage on schema public to techhub_app;
+    grant select, insert, update, delete on table
+      public.notifications,
+      public.notification_preferences
+    to techhub_app;
+  end if;
+end $$;
+
+
 -- ----------------------------------------------------------------------------
 -- 6. Grants for Non-Superuser App Role (techhub_app)
 -- ----------------------------------------------------------------------------

@@ -1,0 +1,198 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    env:
+      POSTGRES_DB: tech_competition_hub
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      APP_DB_USER: techhub_app
+      APP_DB_PASSWORD: techhub_app_e2e
+      DATABASE_URL: postgresql://techhub_app:techhub_app_e2e@127.0.0.1:5432/tech_competition_hub
+      MIGRATION_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/tech_competition_hub
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: tech_competition_hub
+      SESSION_SECRET: ci-only-session-secret-0123456789abcdef
+      CRON_SECRET: ci-only-cron-secret-0123456789abcdef
+      ADMIN_EMAILS: teacher.e2e@example.test
+      E2E_TEACHER_EMAIL: teacher.e2e@example.test
+      E2E_TEACHER_PASSWORD: e2e-teacher-pass
+      E2E_STUDENT_EMAIL: student.e2e@example.test
+      E2E_STUDENT_PASSWORD: e2e-student-pass
+      E2E_COMPETITION_TITLE: E2E Hackathon
+      COOKIE_SECURE: "false"
+      TYPHOON_API_KEY: ""
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: tech_competition_hub
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d tech_competition_hub"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Create application database role
+        run: sh db/init/00-init-role.sh
+
+      - name: Load schema and migrations
+        run: |
+          psql "$MIGRATION_DATABASE_URL" -v ON_ERROR_STOP=1 -f db/schema.sql
+          npm run db:migrate
+
+      - name: Seed E2E fixtures
+        run: |
+          {
+            read -r TEACHER_HASH
+            read -r STUDENT_HASH
+          } < <(node -e '
+          const { randomBytes, scrypt } = require("node:crypto");
+          const hash = (password) =>
+            new Promise((resolve, reject) => {
+              const salt = randomBytes(16).toString("hex");
+              scrypt(password, salt, 64, (error, key) => {
+                if (error) reject(error);
+                else resolve(`scrypt$${salt}$${key.toString("hex")}`);
+              });
+            });
+          Promise.all(process.argv.slice(1).map(hash)).then((hashes) =>
+            process.stdout.write(`${hashes.join("\n")}\n`),
+          );
+          ' "$E2E_TEACHER_PASSWORD" "$E2E_STUDENT_PASSWORD")
+
+          psql "$MIGRATION_DATABASE_URL" -v ON_ERROR_STOP=1 \
+            -v teacher_email="$E2E_TEACHER_EMAIL" \
+            -v teacher_hash="$TEACHER_HASH" \
+            -v student_email="$E2E_STUDENT_EMAIL" \
+            -v student_hash="$STUDENT_HASH" \
+            -v competition_title="$E2E_COMPETITION_TITLE" \
+            -v source_url="https://example.test/e2e-hackathon" <<'SQL'
+          with account as (
+            insert into public.auth_accounts (email, password_hash)
+            values (:'teacher_email', :'teacher_hash')
+            on conflict (email) do update
+              set password_hash = excluded.password_hash
+            returning id, email
+          ), profile as (
+            insert into public.profiles (id, full_name, nickname, email, role, grade)
+            select id, 'ครูทดสอบ', 'ครู', email, 'teacher', 'ม.5/1' from account
+            on conflict (id) do update
+              set full_name = excluded.full_name,
+                  nickname = excluded.nickname,
+                  email = excluded.email,
+                  role = 'teacher',
+                  grade = excluded.grade
+            returning id
+          )
+          insert into public.auth_security (user_id, session_version)
+          select id, 0 from profile
+          on conflict (user_id) do update set session_version = 0;
+
+          with account as (
+            insert into public.auth_accounts (email, password_hash)
+            values (:'student_email', :'student_hash')
+            on conflict (email) do update
+              set password_hash = excluded.password_hash
+            returning id, email
+          ), profile as (
+            insert into public.profiles (id, full_name, nickname, email, role, grade)
+            select id, 'นักเรียนทดสอบ', 'น้อง', email, 'student', 'ม.5/1' from account
+            on conflict (id) do update
+              set full_name = excluded.full_name,
+                  nickname = excluded.nickname,
+                  email = excluded.email,
+                  role = 'student',
+                  grade = excluded.grade
+            returning id
+          )
+          insert into public.auth_security (user_id, session_version)
+          select id, 0 from profile
+          on conflict (user_id) do update set session_version = 0;
+
+          delete from public.competitions where source_url = :'source_url';
+
+          insert into public.competitions (
+            title, category, deadline, min_size, max_size,
+            recommended_roles, tech_stack_hints, eligibility, summary,
+            source_url, source_type, status
+          )
+          values (
+            :'competition_title',
+            'Programming / Competitive',
+            (current_date + interval '30 days')::date,
+            1,
+            4,
+            array['Frontend', 'Backend'],
+            array['Next.js'],
+            'นักเรียนมัธยมศึกษาตอนปลาย',
+            'รายการแข่งขันสำหรับทดสอบเส้นทางผู้ใช้แบบ end-to-end',
+            :'source_url',
+            'manual',
+            'open'
+          );
+          SQL
+
+      - name: Integration schema and RLS check
+        run: npm run test:integration
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Playwright E2E
+        run: npm run test:e2e
+
+      - name: Upload Playwright artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: test-results/
+          if-no-files-found: ignore
