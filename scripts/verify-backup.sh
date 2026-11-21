@@ -38,7 +38,7 @@ if ! basename "$BACKUP_FILE" | grep -Eq '^competition-hub-[0-9]{8}T[0-9]{6}Z\.sq
 fi
 
 echo "==> static migration/schema parity"
-npm run check:schema
+docker compose "${COMPOSE_ENV[@]}" run -T --rm web npm run check:schema </dev/null
 
 echo "==> gzip integrity"
 gzip -t "$BACKUP_FILE"
