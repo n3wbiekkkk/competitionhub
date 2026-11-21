@@ -3,19 +3,22 @@
 Baseline commit: `fdd8830`
 Baseline gate: 37 tests pass, lint/typecheck/build pass, public repo gate pass.
 Branch: `main`
+Final verification commit: `c504dd7`
+Final CI run: `44860707491`
+Final deploy stamp: `20261121T032346Z`
 
 ## Phase status
 
 | Phase | Focus | Status | Evidence |
 | --- | --- | --- | --- |
-| 1 | Security, observability, hardening | IMPLEMENTED | DB rate limits, headers, CSRF, redaction, deep health, magic bytes. Audit fixes applied. Pending CI. |
-| 2 | Database evolution, migration engine | IMPLEMENTED | 9 migrations, checksums, advisory lock before ledger read, schema parity script. Pending CI. |
-| 3 | Auth, SMTP, admin RBAC | IMPLEMENTED | jti sessions, truthful outbox, audit writes, RBAC. Pending CI. |
-| 4 | Scout engine, AI extraction v2 | IMPLEMENTED | Server gatekeeper, dedupe, retry abort fix, 7 sources, web search. Pending CI. |
-| 5 | Discovery, matching, student workspace | IMPLEMENTED | Rate-limited AI ranking, honest relaxed intent, explainable matching wired. Pending CI. |
-| 6 | Teacher ops, team builder, analytics | IMPLEMENTED | Canonical roles, optimizer wired, safer task RLS. Pending CI. |
-| 7 | Notifications, media, UX polish | IMPLEMENTED | New-user preference trigger, reminders scheduler, Thai admin copy. Pending CI. |
-| 8 | Tests, CI/CD, production docs | IMPLEMENTED | 83 unit tests, CI parity/integration/audit gates, E2E journeys. Pending CI and deploy. |
+| 1 | Security, observability, hardening | VERIFIED | CI run 44860707491 green; 83 unit tests; health reports schema ok; login probe returns 401, not 429. |
+| 2 | Database evolution, migration engine | VERIFIED | 9 migrations applied in production; `db:status` complete; schema parity reports 9 migrations and 41 objects. |
+| 3 | Auth, SMTP, admin RBAC | VERIFIED | jti sessions, truthful outbox, audit writes, RBAC. CI green and production login probe pass. |
+| 4 | Scout engine, AI extraction v2 | VERIFIED | Server gatekeeper, dedupe, retry abort fix, 7 sources, web search. CI green; live provider probes returned Thai competition URLs. |
+| 5 | Discovery, matching, student workspace | VERIFIED | Rate-limited AI ranking, honest relaxed intent, explainable matching wired. CI green. |
+| 6 | Teacher ops, team builder, analytics | VERIFIED | Canonical roles, optimizer wired, safer task RLS. CI green; integration RLS probe reports 0 unprotected tables. |
+| 7 | Notifications, media, UX polish | VERIFIED | New-user preference trigger applied as 0008; reminders scheduler added; E2E covers notification bell. CI green. |
+| 8 | Tests, CI/CD, production docs | VERIFIED | CI run 44860707491 green with 3 Playwright tests; public repo gate green; deploy stamp 20261121T032346Z healthy. |
 
 ## Decision trail
 
@@ -48,6 +51,8 @@ Branch: `main`
 | 6 | Use `optimizeTeams` for new team creation | Only `scoreTeam` was wired into the UI | `src/components/teacher/team-builder-board.tsx` |
 | 7 | Add a trigger that creates notification preferences for new users | New users were excluded from reminders | `db/migrations/0008_notification_preferences.sql` |
 | 8 | Check all public tables and all migration versions in the integration probe | The old probe missed missing tables and migrations | `scripts/test-integration.mjs` |
+
+| 8 | Marked all phases VERIFIED only after CI, deploy, and production probes passed | Labels without real verification were the original problem | CI run 44860707491, deploy stamp 20261121T032346Z, `/api/health`, login probe |
 
 ## Accepted boundaries
 
