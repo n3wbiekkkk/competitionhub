@@ -52,7 +52,7 @@ test("request IP ignores client headers unless a trusted proxy is configured", (
   }
 });
 
-test("CSRF accepts same-origin and non-browser writes", () => {
+test("CSRF accepts same-origin writes", () => {
   assert.equal(
     isAllowedMutationOrigin(new Request("http://localhost:3000/api/profile", {
       method: "POST",
@@ -65,7 +65,7 @@ test("CSRF accepts same-origin and non-browser writes", () => {
       method: "POST",
       headers: { host: "localhost:3000" },
     })),
-    true,
+    false,
   );
 });
 

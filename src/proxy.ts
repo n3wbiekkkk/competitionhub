@@ -22,10 +22,15 @@ export async function proxy(request: NextRequest) {
   const session = token ? await verifySessionToken(token) : null;
   const user = session?.user ?? null;
 
+  const hasBearerAuth = request.headers
+    .get("authorization")
+    ?.toLowerCase()
+    .startsWith("bearer ");
+
   if (
     pathname.startsWith("/api/") &&
     !SAFE_METHODS.has(request.method.toUpperCase()) &&
-    token &&
+    !hasBearerAuth &&
     !isAllowedMutationOrigin(request)
   ) {
     return withRequestId(
