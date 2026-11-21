@@ -108,9 +108,9 @@ Baseline for visual work: commit `1a536e3`, baseline gate `/tmp/competition-hub-
 
 - Full local gate: `/tmp/competition-hub-ux/final-check.log`, all checks passed.
 - Remote CI run `44882473213` green at commit `3f00cc0`, 13 Playwright tests passed.
-- Playwright: 13 passed in `/tmp/competition-hub-ux/e2e6.log`.
+- Playwright: 13 passed in `/tmp/competition-hub-ux/e2e8.log`.
 - Visual audit: 24 checks pass in `/tmp/competition-hub-ux/visual-final.log`. Screenshots in `/tmp/competition-hub-ux/final/visual`.
-- 1920px light shell metric: sidebar 247px, topbar 65px, main starts at 248px, no horizontal overflow.
+- 1920px light shell metric: sidebar 247px, topbar 65px, main starts at 248px, no horizontal overflow. Produced by `scripts/visual-audit.mjs`.
 - 390px metric: sidebar hidden, bottom navigation visible, no horizontal overflow.
 - Decision trail: `docs/ux-overhaul-decisions.tsv`.
 
@@ -119,3 +119,4 @@ Baseline for visual work: commit `1a536e3`, baseline gate `/tmp/competition-hub-
 - Before: max-w-7xl topbar-only shell, dense single-column feed, narrow stacked page wrappers.
 - After: grouped 248px sidebar, h-16 topbar, 1680px canvas, sticky filter rail, 2–3 column competition grid, 12-column detail split, full-width workspaces, master-detail review, and bento KPIs.
 - Thai typography uses 1.65 body line-height and 1.35 heading line-height with a Thai fallback for mono.
+- Dev-only React warning about Radix `aria-hidden` hydration attributes is an accepted boundary. CI and all 13 E2E routes pass, and no user-visible failure was observed.
