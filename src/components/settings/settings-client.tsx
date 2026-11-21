@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -39,7 +39,7 @@ import {
 } from "@/lib/constants/classroom";
 import { USER_ROLE_LABELS_TH } from "@/lib/constants/tech-taxonomy";
 import { formatThaiDate } from "@/lib/utils/thai-date";
-import type { Profile } from "@/types/database";
+import type { Profile, UserSessionItem } from "@/types/database";
 
 interface SettingsClientProps {
   profile: Profile;
@@ -67,6 +67,21 @@ export function SettingsClient({ profile }: SettingsClientProps) {
   const [showPasswords, setShowPasswords] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [sessions, setSessions] = useState<UserSessionItem[]>([]);
+  const [sessionBusy, setSessionBusy] = useState(false);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const response = await fetch("/api/auth/sessions");
+        if (!response.ok) return;
+        const data = (await response.json()) as { sessions: UserSessionItem[] };
+        setSessions(data.sessions);
+      } catch {
+        // The panel can be retried by reloading the page.
+      }
+    })();
+  }, []);
 
   const computedGrade =
     formatClassroom(gradeLevel, room) ?? (legacyGrade.trim() || null);
@@ -150,6 +165,36 @@ export function SettingsClient({ profile }: SettingsClientProps) {
       toast.error("ไม่สามารถออกจากระบบได้");
     } finally {
       setLoggingOut(false);
+    }
+  }
+
+  async function revokeSession(jti: string) {
+    setSessionBusy(true);
+    try {
+      const response = await fetch(`/api/auth/sessions/${jti}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("revoke failed");
+      setSessions((prev) => prev.filter((item) => item.jti !== jti));
+      toast.success("ยกเลิกเซสชันแล้ว");
+    } catch {
+      toast.error("ไม่สามารถยกเลิกเซสชันได้");
+    } finally {
+      setSessionBusy(false);
+    }
+  }
+
+  async function revokeAllSessions() {
+    setSessionBusy(true);
+    try {
+      const response = await fetch("/api/auth/sessions/revoke-all", { method: "POST" });
+      if (!response.ok) throw new Error("revoke failed");
+      setSessions([]);
+      toast.success("ออกจากระบบทุกอุปกรณ์แล้ว");
+      router.push("/login");
+      router.refresh();
+    } catch {
+      toast.error("ไม่สามารถออกจากระบบทุกอุปกรณ์ได้");
+    } finally {
+      setSessionBusy(false);
     }
   }
 
@@ -294,6 +339,37 @@ export function SettingsClient({ profile }: SettingsClientProps) {
               <LogOut className="h-4 w-4" />ออกจากระบบ
             </Button>
           </div>
+        </div>
+
+        <div className="mt-6 border-t border-border pt-5">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-medium text-foreground">เซสชันที่ใช้งานอยู่</h3>
+              <p className="text-xs text-muted-foreground">อุปกรณ์ที่เข้าสู่ระบบบัญชีนี้อยู่ตอนนี้</p>
+            </div>
+            <Button type="button" variant="outline" size="sm" disabled={sessionBusy || sessions.length === 0} onClick={() => void revokeAllSessions()} className="rounded-lg">
+              ออกจากทุกอุปกรณ์
+            </Button>
+          </div>
+          <ul className="divide-y divide-border border-y border-border">
+            {sessions.map((session) => (
+              <li key={session.jti} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-sm text-foreground">
+                    {session.user_agent ?? "อุปกรณ์ไม่ระบุ"}
+                    {session.is_current ? <Badge variant="secondary" className="ml-2 rounded-md">อุปกรณ์นี้</Badge> : null}
+                  </p>
+                  <p className="font-mono text-[11px] tabular-nums text-muted-foreground">
+                    {session.ip_address ?? "-"} · {formatThaiDate(session.last_active_at.slice(0, 10), "short")}
+                  </p>
+                </div>
+                <Button type="button" variant="ghost" size="sm" disabled={sessionBusy || session.is_current} onClick={() => void revokeSession(session.jti)} className="self-start rounded-lg text-muted-foreground hover:text-destructive">
+                  ยกเลิก
+                </Button>
+              </li>
+            ))}
+            {sessions.length === 0 ? <li className="py-4 text-sm text-muted-foreground">ไม่มีเซสชันที่ใช้งานอยู่</li> : null}
+          </ul>
         </div>
       </AccountSection>
     </div>

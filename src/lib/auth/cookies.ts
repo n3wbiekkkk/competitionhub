@@ -4,7 +4,7 @@ import {
   SESSION_COOKIE_NAME,
   SESSION_MAX_AGE_SECONDS,
 } from "@/lib/auth/session";
-import { withUserDb } from "@/lib/db/pool";
+import { withSystemDb, withUserDb } from "@/lib/db/pool";
 import type { Profile } from "@/types/database";
 import { logError } from "@/lib/utils/logger";
 
@@ -54,6 +54,15 @@ export async function getAuthenticatedProfile(): Promise<Profile | null> {
   }
 
   try {
+    const active = await withSystemDb(async (client) => {
+      const res = await client.query(
+        "select 1 from public.user_sessions where jti = $1 and user_id = $2 and revoked_at is null limit 1",
+        [session.jti, session.user.id],
+      );
+      return res.rowCount !== null && res.rowCount > 0;
+    });
+    if (!active) return null;
+
     const row = await withUserDb(session.user.id, async (client) => {
       const result = await client.query<LiveAuthRow>(
         `SELECT p.id, p.full_name, p.nickname, p.email, p.role, p.grade, p.skills,

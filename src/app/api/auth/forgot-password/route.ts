@@ -1,8 +1,9 @@
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { withSystemDb } from "@/lib/db/pool";
 import { consumeRateLimit } from "@/lib/auth/rate-limit";
+import { passwordResetEmail } from "@/lib/email/templates";
 import { logError } from "@/lib/utils/logger";
 
 const schema = z.object({
@@ -10,7 +11,7 @@ const schema = z.object({
 });
 
 const GENERIC_MESSAGE =
-  "หากอีเมลนี้มีบัญชีในระบบ ระบบจะบันทึกคำขอรีเซ็ตรหัสผ่านให้อาจารย์ผู้ดูแลตรวจสอบ";
+  "หากอีเมลนี้มีบัญชีในระบบ ระบบจะส่งลิงก์รีเซ็ตหรือบันทึกคำขอให้ครูตรวจสอบ";
 
 function sha256(value: string): string {
   return createHash("sha256").update(value).digest("hex");
@@ -53,6 +54,23 @@ export async function POST(request: Request) {
       );
       const userId = account.rows[0]?.id;
       if (!userId) return;
+
+      const rawToken = randomBytes(32).toString("base64url");
+      const tokenHash = createHash("sha256").update(rawToken).digest();
+      await client.query(
+        `insert into public.password_reset_tokens (user_id, token_hash, expires_at)
+         values ($1, $2, now() + interval '30 minutes')`,
+        [userId, tokenHash],
+      );
+
+      const link = new URL("/reset-password", new URL(request.url).origin);
+      link.searchParams.set("token", rawToken);
+      const mail = passwordResetEmail(link.toString());
+      await client.query(
+        `insert into public.email_outbox (to_email, template, payload, scheduled_at)
+         values ($1, 'password_reset', $2::jsonb, now())`,
+        [email, JSON.stringify(mail)],
+      );
 
       await client.query(
         `INSERT INTO public.password_reset_requests (user_id, expires_at)

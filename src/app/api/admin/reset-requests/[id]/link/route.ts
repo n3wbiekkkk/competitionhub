@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireTeacherUser } from "@/lib/auth/cookies";
 import { withSystemDb } from "@/lib/db/pool";
+import { writeAudit } from "@/lib/utils/audit";
+import { getRequestIp } from "@/lib/utils/request-ip";
 import { logError } from "@/lib/utils/logger";
 
 const uuidSchema = z.string().uuid();
@@ -59,6 +61,13 @@ export async function POST(
 
     const link = new URL("/reset-password", new URL(request.url).origin);
     link.searchParams.set("token", result.token);
+    await writeAudit({
+      actorId: auth.user.id,
+      action: "admin.reset_link_issued",
+      targetType: "password_reset_request",
+      targetId: id,
+      ipAddress: getRequestIp(request),
+    });
     return NextResponse.json({ link: link.toString() });
   } catch (error) {
     logError("[api/admin/reset-requests] link failed", error);

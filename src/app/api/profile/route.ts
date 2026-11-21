@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAuthUser, setSessionCookie } from "@/lib/auth/cookies";
-import { signSessionToken } from "@/lib/auth/session";
+import { requireAuthUser } from "@/lib/auth/cookies";
+import { issueSessionCookie } from "@/lib/auth/session-issue";
+
 import { withUserDb } from "@/lib/db/pool";
 import { isValidProfileLink, SOCIAL_HOSTS } from "@/lib/utils/profile-links";
 import type { Profile } from "@/types/database";
@@ -177,7 +178,9 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const refreshedToken = await signSessionToken(
+    const response = NextResponse.json({ profile: updated }, { status: 200 });
+    await issueSessionCookie(
+      response,
       {
         id: updated.id,
         email: updated.email,
@@ -185,10 +188,8 @@ export async function PATCH(request: Request) {
         fullName: updated.full_name,
       },
       sessionVersion,
+      request,
     );
-
-    const response = NextResponse.json({ profile: updated }, { status: 200 });
-    setSessionCookie(response, refreshedToken);
     return response;
   } catch (error) {
     logError("[api/profile] update error:", error);

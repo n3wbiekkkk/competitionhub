@@ -3,9 +3,9 @@ import { z } from "zod";
 import { consumeRateLimit } from "@/lib/auth/rate-limit";
 import { getRequestIp } from "@/lib/utils/request-ip";
 import { isConfiguredAdminEmail } from "@/lib/auth/admin-emails";
-import { setSessionCookie } from "@/lib/auth/cookies";
+import { issueSessionCookie } from "@/lib/auth/session-issue";
 import { hashPassword } from "@/lib/auth/password";
-import { signSessionToken } from "@/lib/auth/session";
+
 import {
   formatClassroom,
   isClassRoom,
@@ -191,16 +191,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const token = await signSessionToken(
-      {
-        id: outcome.profile.id,
-        email: outcome.profile.email,
-        role: outcome.profile.role,
-        fullName: outcome.profile.full_name,
-      },
-      0,
-    );
-
     const response = NextResponse.json(
       {
         user: outcome.profile,
@@ -208,7 +198,17 @@ export async function POST(request: Request) {
       },
       { status: 201 },
     );
-    setSessionCookie(response, token);
+    await issueSessionCookie(
+      response,
+      {
+        id: outcome.profile.id,
+        email: outcome.profile.email,
+        role: outcome.profile.role,
+        fullName: outcome.profile.full_name,
+      },
+      0,
+      request,
+    );
     return response;
   } catch (error) {
     logError("[auth/register] error:", error);

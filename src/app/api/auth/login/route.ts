@@ -4,9 +4,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { consumeRateLimit } from "@/lib/auth/rate-limit";
 import { getRequestIp } from "@/lib/utils/request-ip";
-import { setSessionCookie } from "@/lib/auth/cookies";
+import { issueSessionCookie } from "@/lib/auth/session-issue";
 import { verifyPassword } from "@/lib/auth/password";
-import { signSessionToken } from "@/lib/auth/session";
+
 import { withSystemDb } from "@/lib/db/pool";
 import type { Profile } from "@/types/database";
 import { logError } from "@/lib/utils/logger";
@@ -108,7 +108,9 @@ export async function POST(request: Request) {
       updated_at: account.updated_at,
     };
 
-    const token = await signSessionToken(
+    const response = NextResponse.json({ user }, { status: 200 });
+    await issueSessionCookie(
+      response,
       {
         id: user.id,
         email: user.email,
@@ -116,10 +118,8 @@ export async function POST(request: Request) {
         fullName: user.full_name,
       },
       account.session_version,
+      request,
     );
-
-    const response = NextResponse.json({ user }, { status: 200 });
-    setSessionCookie(response, token);
     return response;
   } catch (error) {
     logError("[auth/login] error:", error);

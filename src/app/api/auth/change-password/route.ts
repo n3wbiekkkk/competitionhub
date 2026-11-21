@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAuthUser, setSessionCookie } from "@/lib/auth/cookies";
+import { requireAuthUser } from "@/lib/auth/cookies";
+import { issueSessionCookie } from "@/lib/auth/session-issue";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
-import { signSessionToken } from "@/lib/auth/session";
+
 import { withSystemDb } from "@/lib/db/pool";
 import { logError } from "@/lib/utils/logger";
 
@@ -105,7 +106,8 @@ export async function POST(request: Request) {
     );
 
     // Keep this device signed in with the new version; every other token dies.
-    const token = await signSessionToken(
+    await issueSessionCookie(
+      response,
       {
         id: auth.user.id,
         email: auth.user.email,
@@ -113,8 +115,8 @@ export async function POST(request: Request) {
         fullName: auth.user.full_name,
       },
       outcome.sessionVersion,
+      request,
     );
-    setSessionCookie(response, token);
     return response;
   } catch (error) {
     logError("[api/auth/change-password] error:", error);

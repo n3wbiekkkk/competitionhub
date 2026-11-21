@@ -60,6 +60,34 @@ export interface DirectoryPersonProfile extends DirectoryProfile {
   contact: string | null;
 }
 
+export interface OutboxItem {
+  id: string;
+  to_email: string;
+  template: string;
+  status: "pending" | "sent" | "failed";
+  attempts: number;
+  last_error: string | null;
+  created_at: string;
+}
+
+export interface AuditLogItem {
+  id: string;
+  actor_id: string | null;
+  action: string;
+  target_type: string;
+  target_id: string | null;
+  created_at: string;
+}
+
+export interface UserSessionItem {
+  jti: string;
+  user_agent: string | null;
+  ip_address: string | null;
+  created_at: string;
+  last_active_at: string;
+  is_current: boolean;
+}
+
 export interface PasswordResetRequest {
   id: string;
   user_id: string;

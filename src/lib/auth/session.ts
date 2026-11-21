@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { z } from "zod";
@@ -13,6 +14,7 @@ const sessionPayloadSchema = z.object({
   role: userRoleSchema,
   fullName: z.string(),
   sv: z.number().int().nonnegative(),
+  jti: z.string().uuid(),
 });
 
 function getSessionSecretKey(): Uint8Array | null {
@@ -27,14 +29,10 @@ export function isSessionSecretConfigured(): boolean {
   return getSessionSecretKey() !== null;
 }
 
-/**
- * Mints a session token. `sessionVersion` comes from public.auth_security and
- * is re-checked against the database on every authenticated read, so changing
- * a password or role can revoke tokens that were already handed out.
- */
 export async function signSessionToken(
   payload: SessionUser,
   sessionVersion = 0,
+  jti = randomUUID(),
 ): Promise<string> {
   const secretKey = getSessionSecretKey();
   if (!secretKey) {
@@ -43,13 +41,18 @@ export async function signSessionToken(
     );
   }
 
-  const validated = sessionPayloadSchema.parse({ ...payload, sv: sessionVersion });
+  const validated = sessionPayloadSchema.parse({
+    ...payload,
+    sv: sessionVersion,
+    jti,
+  });
 
   return new SignJWT({
     email: validated.email,
     role: validated.role,
     fullName: validated.fullName,
     sv: validated.sv,
+    jti: validated.jti,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(validated.id)
@@ -61,6 +64,7 @@ export async function signSessionToken(
 export interface VerifiedSession {
   user: SessionUser;
   sessionVersion: number;
+  jti: string;
 }
 
 export async function verifySessionToken(
@@ -82,14 +86,15 @@ export async function verifySessionToken(
       role: payload.role,
       fullName: payload.fullName ?? "",
       sv: payload.sv ?? 0,
+      jti: payload.jti,
     });
 
     if (!parsed.success) {
       return null;
     }
 
-    const { sv, ...user } = parsed.data;
-    return { user, sessionVersion: sv };
+    const { sv, jti, ...user } = parsed.data;
+    return { user, sessionVersion: sv, jti };
   } catch {
     return null;
   }

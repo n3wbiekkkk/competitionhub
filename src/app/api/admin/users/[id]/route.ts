@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { isConfiguredAdminEmail } from "@/lib/auth/admin-emails";
-import { requireTeacherUser, setSessionCookie } from "@/lib/auth/cookies";
+import { requireTeacherUser } from "@/lib/auth/cookies";
+import { issueSessionCookie } from "@/lib/auth/session-issue";
 import { hashPassword } from "@/lib/auth/password";
-import { signSessionToken } from "@/lib/auth/session";
+import { logError } from "@/lib/utils/logger";
+
 import {
   formatClassroom,
   isClassRoom,
@@ -13,7 +15,8 @@ import {
 import { userRoleSchema } from "@/lib/constants/tech-taxonomy";
 import { withSystemDb } from "@/lib/db/pool";
 import type { Profile } from "@/types/database";
-import { logError } from "@/lib/utils/logger";
+import { writeAudit } from "@/lib/utils/audit";
+import { getRequestIp } from "@/lib/utils/request-ip";
 
 const uuidSchema = z.string().uuid();
 
@@ -131,6 +134,8 @@ export async function PATCH(
   const contact = parsed.data.contact?.trim() || null;
   const rawNewPassword = parsed.data.newPassword?.trim() || "";
 
+  let roleChanged = false;
+
   try {
     const nextHash = rawNewPassword ? await hashPassword(rawNewPassword) : null;
 
@@ -152,7 +157,7 @@ export async function PATCH(
       const nextNickname =
         nickname === undefined ? targetUser.nickname : nickname;
 
-      const roleChanged = targetUser.role !== parsed.data.role;
+      roleChanged = targetUser.role !== parsed.data.role;
 
       if (parsed.data.role === "student") {
         if (isConfiguredAdminEmail(targetUser.email)) {
@@ -225,15 +230,27 @@ export async function PATCH(
     }
 
     const response = NextResponse.json({ user: outcome.user }, { status: 200 });
+    await writeAudit({
+      actorId: auth.user.id,
+      action: parsed.data.newPassword ? "admin.password_reset" : "admin.user_update",
+      targetType: "user",
+      targetId: id,
+      metadata: { role: parsed.data.role, roleChanged },
+      ipAddress: getRequestIp(request),
+    });
 
     if (outcome.user.id === auth.user.id) {
-      const token = await signSessionToken({
-        id: outcome.user.id,
-        email: outcome.user.email,
-        role: outcome.user.role,
-        fullName: outcome.user.full_name,
-      }, outcome.sessionVersion);
-      setSessionCookie(response, token);
+      await issueSessionCookie(
+        response,
+        {
+          id: outcome.user.id,
+          email: outcome.user.email,
+          role: outcome.user.role,
+          fullName: outcome.user.full_name,
+        },
+        outcome.sessionVersion,
+        request,
+      );
     }
 
     return response;
@@ -247,7 +264,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const auth = await requireTeacherUser();
@@ -322,6 +339,13 @@ export async function DELETE(
       );
     }
 
+    await writeAudit({
+      actorId: auth.user.id,
+      action: "admin.user_delete",
+      targetType: "user",
+      targetId: id,
+      ipAddress: getRequestIp(request),
+    });
     return NextResponse.json({ deleted: true }, { status: 200 });
   } catch (error) {
     logError("[api/admin/users/[id]] DELETE error:", error);

@@ -1,13 +1,16 @@
 import { redirect } from "next/navigation";
 import { AdminDashboardClient } from "@/components/admin/admin-dashboard-client";
 import { getAuthenticatedProfile } from "@/lib/auth/cookies";
-import { withUserDb } from "@/lib/db/pool";
+import { withSystemDb, withUserDb } from "@/lib/db/pool";
+import { AdminOpsPanel } from "@/components/admin/admin-ops-panel";
 import type {
   AdminCompetitionItem,
   AdminTeamItem,
   AdminTeamMemberSummary,
   AdminUserItem,
+  AuditLogItem,
   Competition,
+  OutboxItem,
   Profile,
 } from "@/types/database";
 
@@ -150,8 +153,23 @@ export default async function AdminDashboardPage() {
     },
   );
 
+  const ops = await withSystemDb(async (client) => {
+    const [outboxRes, auditRes] = await Promise.all([
+      client.query<OutboxItem>(
+        `select id, to_email, template, status, attempts, last_error, created_at::text
+         from public.email_outbox order by created_at desc limit 20`,
+      ),
+      client.query<AuditLogItem>(
+        `select id, actor_id, action, target_type, target_id, created_at::text
+         from public.audit_logs order by created_at desc limit 30`,
+      ),
+    ]);
+    return { outbox: outboxRes.rows, auditLogs: auditRes.rows };
+  });
+
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <main className="mx-auto max-w-7xl space-y-10 px-4 py-8 sm:px-6 lg:px-8">
+      <AdminOpsPanel outbox={ops.outbox} auditLogs={ops.auditLogs} />
       <AdminDashboardClient
         currentUserId={user.id}
         initialUsers={users}
