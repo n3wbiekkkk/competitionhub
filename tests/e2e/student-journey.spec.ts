@@ -29,7 +29,7 @@ test("นักเรียนลงชื่อสนใจการแข่�
 
   await page.getByRole("button", { name: "การแจ้งเตือน" }).click();
   await expect(page.getByText("ยังไม่มีการแจ้งเตือน")).toBeVisible();
-  await page.getByRole("button", { name: "การแจ้งเตือน" }).click();
+  await page.keyboard.press("Escape");
 
   await page.getByRole("link", { name: competitionTitle, exact: true }).click();
   await expect(
