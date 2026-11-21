@@ -192,9 +192,11 @@ test("LFG → เชิญเพื่อน → AI roadmap → แชท → me
       },
     );
     expect([200, 201]).toContain(invited.status);
-    const invitationId = extractId(invited.body);
-    expect(invitationId).toBeTruthy();
-    if (!invitationId) return;
+    const invitationId = z
+      .object({ invitation: z.object({ id: z.string().uuid() }) })
+      .safeParse(invited.body);
+    expect(invitationId.success).toBeTruthy();
+    if (!invitationId.success) return;
 
     const peerContext = await browser.newContext();
     try {
@@ -202,7 +204,7 @@ test("LFG → เชิญเพื่อน → AI roadmap → แชท → me
       await signIn(peerPage, peer.email, peer.password);
       const accepted = await postJson(
         peerPage,
-        `/api/invitations/${invitationId}`,
+        `/api/invitations/${invitationId.data.invitation.id}`,
         { action: "accept" },
         "PATCH",
       );
