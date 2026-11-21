@@ -129,7 +129,7 @@ Goal: elevate TechComp Hub from commit `2ea7f5d` to world-class visual craft acr
 | --- | --- | --- | --- |
 | D1 | Remove /showcase and establish surface/color/typography tokens | VERIFIED | All gates green; 12 E2E pass; 66 visual checks; commit on branch |
 | D2 | Linear-grade app shell: single-line sidebar and quiet topbar | VERIFIED | All gates green; 12 E2E pass; geometry 227/61/228; commit on branch |
-| D3 | Flagship discovery page: full-width grid and horizontal filter bar | NOT STARTED | — |
+| D3 | Flagship discovery page: full-width grid and horizontal filter bar | VERIFIED | All gates green; 12 E2E pass; 72 visual checks; cards above fold; commit on branch |
 | D4 | Editorial detail and student workspaces | NOT STARTED | — |
 | D5 | Teacher studio and admin console | NOT STARTED | — |
 | D6 | Motion, dev-warning fixes, visual audit and full gate | NOT STARTED | — |
@@ -208,3 +208,30 @@ The live database was not used for E2E writes. A throwaway database `tech_compet
 ### E2E harness note
 
 A second E2E run initially failed because earlier runs had left team rows in the throwaway DB, so the admin empty state no longer appeared. The isolated DB was recreated, reseeded with the two accounts and one seed competition, and the suite then passed 12/12. No live data was touched.
+
+### D3 verification evidence
+
+- `npm run lint` — PASS, 0 errors, 0 warnings.
+- `npm run typecheck` — PASS, 0 errors.
+- `npm test` — PASS, 135/135.
+- `npm run check:schema` — PASS, `migrations=14 objects=96`.
+- `npm run test:integration` — PASS, `tables=36 migrations=14`.
+- `npm run build` — PASS, compiled and 29 static pages generated, no warnings.
+- `npm run test:e2e` — PASS, 12/12.
+- `npm run test:visual` — PASS, 72 checks across 3 viewports and 2 themes.
+
+### D3 discovery rebuild
+
+- Removed the 288px desktop filter rail and the mobile filter Sheet; the canvas is now full width. The filter surface is a two-row horizontal control bar labelled `แถบตัวกรองการแข่งขัน`, with a scrollable category strip and dimmed zero-count categories.
+- Deleted the duplicate `+ เพิ่มรายการ` button, its extra modal mount, and the duplicated 14-day 3-card strip. A `ปิดใน 14 วัน` quick-filter pill replaces the strip. The shell remains the single primary CTA source.
+- Header is one editorial row with inline KPI pills, a one-line subtitle, and an inline collapsed AI trigger. The first card row is above the fold at 1440×900 and 1920×1080.
+- Cards use the 5-element anatomy: category pill plus one countdown, title and date, two-line description, ONE merged tag row capped at 4 chips plus `+N`, and a calm footer. No non-functional bookmark control was added.
+- Grid is `grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4`; the view toggles keep their exact `aria-label`s.
+
+### Audit contract change
+
+The sticky-rail assertion was replaced with a horizontal-filter-bar assertion, the grid selector moved from `2xl:grid-cols-3` to `xl:grid-cols-3`, and `/` was added to the authenticated path set so the single-CTA assertion runs against a logged-in context. The audit now also checks filter-bar overflow and that the first card is above the fold. Anonymous `/` has zero add CTAs by design, so the CTA count check is scoped to authenticated contexts.
+
+### Visual spot check
+
+Inspected `.visual-audit/light-1440-home.png` and `.visual-audit/dark-1440-home.png` directly. Both show a single sidebar, full-width canvas, horizontal filters, one unified tag row per card, and the first card row fully visible. No raw hue or ad-hoc shadow styling was introduced.

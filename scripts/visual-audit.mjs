@@ -36,6 +36,7 @@ const publicPaths = [
   ...(competitionId ? [`/competitions/${competitionId}`] : []),
 ];
 const privatePaths = [
+  "/",
   "/my-teams",
   "/people",
   "/profile",
@@ -76,14 +77,43 @@ async function requireAny(page, path, selectors, label) {
   fail(`${path} missing ${label}`);
 }
 
-async function assertLayout(page, path, scheme, viewport) {
+async function assertLayout(page, path, scheme, viewport, auth) {
   if (viewport.width < 1440) return;
   if (path === "/") {
     await requireVisible(page, path, 'nav[aria-label="เมนูหลัก"]', "desktop sidebar nav");
     await requireVisible(page, path, 'button[aria-label="แสดงเป็นตาราง"]', "grid view toggle");
     await requireVisible(page, path, 'button[aria-label="แสดงเป็นรายการ"]', "list view toggle");
-    await requireVisible(page, path, 'aside[class*="xl:sticky"][class*="top-24"]', "sticky filter rail");
-    await requireVisible(page, path, '[class*="2xl:grid-cols-3"]', "3-column card grid");
+    await requireVisible(page, path, '[aria-label="แถบตัวกรองการแข่งขัน"]', "horizontal filter bar");
+    await requireVisible(page, path, '[class*="xl:grid-cols-3"]', "3-column card grid");
+
+    if (auth) {
+      const addButtons = page.getByRole("button", { name: "เพิ่มรายการ", exact: true });
+      let visibleAddButtons = 0;
+      const addButtonCount = await addButtons.count();
+      for (let i = 0; i < addButtonCount; i += 1) {
+        if (await addButtons.nth(i).isVisible()) visibleAddButtons += 1;
+      }
+      if (visibleAddButtons !== 1) {
+        fail(`${path} expected 1 visible เพิ่มรายการ button, found ${visibleAddButtons}`);
+      }
+    }
+
+    const filterOverflow = await page.evaluate(() => {
+      const bar = document.querySelector('[aria-label="แถบตัวกรองการแข่งขัน"]');
+      if (!bar) return null;
+      return { scrollWidth: bar.scrollWidth, clientWidth: bar.clientWidth };
+    });
+    if (filterOverflow && filterOverflow.scrollWidth > filterOverflow.clientWidth + 1) {
+      fail(`${path} filter bar horizontal overflow ${filterOverflow.scrollWidth}>${filterOverflow.clientWidth}`);
+    }
+
+    const firstCardAboveFold = await page.evaluate(() => {
+      const grid = document.querySelector('[class*="xl:grid-cols-3"]');
+      const card = grid?.querySelector("article");
+      if (!card) return null;
+      return card.getBoundingClientRect().top < window.innerHeight;
+    });
+    if (firstCardAboveFold === false) fail(`${path} first competition card below fold`);
   }
   if (path.startsWith("/competitions/")) {
     await requireVisible(page, path, '[class*="lg:col-span-8"]', "editorial main column");
@@ -158,7 +188,7 @@ async function visitPaths(page, paths, scheme, viewport, auth) {
     if (viewport.width === 390 && path === "/" && !metrics.bottomNav) {
       fail(`${label} missing เมนูด้านล่าง`);
     }
-    await assertLayout(page, path, scheme, viewport);
+    await assertLayout(page, path, scheme, viewport, auth);
     const file = `${scheme}-${viewport.name}-${auth ? "auth-" : ""}${path === "/" ? "home" : path.replaceAll(/[^a-zA-Z0-9]+/g, "-")}.png`;
     await page.screenshot({ path: resolve(outputDir, file), fullPage: false });
   }
