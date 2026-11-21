@@ -60,7 +60,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo "==> restoring into temporary database $VERIFY_DB"
-compose_psql -d postgres -c "create database $VERIFY_DB;" >/dev/null
+docker compose "${COMPOSE_ENV[@]}" exec -T db createdb -U postgres "$VERIFY_DB" >/dev/null
 gunzip -c "$BACKUP_FILE" | compose_psql -d "$VERIFY_DB" >/dev/null
 
 TABLES=(
