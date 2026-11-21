@@ -13,3 +13,4 @@ ts	phase	decision	why	evidence	result
 2026-11-21T07:55:17Z	U6	added a rerunnable multi-viewport visual audit	screenshots alone are not a repeatable gate	scripts/visual-audit.mjs, /tmp/competition-hub-ux/visual-final.log	24 checks pass
 2026-11-21T07:55:17Z	U6	scoped the showcase E2E assertion to the first title match	Next dev streaming briefly exposes a hidden duplicate node during hydration	tests/e2e/public-showcase-and-ics.spec.ts, /tmp/competition-hub-ux/e2e6.log	13 E2E pass
 2026-11-21T07:55:17Z	U6	added shared empty state and layout matched feed skeleton	plain empty copy and list skeletons caused jarring layout shifts	src/components/ui/empty-state.tsx, src/app/loading.tsx	checks green
+2026-11-21T07:58:04Z	U6	pushed the UX overhaul and confirmed CI green	the final code commit needs a remote gate, not only local checks	CI 44882473213, commit 3f00cc0	13 E2E pass

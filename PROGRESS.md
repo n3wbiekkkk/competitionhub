@@ -107,6 +107,7 @@ Baseline for visual work: commit `1a536e3`, baseline gate `/tmp/competition-hub-
 ### UX/UI verification notes
 
 - Full local gate: `/tmp/competition-hub-ux/final-check.log`, all checks passed.
+- Remote CI run `44882473213` green at commit `3f00cc0`, 13 Playwright tests passed.
 - Playwright: 13 passed in `/tmp/competition-hub-ux/e2e6.log`.
 - Visual audit: 24 checks pass in `/tmp/competition-hub-ux/visual-final.log`. Screenshots in `/tmp/competition-hub-ux/final/visual`.
 - 1920px light shell metric: sidebar 247px, topbar 65px, main starts at 248px, no horizontal overflow.
