@@ -4,26 +4,34 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
-  Check,
-  ExternalLink,
+  LayoutGrid,
+  List,
   Plus,
   RotateCcw,
-  Search,
-  X,
+  SlidersHorizontal,
 } from "lucide-react";
-import { SmartAddModal } from "@/components/competitions/smart-add-modal";
 import { AiDiscoveryPanel } from "@/components/competitions/ai-discovery-panel";
-import { getCategoryIcon } from "@/components/competitions/category-icon";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+  CompetitionCard,
+  type CompetitionMatchInfo,
+  type FeedCompetitionItem,
+} from "@/components/competitions/competition-card";
+import {
+  FeedFilters,
+  type FeedFilterState,
+} from "@/components/competitions/feed-filters";
+import { SmartAddModal } from "@/components/competitions/smart-add-modal";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import {
   TECH_CATEGORIES,
   TECH_CATEGORY_META,
@@ -35,39 +43,30 @@ import {
   formatThaiDate,
   getDeadlineCountdown,
 } from "@/lib/utils/thai-date";
-import type { Competition } from "@/types/database";
 
-export interface FeedCompetitionItem extends Competition {
-  interest_count: number;
-  my_preferred_role: string | null;
-}
+export type { FeedCompetitionItem } from "@/components/competitions/competition-card";
+export type {
+  SortOption,
+  TargetLevelFilter,
+  TeamSizeFilter,
+} from "@/components/competitions/feed-filters";
 
-export type TeamSizeFilter = "all" | "solo" | "small" | "large";
-export type TargetLevelFilter = "all" | "high_school" | "university" | "public";
-export type SortOption = "deadline_asc" | "popular" | "newest" | "match";
-
-export interface InitialFeedFilters {
-  status: "open" | "closed";
-  category: "all" | TechCategory;
-  level: TargetLevelFilter;
-  size: TeamSizeFilter;
-  sort: SortOption;
-  q: string;
-  match: boolean;
-}
+export type InitialFeedFilters = Partial<FeedFilterState>;
 
 interface CompetitionFeedProps {
   competitions: FeedCompetitionItem[];
   userRole: UserRole | null;
   userSkills?: string[];
-  initialFilters?: Partial<InitialFeedFilters>;
+  initialFilters?: InitialFeedFilters;
   todayIso: string;
 }
+
+type ViewMode = "grid" | "list";
 
 function computeMatchedTech(
   comp: FeedCompetitionItem,
   userSkills: string[],
-): { matchedHints: Set<string>; matchedCount: number } {
+): CompetitionMatchInfo {
   const explanation = explainSkillMatch({
     userSkills,
     competition: {
@@ -88,7 +87,7 @@ function computeMatchedTech(
 
 function matchesTargetLevel(
   comp: FeedCompetitionItem,
-  level: TargetLevelFilter,
+  level: FeedFilterState["level"],
 ): boolean {
   if (level === "all") return true;
   const haystack =
@@ -134,37 +133,54 @@ export function CompetitionFeed({
   todayIso,
 }: CompetitionFeedProps) {
   const hasUserSkills = userSkills.length > 0;
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const railSearchRef = useRef<HTMLInputElement>(null);
+  const mobileSearchRef = useRef<HTMLInputElement>(null);
+  const pendingSearchFocusRef = useRef(false);
 
-  const [statusTab, setStatusTab] = useState<"open" | "closed">(
-    initialFilters?.status ?? "open",
-  );
-  const [selectedCategory, setSelectedCategory] = useState<
-    "all" | TechCategory
-  >(initialFilters?.category ?? "all");
-  const [levelFilter, setLevelFilter] = useState<TargetLevelFilter>(
-    initialFilters?.level ?? "all",
-  );
-  const [teamSizeFilter, setTeamSizeFilter] = useState<TeamSizeFilter>(
-    initialFilters?.size ?? "all",
-  );
-  const [sortBy, setSortBy] = useState<SortOption>(() => {
-    const initSort = initialFilters?.sort ?? "deadline_asc";
-    if (initSort === "match" && !hasUserSkills) {
-      return "deadline_asc";
-    }
-    return initSort;
-  });
-  const [searchQuery, setSearchQuery] = useState(initialFilters?.q ?? "");
-  const [onlySkillMatch, setOnlySkillMatch] = useState(
-    hasUserSkills ? (initialFilters?.match ?? false) : false,
-  );
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [smartModalOpen, setSmartModalOpen] = useState(false);
+  const [filters, setFilters] = useState<FeedFilterState>(() => {
+    const initialSort = initialFilters?.sort ?? "deadline_asc";
+    return {
+      status: initialFilters?.status ?? "open",
+      category: initialFilters?.category ?? "all",
+      level: initialFilters?.level ?? "all",
+      size: initialFilters?.size ?? "all",
+      sort: initialSort === "match" && !hasUserSkills ? "deadline_asc" : initialSort,
+      q: initialFilters?.q ?? "",
+      match: hasUserSkills ? (initialFilters?.match ?? false) : false,
+    };
+  });
 
-  // Global "/" shortcut to focus search
+  const {
+    status: statusTab,
+    category: selectedCategory,
+    level: levelFilter,
+    size: teamSizeFilter,
+    sort: sortBy,
+    q: searchQuery,
+    match: onlySkillMatch,
+  } = filters;
+
+  function updateFilters(patch: Partial<FeedFilterState>) {
+    setFilters((previous) => {
+      const next = { ...previous, ...patch };
+      if (!hasUserSkills && next.match) next.match = false;
+      if (next.sort === "match" && !hasUserSkills) next.sort = "deadline_asc";
+      return next;
+    });
+  }
+
+  // Global "/" shortcut to focus the visible search input, opening filters on mobile.
   useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (
+        event.key !== "/" ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey
+      ) {
         return;
       }
       const active = document.activeElement;
@@ -179,15 +195,32 @@ export function CompetitionFeed({
           return;
         }
       }
-      e.preventDefault();
-      searchInputRef.current?.focus();
+      event.preventDefault();
+      const visibleSearch = [railSearchRef.current, mobileSearchRef.current].find(
+        (input) => input !== null && input.getClientRects().length > 0,
+      );
+      if (visibleSearch) {
+        visibleSearch.focus();
+        return;
+      }
+      pendingSearchFocusRef.current = true;
+      setMobileFiltersOpen(true);
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Sync non-default filters cleanly to URL query string
+  useEffect(() => {
+    if (!mobileFiltersOpen || !pendingSearchFocusRef.current) return;
+    const frame = requestAnimationFrame(() => {
+      mobileSearchRef.current?.focus();
+      pendingSearchFocusRef.current = false;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [mobileFiltersOpen]);
+
+  // Sync non-default filters cleanly to URL query string.
   useEffect(() => {
     const params = new URLSearchParams();
     if (statusTab !== "open") params.set("status", statusTab);
@@ -216,11 +249,11 @@ export function CompetitionFeed({
   ]);
 
   const openItems = useMemo(
-    () => competitions.filter((c) => c.status === "open"),
+    () => competitions.filter((comp) => comp.status === "open"),
     [competitions],
   );
   const closedCount = useMemo(
-    () => competitions.filter((c) => c.status === "closed").length,
+    () => competitions.filter((comp) => comp.status === "closed").length,
     [competitions],
   );
 
@@ -249,11 +282,11 @@ export function CompetitionFeed({
 
   const statusScoped = useMemo(
     () =>
-      competitions.filter((c) => {
-        if (c.status !== statusTab) return false;
+      competitions.filter((comp) => {
+        if (comp.status !== statusTab) return false;
         return (
           statusTab !== "open" ||
-          getDeadlineCountdown(c.deadline, todayIso).kind !== "expired"
+          getDeadlineCountdown(comp.deadline, todayIso).kind !== "expired"
         );
       }),
     [competitions, statusTab, todayIso],
@@ -261,8 +294,8 @@ export function CompetitionFeed({
 
   const categoryCounts = useMemo(() => {
     const map = new Map<TechCategory, number>();
-    for (const cat of TECH_CATEGORIES) {
-      map.set(cat, 0);
+    for (const category of TECH_CATEGORIES) {
+      map.set(category, 0);
     }
     for (const comp of statusScoped) {
       map.set(comp.category, (map.get(comp.category) ?? 0) + 1);
@@ -271,10 +304,7 @@ export function CompetitionFeed({
   }, [statusScoped]);
 
   const skillMatchById = useMemo(() => {
-    const map = new Map<
-      string,
-      { matchedHints: Set<string>; matchedCount: number }
-    >();
+    const map = new Map<string, CompetitionMatchInfo>();
     if (!hasUserSkills) return map;
     for (const comp of competitions) {
       map.set(comp.id, computeMatchedTech(comp, userSkills));
@@ -283,7 +313,7 @@ export function CompetitionFeed({
   }, [competitions, userSkills, hasUserSkills]);
 
   const filteredCompetitions = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
+    const query = searchQuery.trim().toLowerCase();
 
     const matched = statusScoped.filter((comp) => {
       if (selectedCategory !== "all" && comp.category !== selectedCategory) {
@@ -317,7 +347,7 @@ export function CompetitionFeed({
         }
       }
 
-      if (q.length > 0) {
+      if (query.length > 0) {
         const haystack = [
           comp.title,
           comp.category,
@@ -328,7 +358,7 @@ export function CompetitionFeed({
         ]
           .join(" ")
           .toLowerCase();
-        if (!haystack.includes(q)) {
+        if (!haystack.includes(query)) {
           return false;
         }
       }
@@ -338,9 +368,9 @@ export function CompetitionFeed({
 
     return [...matched].sort((a, b) => {
       if (sortBy === "match" && hasUserSkills) {
-        const ma = skillMatchById.get(a.id)?.matchedCount ?? 0;
-        const mb = skillMatchById.get(b.id)?.matchedCount ?? 0;
-        if (mb !== ma) return mb - ma;
+        const matchA = skillMatchById.get(a.id)?.matchedCount ?? 0;
+        const matchB = skillMatchById.get(b.id)?.matchedCount ?? 0;
+        if (matchB !== matchA) return matchB - matchA;
       } else if (sortBy === "popular") {
         if (b.interest_count !== a.interest_count) {
           return b.interest_count - a.interest_count;
@@ -349,9 +379,9 @@ export function CompetitionFeed({
         return b.created_at.localeCompare(a.created_at);
       }
 
-      const da = a.deadline ?? "9999-12-31";
-      const db = b.deadline ?? "9999-12-31";
-      if (da !== db) return da.localeCompare(db);
+      const deadlineA = a.deadline ?? "9999-12-31";
+      const deadlineB = b.deadline ?? "9999-12-31";
+      if (deadlineA !== deadlineB) return deadlineA.localeCompare(deadlineB);
       return b.created_at.localeCompare(a.created_at);
     });
   }, [
@@ -366,567 +396,310 @@ export function CompetitionFeed({
     skillMatchById,
   ]);
 
-  const hasActiveFilters =
-    selectedCategory !== "all" ||
-    levelFilter !== "all" ||
-    teamSizeFilter !== "all" ||
-    onlySkillMatch ||
-    searchQuery.trim().length > 0;
+  const activeFilterCount =
+    (selectedCategory !== "all" ? 1 : 0) +
+    (levelFilter !== "all" ? 1 : 0) +
+    (teamSizeFilter !== "all" ? 1 : 0) +
+    (hasUserSkills && onlySkillMatch ? 1 : 0) +
+    (searchQuery.trim().length > 0 ? 1 : 0);
+  const hasActiveFilters = activeFilterCount > 0;
 
   function resetFilters() {
-    setSelectedCategory("all");
-    setLevelFilter("all");
-    setTeamSizeFilter("all");
-    setOnlySkillMatch(false);
-    setSearchQuery("");
+    updateFilters({
+      category: "all",
+      level: "all",
+      size: "all",
+      match: false,
+      q: "",
+    });
   }
 
+  const filterPanelProps = {
+    filters,
+    onFiltersChange: updateFilters,
+    openCount: openItems.length,
+    closedCount,
+    categoryCounts,
+    statusScopedCount: statusScoped.length,
+    competitionYear,
+    hasUserSkills,
+    hasActiveFilters,
+    onReset: resetFilters,
+  };
+
   return (
-    <div className="space-y-8">
-      {/* Header: search-first instead of stats-first */}
-      <section className="space-y-5">
-        <div className="space-y-2">
-          <p className="text-xs font-medium uppercase tracking-widest text-primary">
-            ฐานข้อมูลการแข่งขันในประเทศไทย
+    <div className="xl:flex xl:items-start xl:gap-8">
+      <aside className="hidden w-72 shrink-0 xl:sticky xl:top-24 xl:block xl:self-start">
+        <div className="surface-subtle rounded-2xl p-5">
+          <p className="mb-5 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            ตัวกรอง
           </p>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl sm:leading-[1.2]">
-            การแข่งขันคอมพิวเตอร์และเทคโนโลยี
-          </h1>
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            คัดเฉพาะเวทีในไทยด้านซอฟต์แวร์ AI ความปลอดภัยไซเบอร์ หุ่นยนต์
-            และนวัตกรรมดิจิทัล พร้อมลงชื่อตามบทบาทเพื่อจัดทีม
-          </p>
+          <FeedFilters {...filterPanelProps} searchInputRef={railSearchRef} />
         </div>
-        <AiDiscoveryPanel userSkills={userSkills} />
-      </section>
+      </aside>
 
-      {/* Stats row */}
-      <div className="flex flex-wrap items-center gap-4 border-y border-border py-3 sm:gap-6">
-        <div className="flex items-center gap-1.5">
-          <span className="font-mono text-xl font-bold tabular-nums text-primary">{openItems.length}</span>
-          <span className="text-xs text-muted-foreground">เปิดรับสมัคร</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="font-mono text-xl font-bold tabular-nums text-peach-foreground">{urgentSpotlight.length}</span>
-          <span className="text-xs text-muted-foreground">ปิดใน 14 วัน</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="font-mono text-xl font-bold tabular-nums text-muted-foreground">{closedCount}</span>
-          <span className="text-xs text-muted-foreground">คลังปี {competitionYear}</span>
-        </div>
-        {userRole ? (
-          <Button
-            size="sm"
-            className="ml-auto gap-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
-            onClick={() => setSmartModalOpen(true)}
-          >
-            <Plus className="h-3.5 w-3.5" /> เพิ่มรายการ
-          </Button>
-        ) : (
-          <Button asChild size="sm" className="ml-auto gap-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90">
-            <Link href="/login">เข้าสู่ระบบเพื่อลงชื่อแข่ง<ArrowRight className="h-3.5 w-3.5" /></Link>
-          </Button>
-        )}
-      </div>
-
-      {userRole ? (
-        <SmartAddModal
-          userRole={userRole}
-          open={smartModalOpen}
-          onOpenChange={setSmartModalOpen}
-        />
-      ) : null}
-
-      {/* Closing Soon Hairline Strip */}
-      {statusTab === "open" && !hasActiveFilters && urgentSpotlight.length > 0 ? (
-        <section className="space-y-3">
-          <h2 className="text-xs font-medium tracking-wide text-muted-foreground">
-            ปิดรับสมัครภายใน 14 วัน
-          </h2>
-          <div className="grid divide-y divide-border border-y border-border md:grid-cols-3 md:divide-x md:divide-y-0">
-            {urgentSpotlight.map(({ comp, countdown }) => {
-              const catMeta = TECH_CATEGORY_META[comp.category];
-              const countdownText =
-                countdown.daysRemaining === 0
-                  ? "วันนี้"
-                  : `อีก ${countdown.daysRemaining ?? 0} วัน`;
-
-              return (
-                <Link
-                  key={`urgent-${comp.id}`}
-                  href={`/competitions/${comp.id}`}
-                  className="group flex items-start justify-between gap-4 py-4 transition-colors hover:bg-muted/30 md:px-5 md:first:pl-0 md:last:pr-0"
-                >
-                  <div className="min-w-0 space-y-1">
-                    <p className="text-xs text-muted-foreground">
-                      {catMeta.shortLabel}
-                    </p>
-                    <p className="line-clamp-2 text-sm font-medium leading-snug text-foreground transition-colors group-hover:text-primary">
-                      {comp.title}
-                    </p>
-                    <p className="text-xs tabular-nums text-muted-foreground">
-                      ปิดรับ {formatThaiDate(comp.deadline, "short")} · สนใจ{" "}
-                      {comp.interest_count} คน
-                    </p>
-                  </div>
-
-                  <span className="shrink-0 pt-0.5 font-mono text-xs font-semibold whitespace-nowrap tabular-nums text-primary">
-                    {countdownText}
-                  </span>
-                </Link>
-              );
-            })}
+      <div className="min-w-0 flex-1 space-y-8">
+        <section className="space-y-4">
+          <div className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-widest text-primary">
+              ฐานข้อมูลการแข่งขันในประเทศไทย
+            </p>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              การแข่งขันคอมพิวเตอร์และเทคโนโลยี
+            </h1>
+            <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              คัดเฉพาะเวทีในไทยด้านซอฟต์แวร์ AI ความปลอดภัยไซเบอร์ หุ่นยนต์
+              และนวัตกรรมดิจิทัล พร้อมลงชื่อตามบทบาทเพื่อจัดทีม
+            </p>
           </div>
+          <AiDiscoveryPanel userSkills={userSkills} />
         </section>
-      ) : null}
 
-      {/* Canvas Filter Controls */}
-      <section className="space-y-4 border-b border-border pb-5">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <Tabs
-            value={statusTab}
-            onValueChange={(value) =>
-              setStatusTab(value === "closed" ? "closed" : "open")
-            }
-          >
-            <TabsList
-              variant="line"
-              className="h-auto gap-6 rounded-none bg-transparent p-0 group-data-horizontal/tabs:h-auto"
-            >
-              <TabsTrigger
-                value="open"
-                className="flex-none gap-2 rounded-none px-0 pb-2 text-sm font-medium after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-semibold"
-              >
-                <span>กำลังเปิดรับสมัคร</span>
-                <span className="font-mono text-xs tabular-nums text-muted-foreground">
-                  {openItems.length}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="closed"
-                className="flex-none gap-2 rounded-none px-0 pb-2 text-sm font-medium after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-semibold"
-              >
-                <span>ปิดรับแล้ว (คลังปี {competitionYear})</span>
-                <span className="font-mono text-xs tabular-nums text-muted-foreground">
-                  {closedCount}
-                </span>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="relative flex-1 sm:w-64 lg:w-72">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                ref={searchInputRef}
-                type="search"
-                aria-label="ค้นหารายการแข่งขัน"
-                placeholder="ค้นหาชื่อรายการ, ผู้จัด, หรือเทคโนโลยี เช่น Arduino, CTF, มจธ."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") {
-                    if (searchQuery.length > 0) {
-                      setSearchQuery("");
-                    } else {
-                      e.currentTarget.blur();
-                    }
-                  }
-                }}
-                className="h-9 rounded-md pl-8 pr-8 text-sm"
-              />
-              {searchQuery.length > 0 ? (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  aria-label="ล้างคำค้นหา"
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              ) : (
-                <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 rounded border border-border bg-muted/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline-flex">
-                  /
-                </kbd>
-              )}
-            </div>
-
-            <Select
-              value={teamSizeFilter}
-              onValueChange={(value) => {
-                if (
-                  value === "all" ||
-                  value === "solo" ||
-                  value === "small" ||
-                  value === "large"
-                ) {
-                  setTeamSizeFilter(value);
-                }
-              }}
-            >
-              <SelectTrigger aria-label="กรองตามขนาดทีม" className="h-9 w-full rounded-md sm:w-36">
-                <SelectValue placeholder="ขนาดทีม" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">ทุกขนาดทีม</SelectItem>
-                <SelectItem value="solo">แข่งเดี่ยว (1 คน)</SelectItem>
-                <SelectItem value="small">ทีมเล็ก (2–3 คน)</SelectItem>
-                <SelectItem value="large">ทีมใหญ่ (4+ คน)</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={sortBy}
-              onValueChange={(value) => {
-                if (
-                  value === "deadline_asc" ||
-                  value === "popular" ||
-                  value === "newest" ||
-                  value === "match"
-                ) {
-                  setSortBy(value);
-                }
-              }}
-            >
-              <SelectTrigger aria-label="เรียงลำดับรายการ" className="h-9 w-full rounded-md sm:w-44">
-                <SelectValue placeholder="เรียงตาม" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="deadline_asc">ใกล้ปิดรับสมัครสุด</SelectItem>
-                {hasUserSkills ? (
-                  <SelectItem value="match">ตรงทักษะมากสุด</SelectItem>
-                ) : null}
-                <SelectItem value="popular">ได้รับความสนใจสูงสุด</SelectItem>
-                <SelectItem value="newest">เพิ่มล่าสุด</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mr-1">หมวด</span>
-          {(
-            [
-              { id: "all", label: "ทุกระดับ" },
-              { id: "high_school", label: "ม.ปลาย" },
-              { id: "university", label: "มหาวิทยาลัย" },
-              { id: "public", label: "บุคคลทั่วไป" },
-            ] as const
-          ).map((lvl) => {
-            const active = levelFilter === lvl.id;
-            return (
-              <button
-                key={lvl.id}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setLevelFilter(lvl.id)}
-                className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
-                  active
-                    ? "border-foreground bg-foreground text-background"
-                    : "border-border bg-background text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                }`}
-              >
-                {lvl.label}
-              </button>
-            );
-          })}
-
-          {hasUserSkills ? (
-            <button
-              type="button"
-              aria-pressed={onlySkillMatch}
-              onClick={() => setOnlySkillMatch((prev) => !prev)}
-              className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
-                onlySkillMatch
-                  ? "border-primary bg-primary/8 text-primary"
-                  : "border-border bg-background text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-              }`}
-            >
-              ตรงทักษะฉัน
-            </button>
-          ) : null}
-
-          <span
-            aria-hidden="true"
-            className="mx-1.5 hidden h-4 w-px bg-border sm:inline-block"
-          />
-
-          <button
-            type="button"
-            aria-pressed={selectedCategory === "all"}
-            onClick={() => setSelectedCategory("all")}
-            className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
-              selectedCategory === "all"
-                ? "border-foreground bg-foreground text-background"
-                : "border-border bg-background text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-            }`}
-          >
-            ทั้งหมด{" "}
-            <span className="ml-0.5 font-mono tabular-nums opacity-75">
-              {statusScoped.length}
+        <div className="flex flex-wrap items-center gap-4 border-y border-border py-3 sm:gap-6">
+          <div className="flex items-center gap-1.5">
+            <span className="font-mono text-xl font-bold tabular-nums text-primary">
+              {openItems.length}
             </span>
-          </button>
-
-          {TECH_CATEGORIES.map((category) => {
-            const meta = TECH_CATEGORY_META[category];
-            const Icon = getCategoryIcon(category);
-            const count = categoryCounts.get(category) ?? 0;
-            const active = selectedCategory === category;
-
-            return (
-              <button
-                key={category}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setSelectedCategory(category)}
-                className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
-                  active
-                    ? meta.badgeClassName
-                    : "border-border bg-card text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                }`}
-              >
-                <Icon className="mr-1 inline h-3 w-3" />
-                {meta.shortLabel}
-                <span className="ml-1 font-mono tabular-nums opacity-75">
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span className="tabular-nums" role="status" aria-live="polite">
-            แสดง{" "}
-            <strong className="font-medium text-foreground">
-              {filteredCompetitions.length}
-            </strong>{" "}
-            จาก {statusScoped.length} รายการ
-          </span>
-          {hasActiveFilters ? (
-            <button
-              type="button"
-              onClick={resetFilters}
-              className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+            <span className="text-xs text-muted-foreground">เปิดรับสมัคร</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="font-mono text-xl font-bold tabular-nums text-peach-foreground">
+              {urgentSpotlight.length}
+            </span>
+            <span className="text-xs text-muted-foreground">ปิดใน 14 วัน</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="font-mono text-xl font-bold tabular-nums text-muted-foreground">
+              {closedCount}
+            </span>
+            <span className="text-xs text-muted-foreground">คลังปี {competitionYear}</span>
+          </div>
+          {userRole ? (
+            <Button
+              size="sm"
+              className="ml-auto gap-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={() => setSmartModalOpen(true)}
             >
-              <RotateCcw className="h-3 w-3" />
-              ล้างตัวกรอง
-            </button>
-          ) : null}
+              <Plus className="h-3.5 w-3.5" /> เพิ่มรายการ
+            </Button>
+          ) : (
+            <Button
+              asChild
+              size="sm"
+              className="ml-auto gap-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <Link href="/login">
+                เข้าสู่ระบบเพื่อลงชื่อแข่ง
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          )}
         </div>
-      </section>
 
-      {/* Competition List */}
-      {filteredCompetitions.length === 0 ? (
-        <div className="border-b border-border py-14 text-center">
-          <p className="text-sm font-medium text-foreground">
-            ไม่พบรายการแข่งขันในเงื่อนไขที่เลือก
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {hasActiveFilters
-              ? "ลองล้างตัวกรองหรือเปลี่ยนหมวดสาย Tech เพื่อดูรายการแข่งขันในไทยทั้งหมด"
-              : "ยังไม่มีรายการแข่งขันในสถานะนี้ คุณสามารถเพิ่มรายการด้วย AI ได้ทันที"}
-          </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
-            {hasActiveFilters ? (
-              <Button variant="outline" size="sm" onClick={resetFilters}>
-                <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-                ล้างตัวกรองทั้งหมด
-              </Button>
-            ) : null}
-            {userRole ? (
+        {userRole ? (
+          <SmartAddModal
+            userRole={userRole}
+            open={smartModalOpen}
+            onOpenChange={setSmartModalOpen}
+          />
+        ) : null}
+
+        <div className="xl:hidden">
+          <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+            <SheetTrigger asChild>
               <Button
                 variant="outline"
-                size="sm"
-                onClick={() => setSmartModalOpen(true)}
-                className="gap-1.5"
+                className="h-10 w-full gap-2 rounded-xl text-sm"
               >
-                <Plus className="h-3.5 w-3.5" />
-                เพิ่มรายการแข่งขัน
+                <SlidersHorizontal className="h-4 w-4" />
+                ตัวกรองการแข่งขัน
+                {activeFilterCount > 0 ? (
+                  <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 font-mono text-[11px] tabular-nums text-primary-foreground">
+                    {activeFilterCount}
+                  </span>
+                ) : null}
               </Button>
-            ) : null}
-          </div>
+            </SheetTrigger>
+            <SheetContent
+              side="left"
+              className="flex w-[min(88vw,22rem)] flex-col gap-0 overflow-y-auto p-0 sm:max-w-sm"
+            >
+              <SheetHeader className="border-b border-border/60 p-5">
+                <SheetTitle>ตัวกรองการแข่งขัน</SheetTitle>
+                <SheetDescription className="leading-relaxed">
+                  เลือกสายงาน ระดับผู้เข้าร่วม และขนาดทีมเพื่อค้นหาเวทีที่ใช่
+                </SheetDescription>
+              </SheetHeader>
+              <div className="flex-1 overflow-y-auto p-5">
+                <FeedFilters
+                  {...filterPanelProps}
+                  searchInputRef={mobileSearchRef}
+                />
+              </div>
+              <SheetFooter className="border-t border-border/60 p-4">
+                <SheetClose asChild>
+                  <Button className="w-full rounded-xl">
+                    ดูรายการที่ตรงเงื่อนไข
+                  </Button>
+                </SheetClose>
+              </SheetFooter>
+            </SheetContent>
+          </Sheet>
         </div>
-      ) : (
-        <div className="divide-y divide-border">
-          {filteredCompetitions.map((comp) => {
-            const catMeta = TECH_CATEGORY_META[comp.category];
-  const Icon = getCategoryIcon(comp.category);
-  const countdown = getDeadlineCountdown(comp.deadline, todayIso);
-            const visibleRoles = comp.recommended_roles.slice(0, 4);
-            const extraRoleCount =
-              comp.recommended_roles.length - visibleRoles.length;
-            const visibleTech = comp.tech_stack_hints.slice(0, 4);
-            const matchInfo = skillMatchById.get(comp.id);
-            const matchedCount = matchInfo?.matchedCount ?? 0;
 
-            return (
-              <article
-                key={comp.id}
-                className="group -mx-3 rounded-xl px-3 py-5 transition-colors hover:bg-muted/40 hover:shadow-sm sm:-mx-4 sm:px-4 sm:rounded-lg"
-              >
-                <div className="grid gap-4 lg:grid-cols-12 lg:items-start">
-                  <div className="space-y-2 lg:col-span-8">
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                      <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium ${catMeta.badgeClassName}`}>
-                        <Icon className="h-3 w-3" />
-                        {catMeta.shortLabel}
-                      </span>
-                      {comp.eligibility ? (
-                        <>
-                          <span aria-hidden="true">·</span>
-                          <span className="line-clamp-1">
-                            {comp.eligibility}
-                          </span>
-                        </>
-                      ) : null}
-                      {matchedCount > 0 ? (
-                        <>
-                          <span aria-hidden="true">·</span>
-                          <span className="font-medium tabular-nums text-primary">
-                            ตรงทักษะ {matchedCount} รายการ
-                          </span>
-                        </>
-                      ) : null}
-                      {comp.my_preferred_role ? (
-                        <>
-                          <span aria-hidden="true">·</span>
-                          <span className="inline-flex items-center gap-1 font-medium text-primary">
-                            <Check className="h-3 w-3" />
-                            ลงชื่อแล้ว ({comp.my_preferred_role})
-                          </span>
-                        </>
-                      ) : null}
-                    </div>
+        {statusTab === "open" && !hasActiveFilters && urgentSpotlight.length > 0 ? (
+          <section className="space-y-3">
+            <h2 className="text-xs font-medium tracking-wide text-muted-foreground">
+              ปิดรับสมัครภายใน 14 วัน
+            </h2>
+            <div className="grid divide-y divide-border border-y border-border md:grid-cols-3 md:divide-x md:divide-y-0">
+              {urgentSpotlight.map(({ comp, countdown }) => {
+                const categoryMeta = TECH_CATEGORY_META[comp.category];
+                const countdownText =
+                  countdown.daysRemaining === 0
+                    ? "วันนี้"
+                    : `อีก ${countdown.daysRemaining ?? 0} วัน`;
 
-                    <h3 className="text-base font-semibold leading-snug tracking-tight text-foreground">
-                      <Link
-                        href={`/competitions/${comp.id}`}
-                        className="transition-colors hover:text-primary"
-                      >
+                return (
+                  <Link
+                    key={`urgent-${comp.id}`}
+                    href={`/competitions/${comp.id}`}
+                    className="group flex items-start justify-between gap-4 py-4 transition-colors hover:bg-muted/30 md:px-5 md:first:pl-0 md:last:pr-0"
+                  >
+                    <div className="min-w-0 space-y-1">
+                      <p className="text-xs text-muted-foreground">
+                        {categoryMeta.shortLabel}
+                      </p>
+                      <p className="line-clamp-2 text-sm font-medium leading-[1.35] text-foreground transition-colors group-hover:text-primary">
                         {comp.title}
-                      </Link>
-                    </h3>
-
-                    {comp.summary ? (
-                      <p className="line-clamp-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                        {comp.summary}
                       </p>
-                    ) : null}
-
-                    {visibleRoles.length > 0 || visibleTech.length > 0 ? (
-                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                        {visibleRoles.map((role) => (
-                          <span
-                            key={role}
-                            className="rounded border border-border bg-background px-2 py-0.5 text-[11px] font-medium text-foreground/80"
-                          >
-                            {role}
-                          </span>
-                        ))}
-                        {extraRoleCount > 0 ? (
-                          <span className="rounded border border-border bg-background px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
-                            +{extraRoleCount}
-                          </span>
-                        ) : null}
-                        {visibleTech.map((tech) => {
-                          const isMatchedHint =
-                            matchInfo?.matchedHints.has(tech) ?? false;
-                          return (
-                            <button
-                              key={tech}
-                              type="button"
-                              onClick={() => setSearchQuery(tech)}
-                              title={`กรองรายการที่ใช้ ${tech}`}
-                              className={`rounded px-1.5 py-0.5 font-mono text-[11px] transition-colors ${
-                                isMatchedHint
-                                  ? "border border-primary/30 bg-primary/8 text-primary hover:bg-primary/12"
-                                  : "bg-muted text-muted-foreground hover:text-foreground"
-                              }`}
-                            >
-                              {tech}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="flex flex-col justify-between gap-3 lg:col-span-4 lg:items-end lg:text-right">
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                        <span className="text-sm font-medium tabular-nums text-foreground">
-                          {formatThaiDate(comp.deadline, "short")}
-                        </span>
-                        {countdown.kind !== "none" ? (
-                          <span
-                            className={`font-mono text-xs tabular-nums ${
-                              countdown.kind === "urgent" ||
-                              countdown.kind === "today"
-                                ? "font-medium text-primary"
-                                : "text-muted-foreground"
-                            }`}
-                          >
-                            {countdown.kind === "expired"
-                              ? "ปิดรับแล้ว"
-                              : countdown.label}
-                          </span>
-                        ) : null}
-                      </div>
-
                       <p className="text-xs tabular-nums text-muted-foreground">
-                        ทีม{" "}
-                        {comp.min_size === comp.max_size
-                          ? `${comp.min_size} คน`
-                          : `${comp.min_size}–${comp.max_size} คน`}{" "}
-                        · สนใจ {comp.interest_count} คน
+                        ปิดรับ {formatThaiDate(comp.deadline, "short")} · สนใจ{" "}
+                        {comp.interest_count} คน
                       </p>
                     </div>
+                    <span className="shrink-0 pt-0.5 font-mono text-xs font-semibold whitespace-nowrap tabular-nums text-primary">
+                      {countdownText}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
 
-                    <div className="flex flex-wrap items-center gap-2 pt-0.5 lg:justify-end">
-                      {comp.source_url ? (
-                        <a
-                          href={comp.source_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label={`เปิดประกาศต้นทางของ ${comp.title}`}
-                          className="inline-flex items-center gap-1 px-1.5 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-                        >
-                          ต้นทาง
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      ) : null}
-                      {userRole === "teacher" ? (
-                        <Button
-                          asChild
-                          size="sm"
-                          variant="outline"
-                          className="h-7 rounded-md px-2.5 text-xs"
-                        >
-                          <Link href={`/teacher/competitions/${comp.id}/teams`}>
-                            จัดทีม
-                          </Link>
-                        </Button>
-                      ) : null}
-                      <Button
-                        asChild
-                        size="sm"
-                        variant="outline"
-                        className="h-7 gap-1 rounded-md px-2.5 text-xs font-medium hover:border-primary/40 hover:text-primary"
-                      >
-                        <Link href={`/competitions/${comp.id}`}>
-                          รายละเอียด
-                          <ArrowRight className="h-3 w-3" />
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      )}
+        <section className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p
+              className="text-xs leading-relaxed text-muted-foreground tabular-nums"
+              role="status"
+              aria-live="polite"
+            >
+              แสดง{" "}
+              <strong className="font-medium text-foreground">
+                {filteredCompetitions.length}
+              </strong>{" "}
+              จาก {statusScoped.length} รายการ
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {hasActiveFilters ? (
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  ล้างตัวกรอง
+                </button>
+              ) : null}
+              <div
+                role="group"
+                aria-label="รูปแบบการแสดงผล"
+                className="inline-flex items-center gap-1 rounded-xl border border-border/60 bg-muted/40 p-1"
+              >
+                <button
+                  type="button"
+                  aria-label="แสดงเป็นตาราง"
+                  aria-pressed={viewMode === "grid"}
+                  onClick={() => setViewMode("grid")}
+                  className={`inline-flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
+                    viewMode === "grid"
+                      ? "bg-background text-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="แสดงเป็นรายการ"
+                  aria-pressed={viewMode === "list"}
+                  onClick={() => setViewMode("list")}
+                  className={`inline-flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
+                    viewMode === "list"
+                      ? "bg-background text-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <List className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {filteredCompetitions.length === 0 ? (
+            <div className="border-b border-border py-14 text-center">
+              <p className="text-sm font-medium text-foreground leading-[1.35]">
+                ไม่พบรายการแข่งขันในเงื่อนไขที่เลือก
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                {hasActiveFilters
+                  ? "ลองล้างตัวกรองหรือเปลี่ยนหมวดสาย Tech เพื่อดูรายการแข่งขันในไทยทั้งหมด"
+                  : "ยังไม่มีรายการแข่งขันในสถานะนี้ คุณสามารถเพิ่มรายการด้วย AI ได้ทันที"}
+              </p>
+              <div className="mt-5 flex flex-wrap justify-center gap-2">
+                {hasActiveFilters ? (
+                  <Button variant="outline" size="sm" onClick={resetFilters}>
+                    <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                    ล้างตัวกรองทั้งหมด
+                  </Button>
+                ) : null}
+                {userRole ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSmartModalOpen(true)}
+                    className="gap-1.5"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    เพิ่มรายการแข่งขัน
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          ) : (
+            <div
+              className={
+                viewMode === "grid"
+                  ? "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6"
+                  : "grid grid-cols-1 gap-6"
+              }
+            >
+              {filteredCompetitions.map((comp) => (
+                <CompetitionCard
+                  key={comp.id}
+                  competition={comp}
+                  todayIso={todayIso}
+                  userRole={userRole}
+                  matchInfo={skillMatchById.get(comp.id)}
+                  onTechChipClick={(tech) => updateFilters({ q: tech })}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }
