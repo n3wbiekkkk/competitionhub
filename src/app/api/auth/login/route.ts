@@ -17,7 +17,7 @@ const loginSchema = z.object({
 });
 
 interface AccountRow extends Profile {
-  password_hash: string;
+  password_hash: string | null;
   session_version: number;
 }
 
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
       return result.rows[0] ?? null;
     });
 
-    if (!account) {
+    if (!account || !account.password_hash) {
       return NextResponse.json(
         { error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" },
         { status: 401 },

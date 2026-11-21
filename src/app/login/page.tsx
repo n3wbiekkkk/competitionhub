@@ -8,7 +8,7 @@ import { isSafeInternalRedirect } from "@/lib/utils/url-safety";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; mode?: string }>;
+  searchParams: Promise<{ next?: string; mode?: string; error?: string }>;
 }) {
   const [user, params] = await Promise.all([
     getAuthenticatedProfile(),
@@ -98,7 +98,7 @@ export default async function LoginPage({
       {/* Right Auth Form */}
       <section className="lg:col-span-7 lg:pl-2">
         <div className="mx-auto w-full max-w-md lg:mx-0">
-          <AuthForm nextUrl={nextUrl} initialTab={initialTab} />
+          <AuthForm nextUrl={nextUrl} initialTab={initialTab} error={params.error} />
         </div>
       </section>
     </main>

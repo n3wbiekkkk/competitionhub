@@ -320,3 +320,45 @@ Inspected `.visual-audit/dark-1440-auth--admin.png`. The admin console shows a c
 | Schema / migrations / tables | 14 / 36 | 14 / 36, unchanged |
 
 All six phases are VERIFIED. No database table, migration, checksum, or RLS policy was changed at any point.
+
+## OAuth sign-in (Google and GitHub)
+
+Goal: add Google and GitHub sign-in to TechComp Hub, keep email/password and teacher/admin guards intact, link verified emails to existing accounts, deploy to production on `newbie`, and verify live. Smallest change: two provider modules plus two callback routes reusing the existing session issuer, one migration for provider links, login buttons with Thai errors, then the existing rsync and compose deploy flow.
+
+Swarm checklist:
+
+1. Frame: map auth, session, schema, RLS, login UI and existing test contracts. Done predicate is a green full gate plus live redirect verification on the public URL.
+2. Fan out: disjoint writers for database migration, backend OAuth modules and routes, login UI, and tests plus `.env.example`.
+3. Aggregate: review the combined diff, run the full gate, reconcile schema parity.
+4. Report: push, deploy with a rollback image, verify live, and record evidence.
+
+| Slice | Focus | Status | Evidence |
+| --- | --- | --- | --- |
+| O1 | Map auth, session, RLS and login UI | VERIFIED | Auth/session/RLS and login UI maps complete with exact file:line evidence |
+| O2 | Migration for OAuth provider links | VERIFIED | 0015 applied, schema parity ok, 37 tables and 15 migrations |
+| O3 | Google and GitHub OAuth backend | VERIFIED | Provider module, start route and two callbacks green |
+| O4 | Login UI and Thai error states | VERIFIED | Buttons and three Thai error codes present, audit green |
+| O5 | Tests and .env.example | VERIFIED | 141 unit tests, 14 E2E tests pass |
+| O6 | Push, deploy and live verification | IN PROGRESS | Commit and deploy next |
+
+Secret handling: the four OAuth values were pasted in this thread. They were registered through `request_secret` and written only to the production `.env.local` on `newbie`. They do not appear in Git or in this tracker.
+
+### OAuth verification evidence
+
+- `npm run lint` — PASS, 0 errors, 0 warnings.
+- `npm run typecheck` — PASS, 0 errors.
+- `npm test` — PASS, 141/141. The six new cases cover APP_BASE_URL handling, S256 PKCE, state comparison, and two generators.
+- `npm run check:schema` — PASS, `migrations=15 objects=98`.
+- `npm run test:integration` — PASS, `tables=37 migrations=15`, FORCE RLS on every table.
+- `npm run build` — PASS, 29 static pages, no warnings.
+- `npm run test:e2e` — PASS, 14/14. New cases assert both start endpoints return 302 to the correct provider host with the exact `redirect_uri` on `https://pbcomphub.dpdns.org`, Google S256 and openid scope, GitHub read:user and user:email scopes.
+- `npm run test:visual` — PASS, 72 checks including /login at 390px.
+
+### OAuth design decisions
+
+- Pure helpers live in `src/lib/auth/oauth-core.ts` so node:test can import them without `next/server`. `src/lib/auth/oauth.ts` re-exports them and owns the server flow.
+- `getAppBaseUrl` requires `APP_BASE_URL` in production and rejects loopback hosts. Start and callback redirects use it. No code produces `127.0.0.1:3000`.
+- Google uses Authorization Code plus PKCE S256 and requires `email_verified`. GitHub uses state and selects the primary verified email from `/user/emails`. Token schemas tolerate `expires_in` and `refresh_token`.
+- `linkOAuthAccount` runs under `withSystemDb` after provider verification. It links by provider id first, then by verified email, and forces `student` on every newly created account. Existing roles are preserved.
+- `auth_accounts.password_hash` is nullable in migration 0015, and the password login treats null as invalid credentials.
+- `shouldUseSecureCookie` is exported from `src/lib/auth/cookies.ts` and reused by the OAuth cookies with HttpOnly, SameSite Lax, Secure under HTTPS, and a 600 second lifetime.

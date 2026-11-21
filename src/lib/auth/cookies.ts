@@ -8,7 +8,7 @@ import { withSystemDb, withUserDb } from "@/lib/db/pool";
 import type { Profile } from "@/types/database";
 import { logError } from "@/lib/utils/logger";
 
-function shouldUseSecureCookie(): boolean {
+export function shouldUseSecureCookie(): boolean {
   const raw = process.env.COOKIE_SECURE?.trim().toLowerCase();
   return raw === "true" || raw === "1";
 }
