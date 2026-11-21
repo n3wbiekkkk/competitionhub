@@ -114,22 +114,31 @@ test("LFG → เชิญเพื่อน → AI roadmap → แชท → me
   const pool = new Pool({ connectionString: databaseUrl, max: 1 });
   const peer = await createVisiblePeer(pool);
   let teamId: string | null = null;
+  let competitionId: string | null = null;
 
   try {
-    await signIn(page, studentEmail, studentPassword);
-
-    const competitionsResponse = await page.request.get(
-      "/api/competitions?status=open",
+    const suffix = randomUUID();
+    const competition = await pool.query<{ id: string }>(
+      `insert into public.competitions
+         (title, category, deadline, min_size, max_size,
+          recommended_roles, tech_stack_hints, summary,
+          source_url, source_type, status, team_formation_mode)
+       values ($1, 'Programming / Competitive',
+               (current_date + interval '30 days')::date,
+               1, 4, array['Frontend', 'AI / ML'], array['Next.js'],
+               $2, $3, 'manual', 'open', 'hybrid')
+       returning id`,
+      [
+        `E2E Collab ${suffix}`,
+        "รายการสำหรับทดสอบการทำงานร่วมของทีม",
+        `https://example.test/e2e-collab-${suffix}`,
+      ],
     );
-    expect(competitionsResponse.ok()).toBeTruthy();
-    const competitions = z
-      .object({ competitions: z.array(z.object({ id: z.string().uuid() })) })
-      .safeParse(await competitionsResponse.json());
-    expect(competitions.success).toBeTruthy();
-    if (!competitions.success) return;
-    const competitionId = competitions.data.competitions[0]?.id;
+    competitionId = competition.rows[0]?.id ?? null;
     expect(competitionId).toBeTruthy();
     if (!competitionId) return;
+
+    await signIn(page, studentEmail, studentPassword);
 
     const interest = await postJson(
       page,
@@ -301,6 +310,11 @@ test("LFG → เชิญเพื่อน → AI roadmap → แชท → me
   } finally {
     if (teamId) {
       await pool.query("DELETE FROM public.teams WHERE id = $1", [teamId]);
+    }
+    if (competitionId) {
+      await pool.query("DELETE FROM public.competitions WHERE id = $1", [
+        competitionId,
+      ]);
     }
     await pool.query("DELETE FROM public.auth_accounts WHERE id = $1", [peer.id]);
     await pool.end();
