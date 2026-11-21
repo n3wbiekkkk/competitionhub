@@ -131,7 +131,7 @@ Goal: elevate TechComp Hub from commit `2ea7f5d` to world-class visual craft acr
 | D2 | Linear-grade app shell: single-line sidebar and quiet topbar | VERIFIED | All gates green; 12 E2E pass; geometry 227/61/228; commit on branch |
 | D3 | Flagship discovery page: full-width grid and horizontal filter bar | VERIFIED | All gates green; 12 E2E pass; 72 visual checks; cards above fold; commit on branch |
 | D4 | Editorial detail and student workspaces | VERIFIED | All gates green; 12 E2E pass; 72 visual checks; commit on branch |
-| D5 | Teacher studio and admin console | NOT STARTED | — |
+| D5 | Teacher studio and admin console | VERIFIED | All gates green; 12 E2E pass; 72 visual checks; commit on branch |
 | D6 | Motion, dev-warning fixes, visual audit and full gate | NOT STARTED | — |
 
 ### Baseline evidence (pre-change, commit `2ea7f5d`)
@@ -261,3 +261,24 @@ Added a rerunnable throwaway-DB reset at `.e2e-reset.mjs` so each phase can prov
 ### Visual spot check
 
 Inspected `.visual-audit/dark-1440--competitions-*.png`. The detail page shows an editorial hero, horizontal timeline, calm underline tabs, and a crisp sticky rail with both `.ics` and Google Calendar actions.
+
+### D5 verification evidence
+
+- `npm run lint` — PASS, 0 errors, 0 warnings.
+- `npm run typecheck` — PASS, 0 errors.
+- `npm test` — PASS, 135/135.
+- `npm run check:schema` — PASS, `migrations=14 objects=96`.
+- `npm run test:integration` — PASS, `tables=36 migrations=14`.
+- `npm run build` — PASS, compiled and 29 static pages generated, no warnings.
+- `npm run test:e2e` — PASS, 12/12.
+- `npm run test:visual` — PASS, 72 checks.
+
+### D5 studio changes
+
+- Team builder board: edge-to-edge full-width workspace, calm drop zones with crisp `isOver` tint, `bg-popover` drag overlay without `shadow-md`, a thin readiness bar driven by the existing `readinessPercent` alongside the untouched numeric badge, and a sticky compact toolbar. No Redo or Publish control was invented because those actions do not exist.
+- Review queue: kept the audited `lg:grid-cols-12` 4/8 split, calmer master rows with a clear active highlight, a single sticky detail surface, a de-nested inline edit panel, and a sticky approve/reject footer. All E2E strings and the Scout dialog stay.
+- Reports and admin: kept the audited `xl:grid-cols-4` bento and `overflow-x-auto` wrappers, added subtle row hovers and generous table padding, refined tab typography, and kept all E2E strings and print rules.
+
+### Visual spot check
+
+Inspected `.visual-audit/dark-1440-auth--admin.png`. The admin console shows a clean 4-column KPI bento, quiet line tabs, and a hairline table with roomy rows.

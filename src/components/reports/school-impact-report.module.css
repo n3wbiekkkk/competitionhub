@@ -8,6 +8,7 @@
 
 .sheet {
   width: 100%;
+  line-height: 1.65;
 }
 
 .tableWrap {
@@ -24,13 +25,21 @@
 .table th,
 .table td {
   border-bottom: 1px solid var(--border);
-  padding: 0.625rem 0.75rem;
+  padding: 0.875rem 1rem;
   text-align: left;
 }
 
 .table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--background);
   color: var(--muted-foreground);
   font-weight: 500;
+}
+
+.table tbody tr:hover {
+  background: color-mix(in oklab, var(--muted) 40%, transparent);
 }
 
 .table td:last-child,
@@ -59,5 +68,9 @@
   .table th,
   .table td {
     border-bottom-color: black;
+  }
+
+  .table tbody tr:hover {
+    background: transparent;
   }
 }

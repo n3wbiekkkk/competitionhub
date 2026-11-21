@@ -388,7 +388,7 @@ export function AdminDashboardClient({
           <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
             แดชบอร์ดผู้ดูแลระบบ
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm leading-[1.65] text-muted-foreground">
             จัดการบัญชีนักเรียน/อาจารย์ แก้ไขชั้นห้องเรียน ตรวจสอบงานแข่ง
             และติดตามสถานะทีมทั้งหมด
           </p>
@@ -426,31 +426,31 @@ export function AdminDashboardClient({
 
       {/* KPI bento */}
       <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-md border border-border bg-background px-4 py-3.5">
+        <div className="rounded-md border border-border bg-background px-5 py-4">
           <p className="font-mono text-lg font-semibold tabular-nums text-foreground">
             {stats.totalUsers}
           </p>
           <p className="text-xs text-muted-foreground">ผู้ใช้ทั้งหมด</p>
         </div>
-        <div className="rounded-md border border-border bg-background px-4 py-3.5">
+        <div className="rounded-md border border-border bg-background px-5 py-4">
           <p className="font-mono text-lg font-semibold tabular-nums text-foreground">
             {stats.studentCount}
           </p>
           <p className="text-xs text-muted-foreground">นักเรียน</p>
         </div>
-        <div className="rounded-md border border-border bg-background px-4 py-3.5">
+        <div className="rounded-md border border-border bg-background px-5 py-4">
           <p className="font-mono text-lg font-semibold tabular-nums text-foreground">
             {stats.teacherCount}
           </p>
           <p className="text-xs text-muted-foreground">อาจารย์ / Admin</p>
         </div>
-        <div className="rounded-md border border-border bg-background px-4 py-3.5">
+        <div className="rounded-md border border-border bg-background px-5 py-4">
           <p className="font-mono text-lg font-semibold tabular-nums text-foreground">
             {stats.openCompetitions}
           </p>
           <p className="text-xs text-muted-foreground">เปิดรับสมัคร</p>
         </div>
-        <div className="rounded-md border border-border bg-background px-4 py-3.5">
+        <div className="rounded-md border border-border bg-background px-5 py-4">
           <p
             className={`font-mono text-lg font-semibold tabular-nums ${
               stats.pendingReview > 0 ? "text-primary" : "text-foreground"
@@ -460,7 +460,7 @@ export function AdminDashboardClient({
           </p>
           <p className="text-xs text-muted-foreground">รอตรวจสอบ</p>
         </div>
-        <div className="rounded-md border border-border bg-background px-4 py-3.5">
+        <div className="rounded-md border border-border bg-background px-5 py-4">
           <p className="font-mono text-lg font-semibold tabular-nums text-foreground">
             {stats.confirmedTeams}
           </p>
@@ -488,7 +488,7 @@ export function AdminDashboardClient({
           >
           <TabsTrigger
             value="users"
-            className="flex-none gap-2 rounded-none px-0 pb-2.5 text-sm font-medium after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-semibold"
+            className="flex-none gap-2 rounded-none px-0 pb-2.5 text-sm font-normal after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-medium"
           >
             <span>จัดการผู้ใช้</span>
             <span className="font-mono text-xs tabular-nums text-muted-foreground">
@@ -497,7 +497,7 @@ export function AdminDashboardClient({
           </TabsTrigger>
           <TabsTrigger
             value="competitions"
-            className="flex-none gap-2 rounded-none px-0 pb-2.5 text-sm font-medium after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-semibold"
+            className="flex-none gap-2 rounded-none px-0 pb-2.5 text-sm font-normal after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-medium"
           >
             <span>จัดการรายการแข่งขัน</span>
             <span className="font-mono text-xs tabular-nums text-muted-foreground">
@@ -506,7 +506,7 @@ export function AdminDashboardClient({
           </TabsTrigger>
           <TabsTrigger
             value="teams"
-            className="flex-none gap-2 rounded-none px-0 pb-2.5 text-sm font-medium after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-semibold"
+            className="flex-none gap-2 rounded-none px-0 pb-2.5 text-sm font-normal after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-medium"
           >
             <span>ภาพรวมทีมแข่งขัน</span>
             <span className="font-mono text-xs tabular-nums text-muted-foreground">
@@ -612,7 +612,7 @@ export function AdminDashboardClient({
                 return (
                   <div
                     key={u.id}
-                    className="grid grid-cols-[minmax(0,1fr)_200px] items-center gap-4 px-4 py-3.5"
+                    className="grid grid-cols-[minmax(0,1fr)_200px] items-center gap-4 px-4 py-3.5 hover:bg-muted/40"
                   >
                     <div className="min-w-0 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -747,7 +747,7 @@ export function AdminDashboardClient({
                 return (
                   <div
                     key={comp.id}
-                    className="grid grid-cols-[minmax(0,1fr)_300px] items-center gap-4 px-4 py-3.5"
+                    className="grid grid-cols-[minmax(0,1fr)_300px] items-center gap-4 px-4 py-3.5 hover:bg-muted/40"
                   >
                     <div className="min-w-0 space-y-1">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
@@ -868,7 +868,7 @@ export function AdminDashboardClient({
               {teams.map((team) => (
                 <div
                   key={team.id}
-                  className="grid grid-cols-[minmax(0,1fr)_240px] items-center gap-4 px-4 py-3.5"
+                  className="grid grid-cols-[minmax(0,1fr)_240px] items-center gap-4 px-4 py-3.5 hover:bg-muted/40"
                 >
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div className="space-y-0.5">

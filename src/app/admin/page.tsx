@@ -194,19 +194,19 @@ export default async function AdminDashboardPage() {
           >
             <TabsTrigger
               value="dashboard"
-              className="flex-none rounded-none px-0 pb-2.5 text-sm font-medium after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-semibold"
+              className="flex-none rounded-none px-0 pb-2.5 text-sm font-normal after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-medium"
             >
               ภาพรวมระบบ
             </TabsTrigger>
             <TabsTrigger
               value="ops"
-              className="flex-none rounded-none px-0 pb-2.5 text-sm font-medium after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-semibold"
+              className="flex-none rounded-none px-0 pb-2.5 text-sm font-normal after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-medium"
             >
               การดำเนินงาน
             </TabsTrigger>
             <TabsTrigger
               value="webhooks"
-              className="flex-none rounded-none px-0 pb-2.5 text-sm font-medium after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-semibold"
+              className="flex-none rounded-none px-0 pb-2.5 text-sm font-normal after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-medium"
             >
               เว็บฮุก
             </TabsTrigger>

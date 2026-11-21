@@ -35,7 +35,7 @@ export default async function TeacherReportsPage({
         <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
           รายงานผลกระทบของโรงเรียน
         </h1>
-        <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
+        <p className="max-w-3xl text-sm leading-[1.65] text-muted-foreground">
           ข้อมูลจะถูกกรองตามปีการศึกษาไทย โดยนับเฉพาะหลักฐานที่ระบบและอาจารย์รับรองแล้ว
           ส่งออกเป็น CSV เพื่อใช้ในรายงานของโรงเรียน หรือพิมพ์เป็น PDF ได้โดยตรง
         </p>

@@ -528,7 +528,7 @@ export function ReviewQueueClient({
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
                 <div className="min-w-0 lg:col-span-4">
                   <div className="mb-2 flex items-center justify-between gap-2">
-                    <p className="text-xs font-medium text-muted-foreground">
+                    <p className="text-xs font-medium tabular-nums text-muted-foreground">
                       รายการในแท็บนี้ ({visibleItems.length})
                     </p>
                     <label className="flex min-h-11 items-center gap-2 px-1 text-xs text-muted-foreground">
@@ -541,14 +541,14 @@ export function ReviewQueueClient({
                     </label>
                   </div>
 
-                  <div className="max-h-[calc(100vh-18rem)] space-y-1.5 overflow-y-auto rounded-md border border-border p-1.5">
+                  <div className="max-h-[calc(100vh-18rem)] space-y-1 overflow-y-auto rounded-md border border-border p-1">
                     {visibleItems.map((item) => {
                       const isActive = activeItem?.id === item.id;
                       const duplicates = duplicateMatches(item);
                       return (
                         <div
                           key={item.id}
-                          className={`flex items-start gap-2 rounded-md border px-1.5 py-1.5 transition-colors ${
+                          className={`flex items-start gap-2 rounded-md border px-4 py-3.5 transition-colors ${
                             isActive
                               ? "border-primary/50 bg-primary/5"
                               : "border-transparent hover:bg-muted/40"
@@ -565,7 +565,7 @@ export function ReviewQueueClient({
                             type="button"
                             aria-pressed={isActive}
                             onClick={() => setSelectedId(item.id)}
-                            className="min-w-0 flex-1 py-1.5 text-left"
+                            className="min-w-0 flex-1 text-left"
                           >
                             <p className="truncate text-sm font-medium text-foreground">
                               {item.title}
@@ -600,7 +600,7 @@ export function ReviewQueueClient({
                               <span
                                 aria-label="พบรายการที่อาจซ้ำกัน"
                                 title="พบรายการที่อาจซ้ำกัน"
-                                className="inline-flex items-center gap-1 text-[10px] text-destructive"
+                                className="inline-flex items-center gap-1 text-[10px] tabular-nums text-destructive"
                               >
                                 <AlertTriangle className="h-3 w-3" aria-hidden="true" />
                                 ซ้ำ {duplicates.length}
@@ -613,11 +613,11 @@ export function ReviewQueueClient({
                   </div>
                 </div>
 
-                <div className="min-w-0 lg:col-span-8">
+                <div className="min-w-0 lg:col-span-8 lg:border-l lg:border-border lg:pl-6">
                   <div className="lg:sticky lg:top-20">
                     {activeItem ? (
-                      <section className="overflow-hidden rounded-md border border-border bg-background">
-                        <header className="space-y-2 border-b border-border px-5 py-4">
+                      <section className="rounded-md border border-border bg-card p-6 shadow-[inset_0_1px_0_0_var(--border-strong)]">
+                        <header className="space-y-2 border-b border-border pb-5">
                           <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
                             <span className="font-medium text-foreground/80">
                               {TECH_CATEGORY_META[activeItem.category].labelTh}
@@ -644,7 +644,7 @@ export function ReviewQueueClient({
                           </p>
                         </header>
 
-                        <div className="space-y-5 px-5 py-5">
+                        <div className="space-y-5 pt-5">
                           {duplicateMatches(activeItem).length > 0 ? (
                             <div className="flex gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-xs text-destructive">
                               <AlertTriangle
@@ -655,7 +655,7 @@ export function ReviewQueueClient({
                                 <p className="font-medium">
                                   พบรายการที่อาจซ้ำกัน
                                 </p>
-                                <p className="mt-0.5 leading-relaxed">
+                                <p className="mt-0.5 leading-[1.65]">
                                   มี {duplicateMatches(activeItem).length} รายการที่ใช้ชื่อหรือลิงก์ต้นทางเดียวกัน
                                   ควรตรวจสอบก่อนอนุมัติ
                                 </p>
@@ -664,7 +664,7 @@ export function ReviewQueueClient({
                           ) : null}
 
                           {editingId === activeItem.id && editDraft ? (
-                            <div className="grid gap-3 rounded-md border border-border bg-muted/25 p-4 sm:grid-cols-2">
+                            <div className="grid gap-3 rounded-md bg-muted/40 p-5 sm:grid-cols-2">
                               <div className="space-y-1.5 sm:col-span-2">
                                 <Label>ชื่อรายการแข่งขัน</Label>
                                 <Input
@@ -798,13 +798,13 @@ export function ReviewQueueClient({
                               </div>
 
                               {activeItem.summary ? (
-                                <p className="text-sm leading-relaxed text-muted-foreground">
+                                <p className="text-sm leading-[1.65] text-muted-foreground">
                                   {activeItem.summary}
                                 </p>
                               ) : null}
 
                               {activeItem.eligibility ? (
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs leading-[1.65] text-muted-foreground">
                                   <strong className="font-medium text-foreground">
                                     คุณสมบัติ:
                                   </strong>{" "}
@@ -836,7 +836,7 @@ export function ReviewQueueClient({
                             </div>
                           )}
 
-                          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-4">
+                          <div className="sticky bottom-0 z-10 -mx-6 -mb-6 mt-6 flex flex-wrap items-center justify-between gap-3 rounded-b-md border-t border-border bg-card px-6 py-4">
                             {editingId === activeItem.id && editDraft ? (
                               <div className="flex flex-wrap gap-2">
                                 <Button
@@ -929,7 +929,7 @@ export function ReviewQueueClient({
                                     asChild
                                     size="sm"
                                     variant="outline"
-                                    className="h-11 gap-1.5 rounded-md text-xs sm:h-9"
+                                    className="h-11 gap-1.5 rounded-md text-xs tabular-nums sm:h-9"
                                   >
                                     <Link
                                       href={`/teacher/competitions/${activeItem.id}/teams`}
@@ -973,7 +973,7 @@ export function ReviewQueueClient({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>ลบรายการแข่งขันนี้?</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="leading-[1.65]">
               “{deleteCandidate?.title}” และข้อมูลการลงชื่อ/ทีมที่เกี่ยวข้องจะถูกลบถาวร
               หากต้องการเก็บประวัติ ให้เลือกปิดรับสมัครแทน
             </DialogDescription>

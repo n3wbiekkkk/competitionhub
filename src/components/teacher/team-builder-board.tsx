@@ -190,7 +190,7 @@ function DraggableStudentCard({
       ) : null}
 
       {student.note ? (
-        <p className="mt-2 line-clamp-2 border-l-2 border-border pl-2.5 text-xs text-muted-foreground">
+        <p className="mt-2 line-clamp-2 border-l-2 border-border pl-2.5 text-xs leading-[1.65] text-muted-foreground">
           {student.note}
         </p>
       ) : null}
@@ -303,7 +303,7 @@ function DroppableTeamCard({
   return (
     <section
       ref={setNodeRef}
-      className={`rounded-md border bg-background p-4 transition-colors ${
+      className={`relative rounded-md border bg-card p-5 transition-colors before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-foreground/5 sm:p-6 ${
         isOver
           ? "border-primary bg-primary/5"
           : team.status === "confirmed"
@@ -350,6 +350,16 @@ function DroppableTeamCard({
               </span>
             )}
           </div>
+        </div>
+
+        <div
+          className="h-1 w-full overflow-hidden rounded-full bg-muted"
+          aria-hidden="true"
+        >
+          <div
+            className="h-full rounded-full bg-primary"
+            style={{ width: `${readinessPercent}%` }}
+          />
         </div>
 
         <div className="flex items-center gap-2">
@@ -924,9 +934,9 @@ export function TeamBuilderBoard({
   const catMeta = TECH_CATEGORY_META[competition.category];
 
   return (
-    <div className="min-w-0 space-y-6">
+    <div className="min-w-0 space-y-8">
       {/* Canvas Header */}
-      <section className="flex flex-col gap-4 border-b border-border pb-6 lg:flex-row lg:items-end lg:justify-between">
+      <section className="flex flex-col border-b border-border pb-6">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-muted-foreground">
             <Link
@@ -956,77 +966,77 @@ export function TeamBuilderBoard({
             กระดานจัดทีม: {competition.title}
           </h1>
 
-          <p className="text-xs tabular-nums text-muted-foreground">
+          <p className="text-xs leading-[1.65] tabular-nums text-muted-foreground">
             ผู้สนใจทั้งหมด {interestedStudents.length} คน · รอจัดทีม{" "}
             {unassignedStudents.length} คน · จัดลงทีมแล้ว{" "}
             {assignedStudentIds.size} คน
           </p>
         </div>
+      </section>
 
-        <div className="flex flex-wrap gap-2">
+      <div className="sticky top-0 z-20 flex flex-wrap items-center gap-1.5 rounded-lg border border-border bg-background/85 px-2 py-2 backdrop-blur">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={saving || unassignedStudents.length === 0}
+          onClick={autoAssignBalancedTeams}
+          className="h-9 gap-1.5 rounded-md text-xs sm:h-8"
+        >
+          <Wand2 className="h-3.5 w-3.5" />
+          จัดทีมอัตโนมัติ
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={addNewTeam}
+          className="h-9 gap-1.5 rounded-md text-xs sm:h-8"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          สร้างทีมใหม่
+        </Button>
+        {dirty ? (
           <Button
             type="button"
-            variant="outline"
-            size="sm"
-            disabled={saving || unassignedStudents.length === 0}
-            onClick={autoAssignBalancedTeams}
-            className="gap-1.5 rounded-md"
-          >
-            <Wand2 className="h-3.5 w-3.5" />
-            จัดทีมอัตโนมัติ
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={addNewTeam}
-            className="gap-1.5 rounded-md"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            สร้างทีมใหม่
-          </Button>
-          {dirty ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={saving}
-              onClick={revertChanges}
-              className="gap-1.5 rounded-md text-muted-foreground hover:text-foreground"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              ย้อนกลับ
-            </Button>
-          ) : null}
-          <Button
-            type="button"
+            variant="ghost"
             size="sm"
             disabled={saving}
-            onClick={() => persistTeams(teams, "บันทึกการจัดทีมเรียบร้อยแล้ว")}
-            className="gap-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={revertChanges}
+            className="h-9 gap-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground sm:h-8"
           >
-            {saving ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Save className="h-3.5 w-3.5" />
-            )}
-            บันทึกทั้งหมด
+            <RotateCcw className="h-3.5 w-3.5" />
+            ย้อนกลับ
           </Button>
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="gap-1.5 rounded-md"
+        ) : null}
+        <Button
+          type="button"
+          size="sm"
+          disabled={saving}
+          onClick={() => persistTeams(teams, "บันทึกการจัดทีมเรียบร้อยแล้ว")}
+          className="h-9 gap-1.5 rounded-md bg-primary text-xs text-primary-foreground hover:bg-primary/90 sm:h-8"
+        >
+          {saving ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Save className="h-3.5 w-3.5" />
+          )}
+          บันทึกทั้งหมด
+        </Button>
+        <Button
+          asChild
+          variant="outline"
+          size="sm"
+          className="h-9 gap-1.5 rounded-md text-xs sm:h-8"
+        >
+          <a
+            href={`/api/teacher/competitions/${competition.id}/teams/export`}
           >
-            <a
-              href={`/api/teacher/competitions/${competition.id}/teams/export`}
-            >
-              <Download className="h-3.5 w-3.5" />
-              Export CSV
-            </a>
-          </Button>
-        </div>
-      </section>
+            <Download className="h-3.5 w-3.5" />
+            Export CSV
+          </a>
+        </Button>
+      </div>
 
       <DndContext
         sensors={sensors}
@@ -1043,7 +1053,7 @@ export function TeamBuilderBoard({
                   <span>นักเรียนรอจัดทีม ({filteredPool.length})</span>
                 </h2>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs leading-[1.65] text-muted-foreground">
                 กรองตามบทบาท ชั้นปี หรือทักษะ แล้วลากไปวางในทีมฝั่งขวา
               </p>
             </div>
@@ -1137,7 +1147,7 @@ export function TeamBuilderBoard({
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-2 2xl:grid-cols-3">
             {teams.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-dashed border-border py-14 text-center">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm leading-[1.65] text-muted-foreground">
                   ยังไม่มีทีมในรายการนี้ กด &ldquo;สร้างทีมใหม่&rdquo; เพื่อเริ่มต้นจัดทีม
                 </p>
                 <Button
@@ -1245,7 +1255,7 @@ export function TeamBuilderBoard({
 
         <DragOverlay>
           {activeStudent ? (
-            <div className="w-72 rounded-md border border-border bg-background p-3 shadow-md">
+            <div className="w-72 rounded-md border border-border bg-popover p-3 ring-1 ring-foreground/10">
               <p className="text-sm font-medium text-foreground">
                 {activeStudent.full_name}
                 {activeStudent.nickname ? ` (${activeStudent.nickname})` : ""}

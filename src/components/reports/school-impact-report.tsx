@@ -145,7 +145,7 @@ export function SchoolImpactReportView({
           <h2 className="text-xl font-semibold text-foreground">
             รายงานผลกระทบของโรงเรียน {report.academicYearLabel}
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm leading-[1.65] text-muted-foreground">
             {report.periodTh} · สร้างเมื่อ{" "}
             {formatThaiDate(getTodayIsoBangkok(new Date(report.generatedAt)), "long")}
           </p>
