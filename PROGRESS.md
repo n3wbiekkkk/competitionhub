@@ -5,12 +5,13 @@ Baseline gate: 37 tests pass, lint/typecheck/build pass, public repo gate pass.
 Branch: `main`
 Wave 2 code commit: `1c709d9`
 Wave 2 code CI run: `44875005294`
-Wave 2 final CI run: `44876818318`
+Wave 2 final CI run: `44877076252`
 Final deploy stamp: `20261121T063626Z`
 Final production probe: `/tmp/competition-hub-wave2/production-final.log`
 Security fuzz: `/tmp/competition-hub-wave2/fuzz4.log`
 Backup verification: `/tmp/competition-hub-wave2/verify-backup3.log`
 Query benchmark: `/tmp/competition-hub-wave2/bench-final.log`
+Fresh Compose boot: `/tmp/competition-hub-wave2/fresh-compose2.log`
 
 ## Phase status
 
@@ -86,5 +87,6 @@ Query benchmark: `/tmp/competition-hub-wave2/bench-final.log`
 - RLS: 0 public tables without FORCE RLS in production.
 - Backup verification restored the latest dump into a temporary database and matched row counts, schema fingerprint, and migration ledger.
 - Query benchmark: 10 queries, 3 runs on 500 students, 200 competitions, and 100 teams. Median execution 0.02 ms to 2.06 ms. No shared disk reads and no temp reads in the recorded runs. This is a baseline, not a speed comparison.
-- Production health reports migration `0014_badges_reports`, `ok=true`, and package version `1.0.0`.
+- Production health reports migration `0014_badges_reports`, `ok=true`, and package version `1.0.0` in `/tmp/competition-hub-wave2/production-final.log`.
 - `/showcase`, `/`, `/login`, `/api/health`, and `/api/competitions?status=all` return HTTP 200.
+- Fresh Compose boot applied all 13 remaining migrations, returned 200 on `/`, `/login`, `/showcase`, and `/api/health`, and reported memory limits 536870912 bytes for web and 268435456 bytes for db.
