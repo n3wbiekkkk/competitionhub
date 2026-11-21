@@ -1,4 +1,4 @@
-export const EXPECTED_MIGRATION = "0014_badges_reports";
+export const EXPECTED_MIGRATION = "0015_oauth_accounts";
 
 export const REQUIRED_TABLES = [
   "audit_logs",
