@@ -122,7 +122,8 @@ async function signIn(page: Page): Promise<void> {
   await page.getByLabel("อีเมล").fill(studentEmail);
   await page.getByLabel("รหัสผ่าน", { exact: true }).fill(studentPassword);
   await page.getByRole("button", { name: "เข้าสู่ระบบ", exact: true }).click();
-  await expect(page.getByRole("navigation", { name: "เมนูหลัก" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /บัญชีของ/ })).toBeVisible();
+  await expect(page).toHaveURL(/\/$/);
 }
 
 function tokenFromBody(body: unknown): string | null {

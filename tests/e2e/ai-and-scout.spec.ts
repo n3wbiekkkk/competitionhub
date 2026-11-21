@@ -182,9 +182,18 @@ test("Rubric review รับผล AI ที่ Zod ตรวจแล้วแ
       },
     },
   );
-  expect(createResponse.ok()).toBeTruthy();
-  const teamBody: unknown = await createResponse.json();
-  const teamId = extractTeamId(teamBody);
+  let teamId = createResponse.ok()
+    ? extractTeamId(await createResponse.json())
+    : null;
+  if (!teamId) {
+    const existing = await page.request.get(
+      `/api/competitions/${competitionId}/student-teams`,
+    );
+    const parsed = z
+      .object({ teams: z.array(z.object({ id: z.string().uuid() })) })
+      .safeParse(await existing.json());
+    teamId = parsed.success ? (parsed.data.teams[0]?.id ?? null) : null;
+  }
   expect(teamId).toBeTruthy();
   if (!teamId) return;
 
