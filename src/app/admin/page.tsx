@@ -5,6 +5,7 @@ import { withSystemDb, withUserDb } from "@/lib/db/pool";
 import { AdminOpsPanel } from "@/components/admin/admin-ops-panel";
 import { LazyOpsTelemetry } from "@/components/admin/ops-telemetry-lazy";
 import { WebhookRoutingManager } from "@/components/admin/webhook-routing-manager";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { WebhookRouteItem } from "@/lib/integrations/webhook-events";
 import { loadOpsTelemetry } from "@/lib/ops/telemetry";
 import type {
@@ -184,16 +185,52 @@ export default async function AdminDashboardPage() {
   });
 
   return (
-    <main className="mx-auto max-w-7xl space-y-10 px-4 py-8 sm:px-6 lg:px-8">
-      <AdminOpsPanel outbox={ops.outbox} auditLogs={ops.auditLogs} />
-      <LazyOpsTelemetry snapshot={telemetry} />
-      <WebhookRoutingManager initialRoutes={webhookRoutes} />
-      <AdminDashboardClient
-        currentUserId={user.id}
-        initialUsers={users}
-        initialCompetitions={competitions}
-        initialTeams={teams}
-      />
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <Tabs defaultValue="dashboard" className="gap-6">
+        <div className="-mx-1 overflow-x-auto px-1 pb-1">
+          <TabsList
+            variant="line"
+            className="h-auto w-max min-w-full justify-start gap-6 rounded-none border-b border-border bg-transparent p-0 group-data-horizontal/tabs:h-auto"
+          >
+            <TabsTrigger
+              value="dashboard"
+              className="flex-none rounded-none px-0 pb-2.5 text-sm font-medium after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-semibold"
+            >
+              ภาพรวมระบบ
+            </TabsTrigger>
+            <TabsTrigger
+              value="ops"
+              className="flex-none rounded-none px-0 pb-2.5 text-sm font-medium after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-semibold"
+            >
+              การดำเนินงาน
+            </TabsTrigger>
+            <TabsTrigger
+              value="webhooks"
+              className="flex-none rounded-none px-0 pb-2.5 text-sm font-medium after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-semibold"
+            >
+              เว็บฮุก
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="dashboard" className="mt-0">
+          <AdminDashboardClient
+            currentUserId={user.id}
+            initialUsers={users}
+            initialCompetitions={competitions}
+            initialTeams={teams}
+          />
+        </TabsContent>
+
+        <TabsContent value="ops" className="mt-0 grid gap-6 xl:grid-cols-2">
+          <AdminOpsPanel outbox={ops.outbox} auditLogs={ops.auditLogs} />
+          <LazyOpsTelemetry snapshot={telemetry} />
+        </TabsContent>
+
+        <TabsContent value="webhooks" className="mt-0">
+          <WebhookRoutingManager initialRoutes={webhookRoutes} />
+        </TabsContent>
+      </Tabs>
     </main>
   );
 }

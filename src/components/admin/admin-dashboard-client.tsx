@@ -424,33 +424,33 @@ export function AdminDashboardClient({
         </div>
       </section>
 
-      {/* Hairline KPI Strip */}
-      <section className="grid grid-cols-2 divide-x divide-y divide-border border-y border-border sm:grid-cols-3 lg:grid-cols-6 lg:divide-y-0">
-        <div className="px-4 py-3.5 first:pl-0">
+      {/* KPI bento */}
+      <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-md border border-border bg-background px-4 py-3.5">
           <p className="font-mono text-lg font-semibold tabular-nums text-foreground">
             {stats.totalUsers}
           </p>
           <p className="text-xs text-muted-foreground">ผู้ใช้ทั้งหมด</p>
         </div>
-        <div className="px-4 py-3.5">
+        <div className="rounded-md border border-border bg-background px-4 py-3.5">
           <p className="font-mono text-lg font-semibold tabular-nums text-foreground">
             {stats.studentCount}
           </p>
           <p className="text-xs text-muted-foreground">นักเรียน</p>
         </div>
-        <div className="px-4 py-3.5">
+        <div className="rounded-md border border-border bg-background px-4 py-3.5">
           <p className="font-mono text-lg font-semibold tabular-nums text-foreground">
             {stats.teacherCount}
           </p>
           <p className="text-xs text-muted-foreground">อาจารย์ / Admin</p>
         </div>
-        <div className="px-4 py-3.5">
+        <div className="rounded-md border border-border bg-background px-4 py-3.5">
           <p className="font-mono text-lg font-semibold tabular-nums text-foreground">
             {stats.openCompetitions}
           </p>
           <p className="text-xs text-muted-foreground">เปิดรับสมัคร</p>
         </div>
-        <div className="px-4 py-3.5">
+        <div className="rounded-md border border-border bg-background px-4 py-3.5">
           <p
             className={`font-mono text-lg font-semibold tabular-nums ${
               stats.pendingReview > 0 ? "text-primary" : "text-foreground"
@@ -460,7 +460,7 @@ export function AdminDashboardClient({
           </p>
           <p className="text-xs text-muted-foreground">รอตรวจสอบ</p>
         </div>
-        <div className="px-4 py-3.5 last:pr-0">
+        <div className="rounded-md border border-border bg-background px-4 py-3.5">
           <p className="font-mono text-lg font-semibold tabular-nums text-foreground">
             {stats.confirmedTeams}
           </p>
@@ -481,10 +481,11 @@ export function AdminDashboardClient({
           }
         }}
       >
-        <TabsList
-          variant="line"
-          className="h-auto w-full justify-start gap-6 rounded-none border-b border-border bg-transparent p-0 group-data-horizontal/tabs:h-auto"
-        >
+        <div className="-mx-1 overflow-x-auto px-1 pb-1">
+          <TabsList
+            variant="line"
+            className="h-auto w-max min-w-full justify-start gap-6 rounded-none border-b border-border bg-transparent p-0 group-data-horizontal/tabs:h-auto"
+          >
           <TabsTrigger
             value="users"
             className="flex-none gap-2 rounded-none px-0 pb-2.5 text-sm font-medium after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-semibold"
@@ -512,7 +513,8 @@ export function AdminDashboardClient({
               {teams.length}
             </span>
           </TabsTrigger>
-        </TabsList>
+          </TabsList>
+        </div>
 
         {/* Tab 1: Users */}
         <TabsContent value="users" className="space-y-4 pt-5">
@@ -598,13 +600,19 @@ export function AdminDashboardClient({
               ไม่พบผู้ใช้ที่ตรงกับเงื่อนไขที่เลือก
             </div>
           ) : (
-            <div className="divide-y divide-border border-y border-border">
+            <div className="max-h-[70vh] overflow-auto rounded-md border border-border">
+              <div className="min-w-[760px]">
+                <div className="sticky top-0 z-10 grid grid-cols-[minmax(0,1fr)_200px] gap-4 border-b border-border bg-background px-4 py-3.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  <span>ผู้ใช้ในระบบ</span>
+                  <span>การจัดการ</span>
+                </div>
+                <div className="divide-y divide-border">
               {filteredUsers.map((u) => {
                 const isSelf = u.id === currentUserId;
                 return (
                   <div
                     key={u.id}
-                    className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
+                    className="grid grid-cols-[minmax(0,1fr)_200px] items-center gap-4 px-4 py-3.5"
                   >
                     <div className="min-w-0 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -679,6 +687,8 @@ export function AdminDashboardClient({
                   </div>
                 );
               })}
+                </div>
+              </div>
             </div>
           )}
         </TabsContent>
@@ -723,7 +733,13 @@ export function AdminDashboardClient({
               ไม่พบรายการแข่งขันในเงื่อนไขที่เลือก
             </div>
           ) : (
-            <div className="divide-y divide-border border-y border-border">
+            <div className="max-h-[70vh] overflow-auto rounded-md border border-border">
+              <div className="min-w-[900px]">
+                <div className="sticky top-0 z-10 grid grid-cols-[minmax(0,1fr)_300px] gap-4 border-b border-border bg-background px-4 py-3.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  <span>รายการแข่งขัน</span>
+                  <span>การจัดการ</span>
+                </div>
+                <div className="divide-y divide-border">
               {filteredCompetitions.map((comp) => {
                 const catMeta = TECH_CATEGORY_META[comp.category];
                 const isBusy = busyCompId === comp.id;
@@ -731,7 +747,7 @@ export function AdminDashboardClient({
                 return (
                   <div
                     key={comp.id}
-                    className="flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:justify-between"
+                    className="grid grid-cols-[minmax(0,1fr)_300px] items-center gap-4 px-4 py-3.5"
                   >
                     <div className="min-w-0 space-y-1">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
@@ -828,6 +844,8 @@ export function AdminDashboardClient({
                   </div>
                 );
               })}
+                </div>
+              </div>
             </div>
           )}
         </TabsContent>
@@ -840,9 +858,18 @@ export function AdminDashboardClient({
               เพื่อเริ่มต้นจัดทีม
             </div>
           ) : (
-            <div className="divide-y divide-border border-y border-border">
+            <div className="max-h-[70vh] overflow-auto rounded-md border border-border">
+              <div className="min-w-[820px]">
+                <div className="sticky top-0 z-10 grid grid-cols-[minmax(0,1fr)_240px] gap-4 border-b border-border bg-background px-4 py-3.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  <span>ทีมแข่งขัน</span>
+                  <span>การจัดการ</span>
+                </div>
+                <div className="divide-y divide-border">
               {teams.map((team) => (
-                <div key={team.id} className="space-y-2.5 py-4">
+                <div
+                  key={team.id}
+                  className="grid grid-cols-[minmax(0,1fr)_240px] items-center gap-4 px-4 py-3.5"
+                >
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div className="space-y-0.5">
                       <div className="flex flex-wrap items-center gap-2">
@@ -923,6 +950,8 @@ export function AdminDashboardClient({
                   ) : null}
                 </div>
               ))}
+                </div>
+              </div>
             </div>
           )}
         </TabsContent>

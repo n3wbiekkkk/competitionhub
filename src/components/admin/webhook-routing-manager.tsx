@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   WEBHOOK_EVENTS,
   WEBHOOK_EVENT_LABELS_TH,
@@ -175,169 +176,207 @@ export function WebhookRoutingManager({
   }
 
   return (
-    <div className="space-y-10">
-      <AccountSection
-        title="เพิ่มปลายทางเว็บฮุก"
-        description="ระบบจะตรวจสอบความปลอดภัยของลิงก์ก่อนบันทึกและก่อนส่งทุกครั้ง เฉพาะลิงก์สาธารณะเท่านั้นที่อนุญาต"
-      >
-        <form onSubmit={(event) => void createRoute(event)} className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="webhook-name">ชื่อปลายทาง</Label>
-              <Input
-                id="webhook-name"
-                required
-                maxLength={80}
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="เช่น ระบบประกาศ_results ของโรงเรียน"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="webhook-url">ลิงก์ปลายทาง (HTTPS)</Label>
-              <Input
-                id="webhook-url"
-                required
-                type="url"
-                maxLength={2048}
-                value={targetUrl}
-                onChange={(event) => setTargetUrl(event.target.value)}
-                placeholder="https://example.com/hooks/techcomp"
-                className="font-mono text-xs"
-              />
-            </div>
-          </div>
-          <fieldset className="space-y-2">
-            <legend className="text-sm font-medium text-foreground">เหตุการณ์ที่ส่ง</legend>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {WEBHOOK_EVENTS.map((event) => (
-                <label
-                  key={event}
-                  className="flex items-center gap-2 text-xs text-foreground"
-                >
-                  <Checkbox
-                    checked={events.includes(event)}
-                    onCheckedChange={() => toggleEvent(event)}
-                  />
-                  {WEBHOOK_EVENT_LABELS_TH[event]}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          <Button type="submit" size="sm" disabled={creating} className="gap-2 rounded-lg">
-            {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
-            เพิ่มปลายทาง
-          </Button>
-        </form>
-      </AccountSection>
+    <Tabs defaultValue="routes" className="gap-5">
+      <div className="-mx-1 overflow-x-auto px-1 pb-1">
+        <TabsList
+          variant="line"
+          className="h-auto w-max min-w-full justify-start gap-6 rounded-none border-b border-border bg-transparent p-0 group-data-horizontal/tabs:h-auto"
+        >
+          <TabsTrigger
+            value="routes"
+            className="flex-none rounded-none px-0 pb-2.5 text-sm font-medium after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-semibold"
+          >
+            ปลายทางที่ใช้งาน
+          </TabsTrigger>
+          <TabsTrigger
+            value="create"
+            className="flex-none rounded-none px-0 pb-2.5 text-sm font-medium after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:font-semibold"
+          >
+            เพิ่มปลายทางเว็บฮุก
+          </TabsTrigger>
+        </TabsList>
+      </div>
 
-      <AccountSection
-        title="ปลายทางที่ใช้งาน"
-        description="ทดสอบการส่ง ดูประวัติผลการส่ง และระงับปลายทางที่ไม่ใช้งาน"
-      >
-        {routes.length === 0 ? (
-          <p className="py-4 text-sm text-muted-foreground">ยังไม่มีปลายทางเว็บฮุก</p>
-        ) : (
-          <ul className="divide-y divide-border border-y border-border">
-            {routes.map((route) => {
-              const routeHistory = deliveries[route.id] ?? [];
-              const isHistoryOpen = historyOpen === route.id;
-              return (
-                <li key={route.id} className="space-y-3 py-3">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-foreground">{route.name}</p>
-                        <Badge variant={route.is_active ? "default" : "secondary"} className="rounded-md">
-                          {route.is_active ? "ใช้งานอยู่" : "ระงับ"}
-                        </Badge>
-                      </div>
-                      <p className="break-all font-mono text-[11px] text-muted-foreground">
-                        {route.target_url}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {route.events
-                          .map((event) =>
-                            WEBHOOK_EVENT_LABELS_TH[event as WebhookEvent] ?? event,
-                          )
-                          .join(" · ")}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        size="xs"
-                        variant="outline"
-                        disabled={busyId === route.id || !route.is_active}
-                        onClick={() => void sendTest(route)}
-                        className="gap-1.5"
-                      >
-                        <Send className="h-3 w-3" />
-                        ทดสอบส่ง
-                      </Button>
-                      <Button
-                        type="button"
-                        size="xs"
-                        variant="outline"
-                        disabled={busyId === route.id}
-                        onClick={() => void toggleActive(route)}
-                      >
-                        {route.is_active ? "ระงับ" : "เปิดใช้งาน"}
-                      </Button>
-                      <Button
-                        type="button"
-                        size="xs"
-                        variant="outline"
-                        onClick={() => void toggleHistory(route.id)}
-                        className="gap-1.5"
-                      >
-                        <History className="h-3 w-3" />
-                        ประวัติ
-                      </Button>
-                      <Button
-                        type="button"
-                        size="xs"
-                        variant="destructive"
-                        disabled={busyId === route.id}
-                        onClick={() => void removeRoute(route)}
-                        className="gap-1.5"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                        ลบ
-                      </Button>
-                    </div>
-                  </div>
-                  {isHistoryOpen ? (
-                    <ul className="divide-y divide-border rounded-lg border border-border">
-                      {routeHistory.length === 0 ? (
-                        <li className="px-3 py-2 text-xs text-muted-foreground">
-                          ยังไม่มีประวัติการส่ง
-                        </li>
-                      ) : (
-                        routeHistory.map((delivery) => (
-                          <li
-                            key={delivery.id}
-                            className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-xs"
-                          >
-                            <span className="text-foreground">
-                              {delivery.event_type} · {delivery.http_status ?? "-"}
-                            </span>
-                            <span className="text-muted-foreground">
-                              {delivery.status === "sent" ? "ส่งสำเร็จ" : (delivery.error ?? "ส่งไม่สำเร็จ")}
-                              {" · "}
-                              {formatThaiDate(delivery.created_at.slice(0, 10), "short")}
-                            </span>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </AccountSection>
-    </div>
+      <TabsContent value="create" className="mt-0">
+        <AccountSection
+          title="เพิ่มปลายทางเว็บฮุก"
+          description="ระบบจะตรวจสอบความปลอดภัยของลิงก์ก่อนบันทึกและก่อนส่งทุกครั้ง เฉพาะลิงก์สาธารณะเท่านั้นที่อนุญาต"
+        >
+          <form onSubmit={(event) => void createRoute(event)} className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="webhook-name">ชื่อปลายทาง</Label>
+                <Input
+                  id="webhook-name"
+                  required
+                  maxLength={80}
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="เช่น ระบบประกาศ_results ของโรงเรียน"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="webhook-url">ลิงก์ปลายทาง (HTTPS)</Label>
+                <Input
+                  id="webhook-url"
+                  required
+                  type="url"
+                  maxLength={2048}
+                  value={targetUrl}
+                  onChange={(event) => setTargetUrl(event.target.value)}
+                  placeholder="https://example.com/hooks/techcomp"
+                  className="font-mono text-xs"
+                />
+              </div>
+            </div>
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium text-foreground">เหตุการณ์ที่ส่ง</legend>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {WEBHOOK_EVENTS.map((event) => (
+                  <label
+                    key={event}
+                    className="flex min-h-11 items-center gap-2 text-xs text-foreground"
+                  >
+                    <Checkbox
+                      checked={events.includes(event)}
+                      onCheckedChange={() => toggleEvent(event)}
+                    />
+                    {WEBHOOK_EVENT_LABELS_TH[event]}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={creating}
+              className="h-11 min-h-11 gap-2 rounded-lg sm:h-9 sm:min-h-9"
+            >
+              {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+              เพิ่มปลายทาง
+            </Button>
+          </form>
+        </AccountSection>
+      </TabsContent>
+
+      <TabsContent value="routes" className="mt-0">
+        <AccountSection
+          title="ปลายทางที่ใช้งาน"
+          description="ทดสอบการส่ง ดูประวัติผลการส่ง และระงับปลายทางที่ไม่ใช้งาน"
+        >
+          {routes.length === 0 ? (
+            <p className="px-4 py-3.5 text-sm text-muted-foreground">ยังไม่มีปลายทางเว็บฮุก</p>
+          ) : (
+            <div className="max-h-[70vh] overflow-auto rounded-md border border-border">
+              <div className="min-w-[900px]">
+                <div className="sticky top-0 z-10 grid grid-cols-[minmax(0,1fr)_360px] gap-4 border-b border-border bg-background px-4 py-3.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  <span>ปลายทาง / เหตุการณ์</span>
+                  <span>การจัดการ</span>
+                </div>
+                <ul className="divide-y divide-border">
+                  {routes.map((route) => {
+                    const routeHistory = deliveries[route.id] ?? [];
+                    const isHistoryOpen = historyOpen === route.id;
+                    return (
+                      <li key={route.id} className="space-y-3 px-4 py-3.5">
+                        <div className="grid grid-cols-[minmax(0,1fr)_360px] items-start gap-4">
+                          <div className="min-w-0 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium text-foreground">{route.name}</p>
+                              <Badge variant={route.is_active ? "default" : "secondary"} className="rounded-md">
+                                {route.is_active ? "ใช้งานอยู่" : "ระงับ"}
+                              </Badge>
+                            </div>
+                            <p className="break-all font-mono text-[11px] text-muted-foreground">
+                              {route.target_url}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {route.events
+                                .map((event) =>
+                                  WEBHOOK_EVENT_LABELS_TH[event as WebhookEvent] ?? event,
+                                )
+                                .join(" · ")}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              type="button"
+                              size="xs"
+                              variant="outline"
+                              disabled={busyId === route.id || !route.is_active}
+                              onClick={() => void sendTest(route)}
+                              className="h-9 min-h-9 gap-1.5 sm:h-8 sm:min-h-8"
+                            >
+                              <Send className="h-3 w-3" />
+                              ทดสอบส่ง
+                            </Button>
+                            <Button
+                              type="button"
+                              size="xs"
+                              variant="outline"
+                              disabled={busyId === route.id}
+                              onClick={() => void toggleActive(route)}
+                              className="h-9 min-h-9 sm:h-8 sm:min-h-8"
+                            >
+                              {route.is_active ? "ระงับ" : "เปิดใช้งาน"}
+                            </Button>
+                            <Button
+                              type="button"
+                              size="xs"
+                              variant="outline"
+                              onClick={() => void toggleHistory(route.id)}
+                              className="h-9 min-h-9 gap-1.5 sm:h-8 sm:min-h-8"
+                            >
+                              <History className="h-3 w-3" />
+                              ประวัติ
+                            </Button>
+                            <Button
+                              type="button"
+                              size="xs"
+                              variant="destructive"
+                              disabled={busyId === route.id}
+                              onClick={() => void removeRoute(route)}
+                              className="h-9 min-h-9 gap-1.5 sm:h-8 sm:min-h-8"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                              ลบ
+                            </Button>
+                          </div>
+                        </div>
+                        {isHistoryOpen ? (
+                          <ul className="divide-y divide-border rounded-lg border border-border">
+                            {routeHistory.length === 0 ? (
+                              <li className="px-3 py-2 text-xs text-muted-foreground">
+                                ยังไม่มีประวัติการส่ง
+                              </li>
+                            ) : (
+                              routeHistory.map((delivery) => (
+                                <li
+                                  key={delivery.id}
+                                  className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-xs"
+                                >
+                                  <span className="text-foreground">
+                                    {delivery.event_type} · {delivery.http_status ?? "-"}
+                                  </span>
+                                  <span className="text-muted-foreground">
+                                    {delivery.status === "sent" ? "ส่งสำเร็จ" : (delivery.error ?? "ส่งไม่สำเร็จ")}
+                                    {" · "}
+                                    {formatThaiDate(delivery.created_at.slice(0, 10), "short")}
+                                  </span>
+                                </li>
+                              ))
+                            )}
+                          </ul>
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </div>
+          )}
+        </AccountSection>
+      </TabsContent>
+    </Tabs>
   );
 }

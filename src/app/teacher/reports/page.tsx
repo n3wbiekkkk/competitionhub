@@ -41,10 +41,12 @@ export default async function TeacherReportsPage({
         </p>
       </section>
 
-      <SchoolImpactReportView
-        initialReport={report}
-        currentYear={currentYear}
-      />
+      <div className="[&_article>section.grid]:grid-cols-1 [&_article>section.grid]:gap-5 [&_article>section.grid]:sm:grid-cols-2 [&_article>section.grid]:xl:grid-cols-4">
+        <SchoolImpactReportView
+          initialReport={report}
+          currentYear={currentYear}
+        />
+      </div>
     </main>
   );
 }

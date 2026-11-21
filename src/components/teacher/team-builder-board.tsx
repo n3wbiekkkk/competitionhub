@@ -25,6 +25,7 @@ import {
   GitBranch,
   GripVertical,
   Loader2,
+  Lock,
   Plus,
   RotateCcw,
   Save,
@@ -32,6 +33,7 @@ import {
   Trash2,
   UserPlus,
   Users,
+  Unlock,
   Wand2,
   X,
 } from "lucide-react";
@@ -149,7 +151,7 @@ function DraggableStudentCard({
             {...listeners}
             {...attributes}
             aria-label={`ลาก ${student.full_name}`}
-            className="mt-0.5 cursor-grab rounded p-1 text-muted-foreground hover:bg-muted active:cursor-grabbing"
+            className="mt-0.5 flex h-11 w-11 shrink-0 cursor-grab items-center justify-center rounded text-muted-foreground hover:bg-muted active:cursor-grabbing sm:h-8 sm:w-8"
           >
             <GripVertical className="h-4 w-4" />
           </button>
@@ -226,7 +228,7 @@ function DraggableStudentCard({
               size="sm"
               variant="outline"
               disabled={teams.length === 0}
-              className="h-7 gap-1 rounded-md px-2 text-xs"
+              className="h-11 gap-1 rounded-md px-2 text-xs sm:h-8"
             >
               <UserPlus className="h-3 w-3" />
               เพิ่มเข้าทีม
@@ -287,6 +289,16 @@ function DroppableTeamCard({
   const assignedRolesSet = new Set(
     team.members.map((m) => m.assigned_role.toLowerCase()),
   );
+  const readiness = scoreTeam({
+    members: team.members,
+    competition: {
+      min_size: competition.min_size,
+      max_size: competition.max_size,
+      recommended_roles: competition.recommended_roles,
+      tech_stack_hints: competition.tech_stack_hints,
+    },
+  });
+  const readinessPercent = Math.round(readiness.weighted * 100);
 
   return (
     <section
@@ -304,11 +316,11 @@ function DroppableTeamCard({
           <Input
             value={team.name}
             onChange={(e) => onUpdateName(team.clientId, e.target.value)}
-            className="h-8 max-w-[220px] rounded-md font-medium"
+            className="h-11 max-w-[220px] rounded-md font-medium sm:h-8"
             aria-label="ชื่อทีม"
           />
 
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
             <span
               className={`rounded border px-2 py-0.5 font-mono tabular-nums ${
                 sizeValid
@@ -319,12 +331,21 @@ function DroppableTeamCard({
               {memberCount}/{competition.max_size} คน
             </span>
 
+            <span
+              aria-label={`ความพร้อมของทีม ${readinessPercent}%`}
+              className="rounded border border-border bg-muted/30 px-2 py-0.5 font-mono tabular-nums text-foreground/80"
+            >
+              พร้อม {readinessPercent}%
+            </span>
+
             {team.status === "confirmed" ? (
-              <span className="rounded border border-primary/30 bg-primary/8 px-2 py-0.5 font-medium text-primary">
+              <span className="inline-flex items-center gap-1 rounded border border-primary/30 bg-primary/8 px-2 py-0.5 font-medium text-primary">
+                <Lock className="h-3 w-3" aria-hidden="true" />
                 ยืนยันแล้ว
               </span>
             ) : (
-              <span className="rounded border border-border px-2 py-0.5 text-muted-foreground">
+              <span className="inline-flex items-center gap-1 rounded border border-border px-2 py-0.5 text-muted-foreground">
+                <Unlock className="h-3 w-3" aria-hidden="true" />
                 แบบร่าง
               </span>
             )}
@@ -341,7 +362,7 @@ function DroppableTeamCard({
               onUpdateAdvisor(team.clientId, value === "none" ? "" : value)
             }
           >
-            <SelectTrigger className="h-8 rounded-md text-xs">
+            <SelectTrigger className="h-11 rounded-md text-xs sm:h-8">
               <SelectValue placeholder="เลือกอาจารย์ที่ปรึกษา" />
             </SelectTrigger>
             <SelectContent>
@@ -428,7 +449,7 @@ function DroppableTeamCard({
                       onUpdateMemberRole(team.clientId, member.user_id, value)
                     }
                   >
-                    <SelectTrigger className="h-7 w-[140px] rounded-md text-xs">
+                    <SelectTrigger className="h-11 w-[140px] rounded-md text-xs sm:h-8">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -450,7 +471,7 @@ function DroppableTeamCard({
                     type="button"
                     size="icon"
                     variant="ghost"
-                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                    className="h-11 w-11 text-muted-foreground hover:text-destructive sm:h-8 sm:w-8"
                     onClick={() => onRemoveMember(team.clientId, member.user_id)}
                     aria-label={`นำ ${member.full_name} ออกจากทีม`}
                   >
@@ -471,7 +492,7 @@ function DroppableTeamCard({
             variant="outline"
             disabled={busy}
             onClick={() => onToggleStatus(team.clientId, "draft")}
-            className="h-8 rounded-md text-xs"
+            className="h-11 rounded-md text-xs sm:h-8"
           >
             เปลี่ยนเป็นแบบร่าง
           </Button>
@@ -486,7 +507,7 @@ function DroppableTeamCard({
                 : `ต้องมีสมาชิก ${competition.min_size}–${competition.max_size} คนก่อนยืนยัน`
             }
             onClick={() => onToggleStatus(team.clientId, "confirmed")}
-            className="h-8 gap-1.5 rounded-md bg-primary text-xs text-primary-foreground hover:bg-primary/90"
+            className="h-11 gap-1.5 rounded-md bg-primary text-xs text-primary-foreground hover:bg-primary/90 sm:h-8"
           >
             <CheckCircle2 className="h-3.5 w-3.5" />
             ยืนยันทีม
@@ -499,7 +520,7 @@ function DroppableTeamCard({
           variant="ghost"
           disabled={busy}
           onClick={() => onDeleteTeam(team.clientId)}
-          className="h-8 rounded-md text-xs text-muted-foreground hover:text-destructive"
+          className="h-11 rounded-md text-xs text-muted-foreground hover:text-destructive sm:h-8"
         >
           <Trash2 className="mr-1 h-3.5 w-3.5" />
           ลบทีม
@@ -903,7 +924,7 @@ export function TeamBuilderBoard({
   const catMeta = TECH_CATEGORY_META[competition.category];
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       {/* Canvas Header */}
       <section className="flex flex-col gap-4 border-b border-border pb-6 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-2">
@@ -1012,9 +1033,9 @@ export function TeamBuilderBoard({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid gap-6 lg:grid-cols-12">
+        <div className="flex min-w-0 flex-col gap-5 xl:flex-row">
           {/* Left Panel: Unassigned Tech Pool */}
-          <section className="h-fit space-y-4 rounded-md border border-border bg-background p-4 lg:col-span-5">
+          <section className="w-full shrink-0 space-y-4 rounded-md border border-border bg-background p-4 xl:sticky xl:top-20 xl:h-[calc(100vh-6rem)] xl:w-80 xl:overflow-y-auto">
             <div className="space-y-1">
               <div className="flex items-center justify-between gap-2">
                 <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -1034,13 +1055,13 @@ export function TeamBuilderBoard({
                   placeholder="ค้นหาชื่อ, ทักษะ, หมายเหตุ..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-8 rounded-md pl-8 text-xs"
+                  className="h-11 rounded-md pl-8 text-xs sm:h-8"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <Select value={roleFilter} onValueChange={setRoleFilter}>
-                  <SelectTrigger className="h-8 rounded-md text-xs">
+                  <SelectTrigger className="h-11 rounded-md text-xs sm:h-8">
                     <SelectValue placeholder="ทุกบทบาท" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1054,7 +1075,7 @@ export function TeamBuilderBoard({
                 </Select>
 
                 <Select value={gradeFilter} onValueChange={setGradeFilter}>
-                  <SelectTrigger className="h-8 rounded-md text-xs">
+                  <SelectTrigger className="h-11 rounded-md text-xs sm:h-8">
                     <SelectValue placeholder="ทุกชั้นปี" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1112,7 +1133,8 @@ export function TeamBuilderBoard({
           </section>
 
           {/* Right Panel: Teams Grid */}
-          <div className="space-y-4 lg:col-span-7">
+          <div className="min-w-0 flex-1">
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-2 2xl:grid-cols-3">
             {teams.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-dashed border-border py-14 text-center">
                 <p className="text-sm text-muted-foreground">
@@ -1217,6 +1239,7 @@ export function TeamBuilderBoard({
                 />
               ))
             )}
+            </div>
           </div>
         </div>
 
