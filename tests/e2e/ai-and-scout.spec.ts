@@ -16,7 +16,7 @@ async function signIn(
   await page.getByLabel("อีเมล").fill(email);
   await page.getByLabel("รหัสผ่าน", { exact: true }).fill(password);
   await page.getByRole("button", { name: "เข้าสู่ระบบ", exact: true }).click();
-  await expect(page.getByRole("button", { name: "เพิ่มรายการ", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "เพิ่มรายการ", exact: true }).first()).toBeVisible();
   await expect(page).toHaveURL(/\/$/);
 }
 
@@ -151,7 +151,7 @@ test("Rubric review รับผล AI ที่ Zod ตรวจแล้วแ
   await signIn(page, studentEmail, studentPassword);
 
   const competitionsResponse = await page.request.get(
-    "/api/competitions?status=all",
+    "/api/competitions?status=open",
   );
   expect(competitionsResponse.ok()).toBeTruthy();
   const competitionsBody = z

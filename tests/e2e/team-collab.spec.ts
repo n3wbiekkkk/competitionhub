@@ -114,7 +114,7 @@ test("LFG → เชิญเพื่อน → AI roadmap → แชท → me
     await signIn(page, studentEmail, studentPassword);
 
     const competitionsResponse = await page.request.get(
-      "/api/competitions?status=all",
+      "/api/competitions?status=open",
     );
     expect(competitionsResponse.ok()).toBeTruthy();
     const competitions = z

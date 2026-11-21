@@ -89,7 +89,8 @@ async function signIn(page: Page, email: string, password: string): Promise<void
   await page.getByLabel("อีเมล").fill(email);
   await page.getByLabel("รหัสผ่าน", { exact: true }).fill(password);
   await page.getByRole("button", { name: "เข้าสู่ระบบ", exact: true }).click();
-  await expect(page.getByRole("navigation", { name: "เมนูหลัก" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /บัญชีของ/ })).toBeVisible();
+  await expect(page).toHaveURL(/\/$/);
 }
 
 test("กู้คืนรหัสผ่านจากโทเค็นใน email_outbox แล้วเพิกถอนเซสชันเก่า", async ({

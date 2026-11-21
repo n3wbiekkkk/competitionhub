@@ -30,8 +30,8 @@ test("ฟีดและ Smart Add ใช้งานได้บนจอ 390×
   await page.keyboard.press("Control+k");
   const palette = page.getByRole("dialog", { name: /คำสั่งด่วน/ });
   await expect(palette).toBeVisible();
-  await palette.getByRole("textbox", { name: "ค้นหาคำสั่ง" }).fill("เพิ่มรายการ");
-  await palette.getByRole("option", { name: /เพิ่มรายการ/ }).first().click();
+  await palette.getByRole("textbox", { name: "ค้นหาคำสั่ง" }).fill("เพิ่มรายการด้วย AI");
+  await palette.getByRole("option", { name: /เพิ่มรายการด้วย AI/ }).first().click();
   const dialog = page.getByRole("dialog", { name: "เพิ่มรายการแข่งสาย Tech" });
   await expect(dialog).toBeVisible();
   const box = await dialog.boundingBox();
@@ -62,8 +62,8 @@ test("Command Palette เปิดด้วย Ctrl+K และค้นหา�
   await expect(palette).toBeVisible();
   const search = palette.getByRole("textbox", { name: "ค้นหาคำสั่ง" });
   await expect(search).toBeVisible();
-  await search.fill("Smart Add");
-  await expect(palette.getByText(/Smart Add|เพิ่มรายการแข่ง/).first()).toBeVisible();
+  await search.fill("เพิ่มรายการด้วย AI");
+  await expect(palette.getByText(/เพิ่มรายการด้วย AI/).first()).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(palette).toBeHidden();
 });
