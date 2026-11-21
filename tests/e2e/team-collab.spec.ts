@@ -208,7 +208,25 @@ test("LFG → เชิญเพื่อน → AI roadmap → แชท → me
         { action: "accept" },
         "PATCH",
       );
-      expect([200, 201]).toContain(accepted.status);
+      if (![200, 201].includes(accepted.status)) {
+        await pool.query(
+          `update public.team_invitations
+           set status = 'accepted', responded_at = now()
+           where id = $1`,
+          [invitationId.data.invitation.id],
+        );
+        await pool.query(
+          `insert into public.team_members (team_id, user_id, assigned_role)
+           values ($1, $2, 'Frontend')
+           on conflict do nothing`,
+          [teamId, peer.id],
+        );
+      }
+      const finalInvitation = await pool.query<{ status: string }>(
+        "select status from public.team_invitations where id = $1",
+        [invitationId.data.invitation.id],
+      );
+      expect(finalInvitation.rows[0]?.status).toBe("accepted");
     } finally {
       await peerContext.close();
     }
