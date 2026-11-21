@@ -11,12 +11,17 @@ import {
   LogOut,
   Menu,
   Plus,
+  Search,
   Settings,
   ShieldCheck,
   UserCircle2,
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  COMMAND_EVENTS,
+  useCommandPalette,
+} from "@/components/command/command-context";
 import { getInitials } from "@/lib/utils/initials";
 import { SmartAddModal } from "@/components/competitions/smart-add-modal";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
@@ -33,24 +38,73 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import type { Profile } from "@/types/database";
-
-import type { NotificationItem } from "@/types/database";
+import type { NotificationItem, Profile } from "@/types/database";
 
 interface NavbarClientProps {
   user: Profile | null;
   pendingReviewCount: number;
 }
 
+function NotificationList({
+  notifications,
+  unreadCount,
+  onMarkAllRead,
+  onNavigate,
+}: {
+  notifications: NotificationItem[];
+  unreadCount: number;
+  onMarkAllRead: () => void;
+  onNavigate: () => void;
+}) {
+  return (
+    <>
+      <div className="flex items-center justify-between px-3 py-2">
+        <p className="text-sm font-medium">การแจ้งเตือน</p>
+        {unreadCount > 0 ? (
+          <button
+            type="button"
+            onClick={onMarkAllRead}
+            className="text-xs text-primary hover:underline"
+          >
+            อ่านทั้งหมด
+          </button>
+        ) : null}
+      </div>
+      <div className="max-h-80 overflow-y-auto">
+        {notifications.slice(0, 8).map((item) => (
+          <Link
+            key={item.id}
+            href={item.href ?? "/"}
+            onClick={onNavigate}
+            className="flex min-w-0 flex-col gap-0.5 rounded-md px-3 py-2 text-sm outline-none hover:bg-muted focus-visible:bg-muted"
+          >
+            <span className="truncate">{item.title}</span>
+            {item.body ? (
+              <span className="truncate text-xs text-muted-foreground">{item.body}</span>
+            ) : null}
+          </Link>
+        ))}
+      </div>
+      {notifications.length === 0 ? (
+        <p className="px-3 py-4 text-xs text-muted-foreground">ยังไม่มีการแจ้งเตือน</p>
+      ) : null}
+    </>
+  );
+}
+
 export function NavbarClient({ user, pendingReviewCount }: NavbarClientProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { openPalette } = useCommandPalette();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [smartModalOpen, setSmartModalOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [mobileNotificationsOpen, setMobileNotificationsOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
@@ -84,10 +138,36 @@ export function NavbarClient({ user, pendingReviewCount }: NavbarClientProps) {
 
   const unreadCount = notifications.filter((item) => !item.read_at).length;
 
+  useEffect(() => {
+    function handleSmartAdd() {
+      if (user) setSmartModalOpen(true);
+    }
+    function handleNotifications() {
+      if (!user) return;
+      if (window.matchMedia("(max-width: 767px)").matches) {
+        setMobileNotificationsOpen(true);
+      } else {
+        setNotificationsOpen(true);
+      }
+    }
+    function handleMobileMenu() {
+      setMobileOpen(true);
+    }
+
+    window.addEventListener(COMMAND_EVENTS.smartAdd, handleSmartAdd);
+    window.addEventListener(COMMAND_EVENTS.notifications, handleNotifications);
+    window.addEventListener(COMMAND_EVENTS.mobileMenu, handleMobileMenu);
+    return () => {
+      window.removeEventListener(COMMAND_EVENTS.smartAdd, handleSmartAdd);
+      window.removeEventListener(COMMAND_EVENTS.notifications, handleNotifications);
+      window.removeEventListener(COMMAND_EVENTS.mobileMenu, handleMobileMenu);
+    };
+  }, [user]);
+
   async function handleLogout() {
     setLoggingOut(true);
     try {
-    const response = await fetch("/api/auth/logout", { method: "POST" });
+      const response = await fetch("/api/auth/logout", { method: "POST" });
       if (!response.ok) throw new Error("Logout failed");
       toast.success("ออกจากระบบเรียบร้อยแล้ว");
       router.push("/");
@@ -183,7 +263,7 @@ export function NavbarClient({ user, pendingReviewCount }: NavbarClientProps) {
 
         <div className="flex items-center gap-2">
           {user ? (
-            <DropdownMenu>
+            <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" aria-label="การแจ้งเตือน" className="relative">
                   <Bell className="h-4 w-4" />
@@ -195,30 +275,27 @@ export function NavbarClient({ user, pendingReviewCount }: NavbarClientProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80">
-                <div className="flex items-center justify-between px-3 py-2">
-                  <p className="text-sm font-medium">การแจ้งเตือน</p>
-                  {unreadCount > 0 ? (
-                    <button type="button" onClick={() => void markAllRead()} className="text-xs text-primary hover:underline">
-                      อ่านทั้งหมด
-                    </button>
-                  ) : null}
-                </div>
-                {notifications.slice(0, 8).map((item) => (
-                  <DropdownMenuItem key={item.id} asChild>
-                    <Link href={item.href ?? "/"} className="cursor-pointer">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm">{item.title}</p>
-                        {item.body ? <p className="truncate text-xs text-muted-foreground">{item.body}</p> : null}
-                      </div>
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-                {notifications.length === 0 ? (
-                  <p className="px-3 py-4 text-xs text-muted-foreground">ยังไม่มีการแจ้งเตือน</p>
-                ) : null}
+                <NotificationList
+                  notifications={notifications}
+                  unreadCount={unreadCount}
+                  onMarkAllRead={() => void markAllRead()}
+                  onNavigate={() => setNotificationsOpen(false)}
+                />
               </DropdownMenuContent>
             </DropdownMenu>
           ) : null}
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => openPalette()}
+            aria-label="เปิดคำสั่งด่วน (Ctrl+K)"
+            className="hidden h-8 items-center gap-2 rounded-md px-2 text-muted-foreground hover:text-foreground sm:inline-flex"
+          >
+            <Search className="h-4 w-4" aria-hidden="true" />
+            <kbd className="font-mono text-[10px]">⌘K</kbd>
+          </Button>
 
           <ThemeToggle />
 
@@ -422,6 +499,29 @@ export function NavbarClient({ user, pendingReviewCount }: NavbarClientProps) {
                   ธีมสามารถเปลี่ยนได้จากปุ่มสลับโหมดด้านบน
                 </div>
               </div>
+            </SheetContent>
+          </Sheet>
+
+          <Sheet
+            open={mobileNotificationsOpen}
+            onOpenChange={setMobileNotificationsOpen}
+          >
+            <SheetContent
+              side="bottom"
+              className="mx-auto max-w-lg rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
+            >
+              <SheetHeader>
+                <SheetTitle>การแจ้งเตือน</SheetTitle>
+                <SheetDescription className="sr-only">
+                  รายการแจ้งเตือนล่าสุดของบัญชีนี้
+                </SheetDescription>
+              </SheetHeader>
+              <NotificationList
+                notifications={notifications}
+                unreadCount={unreadCount}
+                onMarkAllRead={() => void markAllRead()}
+                onNavigate={() => setMobileNotificationsOpen(false)}
+              />
             </SheetContent>
           </Sheet>
         </div>

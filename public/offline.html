@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0C5B4C" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>ออฟไลน์ · TechComp Hub</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --background: #fbf8f1;
+        --foreground: #1f2739;
+        --muted: #6d6a62;
+        --border: #ddd9cf;
+        --primary: #0c5b4c;
+        --primary-foreground: #fffcf6;
+        --surface: #ffffff;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --background: #161a28;
+          --foreground: #f4efe4;
+          --muted: #b9b8b1;
+          --border: #3c4050;
+          --primary: #3fb89a;
+          --primary-foreground: #161a28;
+          --surface: #222739;
+        }
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; min-height: 100%; }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: calc(24px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));
+        background: var(--background);
+        color: var(--foreground);
+        font-family: "IBM Plex Sans Thai", "Noto Sans Thai", -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        line-height: 1.6;
+      }
+      main {
+        width: 100%;
+        max-width: 30rem;
+        padding: 28px 24px;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: var(--surface);
+      }
+      .mark {
+        display: inline-flex;
+        width: 40px;
+        height: 40px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: var(--primary);
+        color: var(--primary-foreground);
+        font: 700 18px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      h1 { margin: 16px 0 8px; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; }
+      p { margin: 0 0 20px; color: var(--muted); font-size: 0.9375rem; }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+      a, button {
+        min-height: 44px;
+        padding: 10px 16px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: transparent;
+        color: var(--foreground);
+        font: inherit;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      a.primary, button.primary { border-color: var(--primary); background: var(--primary); color: var(--primary-foreground); }
+      a:focus-visible, button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+      .note { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 0.8125rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span class="mark" aria-hidden="true">&lt;/&gt;</span>
+      <h1>กำลังออฟไลน์</h1>
+      <p>
+        ขณะนี้ไม่มีการเชื่อมต่ออินเทอร์เน็ต คุณสามารถดูรายการแข่งขันที่เคยเปิดไว้ในโหมดอ่านอย่างเดียวได้
+        การเพิ่ม แก้ไข หรือส่งข้อมูลจะกลับมาใช้งานได้เมื่อเชื่อมต่ออีกครั้ง
+      </p>
+      <div class="actions">
+        <button type="button" class="primary" onclick="window.location.reload()">ลองใหม่</button>
+        <a href="/">กลับหน้าแรก</a>
+      </div>
+      <p class="note">ข้อมูลบัญชี การแจ้งเตือน และเครื่องมืออาจารย์จะไม่ถูกเก็บไว้สำหรับใช้แบบออฟไลน์</p>
+    </main>
+  </body>
+</html>
