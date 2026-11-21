@@ -106,7 +106,9 @@ Defined in `src/lib/constants/classroom.ts`:
 | `db/schema.sql`, `db/init/00-init-role.sh` | PostgreSQL 16 schema, idempotent `ALTER TABLE`s, `SECURITY DEFINER` helpers, strict RLS policies |
 | `src/proxy.ts` | Edge/server route protection (`/profile`, `/my-teams`, `/settings`, `/teacher/*`, `/admin/*`) |
 | `src/lib/db/pool.ts`, `src/lib/db/team-builder.ts` | `withUserDb` (RLS) / `withSystemDb` transaction wrappers and team builder SQL loaders |
-| `src/lib/auth/*` | `password.ts` (`scrypt`), `session.ts` (`jose` JWT), `cookies.ts` (session & role guards), `admin-emails.ts` |
+| `src/lib/auth/*` | `password.ts` (`scrypt`), `session.ts` (`jose` JWT), `cookies.ts` (session & role guards), `admin-emails.ts`, `oauth-core.ts` (pure state and PKCE helpers), `oauth.ts` (provider exchange and account linking) |
+| `src/app/api/auth/oauth/[provider]/start/route.ts`, `src/app/api/auth/callback/*/route.ts` | OAuth start redirects and Google/GitHub callbacks |
+| `src/lib/health/schema.ts` | `EXPECTED_MIGRATION`, required functions, triggers, and health probe used by `/api/health` |
 | `src/lib/constants/tech-taxonomy.ts`, `classroom.ts` | Canonical 8 categories, 13 roles, 16 skills, status metadata, `ม.1`–`ม.6` & room `1`–`14` helpers |
 | `src/lib/utils/thai-date.ts`, `url-safety.ts` | Thai Buddhist Era date formatting, UTC countdowns, public HTTP URL SSRF validation |
 | `src/lib/ai/opentyphoon.ts`, `extract-competition.ts`, `scout.ts` | OpenTyphoon client, URL/text/OCR extractor, streaming Thailand tech scout |
@@ -137,17 +139,71 @@ Defined in `src/lib/constants/classroom.ts`:
    ```
    All three must exit `0` with zero TypeScript errors, zero ESLint warnings, and a clean standalone production build.
 2. **Schema Changes on Live PostgreSQL:**
-   Apply migrations with `npm run db:migrate`. Files in `db/migrations/` are versioned, checksummed, and idempotent.
+   Apply migrations with `npm run db:migrate`. Files in `db/migrations/` are versioned, checksummed, and idempotent. Mirror every new table, index, function, and trigger in `db/schema.sql` or `npm run check:schema` fails. The web container does not run migrations on boot. After deploying a migration, run it inside the web container.
 3. **Deployment to a self-hosted Linux host:**
-   - Sync without overwriting remote `.env.local` or host state:
+   - `DEPLOY_HOST` is `newbie`. `DEPLOY_DIR` is `/opt/tech-competition-hub`.
+   - Before building, tag the current image as a rollback point. Use a name such as `tech-competition-hub-web:rollback-pre-<change>`.
+   - Sync without overwriting remote secrets or host state. Exclude `.env.local`, `backups/`, `scout.log`, `node_modules`, `.next`, `.git`, and Playwright artifacts:
      ```bash
-     rsync -az --delete --exclude node_modules --exclude .next --exclude .git --exclude .env.local "./" "$DEPLOY_HOST:$DEPLOY_DIR/"
+     rsync -az --delete \
+       --exclude node_modules --exclude .next --exclude .git \
+       --exclude .env.local --exclude backups/ --exclude scout.log \
+       --exclude .visual-audit --exclude test-results \
+       --exclude playwright-report --exclude blob-report \
+       "./" "newbie:/opt/tech-competition-hub/"
      ```
-   - Always pass `--env-file .env.local` to `docker compose` (secrets live in `.env.local`):
+     `backups/` holds database dumps and `scout.log` is host state. A plain `--delete` removes both.
+   - Always pass `--env-file .env.local` to `docker compose`. Secrets live in `.env.local` on the host and never in Git:
      ```bash
-     ssh "$DEPLOY_HOST" "cd \"$DEPLOY_DIR\" && docker compose --env-file .env.local up -d --build web"
+     ssh newbie 'cd /opt/tech-competition-hub && docker compose --env-file .env.local up -d --build web'
      ```
-4. **Post-Deploy Verification & Host Boundaries:**
-   - Verify HTTP `200` on `/`, `/login`, and sample `/competitions/<id>`, plus `307`/`401`/`403` auth & role guards, and check `docker ps` for healthy `db` and running `web`.
+   - Apply new migrations inside the web container:
+     ```bash
+     ssh newbie 'docker exec tech-competition-hub-web-1 node scripts/migrate.mjs'
+     ```
+4. **Migration and health coupling:**
+   `src/lib/health/schema.ts` exports `EXPECTED_MIGRATION`. Set it to the newest migration version in the same change that adds the migration. If you skip this, `/api/health` returns `503` after deploy even when the database is correct. Read the response body before debugging the database.
+5. **Post-Deploy Verification & Host Boundaries:**
+   - Verify `200` on `/`, `/login`, `/api/health`, and a sample `/competitions/<id>`.
+   - Verify `307` on `/teacher` and `/admin` for anonymous requests.
+   - Check `docker ps` for healthy `db` and `web`.
+   - Confirm the migration ledger count and that no public table lacks FORCE RLS.
    - Schedule the scout endpoint with your platform scheduler or cron.
+   - Never modify `cloudflared.service`. The public URL is `https://pbcomphub.dpdns.org` and the tunnel forwards to `http://127.0.0.1:3000` on `newbie`.
    - Never modify unrelated host services or network configuration.
+
+---
+
+## 9. OAuth sign-in
+
+Google and GitHub sign-in lives in `src/lib/auth/oauth-core.ts` and `src/lib/auth/oauth.ts`. Pure helpers stay in the core module so `node:test` can import them without `next/server`.
+
+- Callback paths are fixed by the provider registrations. `/api/auth/callback/google` and `/api/auth/callback/github` must not change.
+- `APP_BASE_URL` drives every `redirect_uri`. In production the app throws when the variable is missing or points at a loopback address. Never build a redirect from `127.0.0.1:3000`.
+- Start routes set `techhub_oauth_state` and, for Google, `techhub_oauth_pkce`. Both cookies are HttpOnly, SameSite Lax, Secure when `COOKIE_SECURE` is on, path `/`, and expire in 600 seconds.
+- Google requires PKCE S256 and `email_verified === true`. GitHub reads the primary verified email from `/user/emails`. Token schemas accept `expires_in` and `refresh_token` without failing.
+- Callbacks verify state with a constant time comparison, then call `linkOAuthAccount` under `withSystemDb`. Call `issueSessionCookie` with the returned user and session version. A hand-signed token fails because `getAuthenticatedProfile` requires a `user_sessions` row for the JWT `jti`.
+- Account linking looks up `oauth_accounts` by provider id first, then `auth_accounts` by verified email. A new account gets role `student` even if it is the first profile and even if its email appears in `ADMIN_EMAILS`. Existing roles are preserved.
+- `auth_accounts.password_hash` is nullable since migration `0015_oauth_accounts`. Password login treats null as invalid credentials. Never store a provider secret or access token in this table.
+- Login error codes in the URL are `provider_cancelled`, `email_unverified`, and `oauth_failed`. Map them to Thai text in `src/components/auth/auth-form.tsx`. Never put provider messages or secrets in the URL.
+- Secrets are `APP_BASE_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID`, and `GITHUB_CLIENT_SECRET`. Set them in `.env.example` as names only. Collect real values with `request_secret` and write them to the host `.env.local`.
+
+---
+
+## 10. Local verification harness
+
+Local Postgres and Docker are not always running. An SSH forward makes the host database reachable from the workstation.
+
+```bash
+ssh -N -o ExitOnForwardFailure=yes -L 5432:127.0.0.1:5432 newbie
+```
+
+This binds `localhost:5432` on the workstation to the host database. It opens no public port and does not touch `cloudflared.service`.
+
+- `npm run test:integration` needs `MIGRATION_DATABASE_URL` with superuser credentials when it must see newly applied migrations.
+- E2E specs need `MIGRATION_DATABASE_URL` for direct SQL seeding and `E2E_BYPASS_RATE_LIMIT=true` to avoid shared IP login throttling.
+- Use a throwaway database cloned from the host for browser tests. Each E2E run creates teams, so the admin empty state test fails on a dirty database. Reset the clone before a final run.
+- `scripts/visual-audit.mjs` waits for `document.body.dataset.commandReady === "true"` before measuring and screenshotting. Playwright injects `caret-color` into inputs before hydration, which otherwise creates a false React hydration warning.
+- The dev server emits `The destination stream errored while writing data` when Playwright closes an in-flight page render. The string comes from React DOM server, not from the SSE route. No app fix exists and production does not emit it.
+
+The full design overhaul evidence and the OAuth deploy record are in `PROGRESS.md`.
