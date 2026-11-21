@@ -8,6 +8,9 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 echo "==> schema parity"
 npm run check:schema
 
+echo "==> production build"
+npm run build
+
 echo "==> typecheck"
 npx tsc --noEmit
 
@@ -16,8 +19,5 @@ npm run lint
 
 echo "==> unit tests"
 npm test
-
-echo "==> production build"
-npm run build
 
 echo "==> all checks passed"

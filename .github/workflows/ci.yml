@@ -177,6 +177,9 @@ jobs:
           );
           SQL
 
+      - name: Build
+        run: npm run build
+
       - name: Typecheck
         run: npm run typecheck
 
@@ -185,9 +188,6 @@ jobs:
 
       - name: Unit tests
         run: npm test
-
-      - name: Build
-        run: npm run build
 
       - name: Public repo gate
         run: ./scripts/audit-public-repo.sh
