@@ -5,9 +5,9 @@ Baseline gate: 37 tests pass, lint/typecheck/build pass, public repo gate pass.
 Branch: `main`
 Wave 2 code commit: `1c709d9`
 Wave 2 code CI run: `44875005294`
-Wave 2 final CI run: pending
+Wave 2 final CI run: `44876818318`
 Final deploy stamp: `20261121T063626Z`
-Final production probe: pending
+Final production probe: `/tmp/competition-hub-wave2/production-final.log`
 Security fuzz: `/tmp/competition-hub-wave2/fuzz4.log`
 Backup verification: `/tmp/competition-hub-wave2/verify-backup3.log`
 Query benchmark: `/tmp/competition-hub-wave2/bench-final.log`
@@ -79,3 +79,12 @@ Query benchmark: `/tmp/competition-hub-wave2/bench-final.log`
 - Direct deployments share one non-spoofable `direct` rate-limit bucket. Enable `TRUST_PROXY_HEADERS=true` only behind a trusted reverse proxy.
 - `competition_results`, `team_tasks`, and `team_activity_logs` are schema-only storage in this release. No UI writes them.
 - Avatar flows have unit coverage for magic bytes and serving rules. Playwright journeys cover student, teacher, admin, and notification bell flows.
+
+## Wave 2 verification notes
+
+- Unit tests: 135 pass. Playwright: 13 pass. Security fuzz: 7 pass.
+- RLS: 0 public tables without FORCE RLS in production.
+- Backup verification restored the latest dump into a temporary database and matched row counts, schema fingerprint, and migration ledger.
+- Query benchmark: 10 queries, 3 runs on 500 students, 200 competitions, and 100 teams. Median execution 0.02 ms to 2.06 ms. No shared disk reads and no temp reads in the recorded runs. This is a baseline, not a speed comparison.
+- Production health reports migration `0014_badges_reports`, `ok=true`, and package version `1.0.0`.
+- `/showcase`, `/`, `/login`, `/api/health`, and `/api/competitions?status=all` return HTTP 200.
