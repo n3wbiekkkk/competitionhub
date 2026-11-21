@@ -63,6 +63,18 @@ export async function getAuthenticatedProfile(): Promise<Profile | null> {
     });
     if (!active) return null;
 
+    await withSystemDb(async (client) => {
+      await client.query(
+        `update public.user_sessions
+         set last_active_at = now()
+         where jti = $1
+           and user_id = $2
+           and revoked_at is null
+           and last_active_at < now() - interval '1 minute'`,
+        [session.jti, session.user.id],
+      );
+    });
+
     const row = await withUserDb(session.user.id, async (client) => {
       const result = await client.query<LiveAuthRow>(
         `SELECT p.id, p.full_name, p.nickname, p.email, p.role, p.grade, p.skills,

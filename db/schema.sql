@@ -20,6 +20,12 @@ create table if not exists public.auth_accounts (
 create unique index if not exists auth_accounts_email_lower_idx
   on public.auth_accounts (lower(email));
 
+create table if not exists public.auth_security (
+  user_id uuid primary key references public.auth_accounts(id) on delete cascade,
+  session_version integer not null default 0,
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.profiles (
   id uuid primary key references public.auth_accounts(id) on delete cascade,
   full_name text not null default '',
@@ -152,6 +158,10 @@ create index if not exists profiles_directory_visible_idx
   on public.profiles (directory_visible)
   where directory_visible;
 
+create index if not exists competitions_source_url_lower_idx
+  on public.competitions (lower(source_url))
+  where source_url is not null;
+
 -- ----------------------------------------------------------------------------
 -- 3. Triggers (updated_at)
 -- ----------------------------------------------------------------------------
@@ -227,6 +237,19 @@ as $$
   );
 $$;
 
+create or replace function public.app_session_version()
+returns integer
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(
+    (select s.session_version from public.auth_security s where s.user_id = public.app_uid()),
+    0
+  );
+$$;
+
 create or replace function public.is_confirmed_team_member(target_team_id uuid)
 returns boolean
 language sql
@@ -270,6 +293,92 @@ as $$
         )
     );
 $$;
+
+create or replace function public.assert_confirmed_team_size()
+returns trigger
+language plpgsql
+as $$
+declare
+  v_team_id uuid := new.id;
+  v_status text;
+  v_min integer;
+  v_max integer;
+  v_count integer;
+begin
+  select t.status, c.min_size, c.max_size
+    into v_status, v_min, v_max
+  from public.teams t
+  join public.competitions c on c.id = t.competition_id
+  where t.id = v_team_id;
+
+  if not found or v_status <> 'confirmed' then
+    return null;
+  end if;
+
+  select count(*)::int into v_count
+  from public.team_members tm
+  where tm.team_id = v_team_id;
+
+  if v_count < v_min or v_count > v_max then
+    raise exception 'TEAM_SIZE_INVALID:%:%', v_min, v_max
+      using errcode = 'check_violation';
+  end if;
+
+  return null;
+end;
+$$;
+
+create or replace function public.assert_confirmed_team_member_count()
+returns trigger
+language plpgsql
+as $$
+declare
+  v_team_id uuid;
+  v_status text;
+  v_min integer;
+  v_max integer;
+  v_count integer;
+begin
+  if tg_op = 'DELETE' then
+    v_team_id := old.team_id;
+  else
+    v_team_id := new.team_id;
+  end if;
+
+  select t.status, c.min_size, c.max_size
+    into v_status, v_min, v_max
+  from public.teams t
+  join public.competitions c on c.id = t.competition_id
+  where t.id = v_team_id;
+
+  if not found or v_status <> 'confirmed' then
+    return null;
+  end if;
+
+  select count(*)::int into v_count
+  from public.team_members tm
+  where tm.team_id = v_team_id;
+
+  if v_count < v_min or v_count > v_max then
+    raise exception 'TEAM_SIZE_INVALID:%:%', v_min, v_max
+      using errcode = 'check_violation';
+  end if;
+
+  return null;
+end;
+$$;
+
+drop trigger if exists assert_confirmed_team_size_trigger on public.teams;
+create constraint trigger assert_confirmed_team_size_trigger
+  after insert or update on public.teams
+  deferrable initially deferred
+  for each row execute function public.assert_confirmed_team_size();
+
+drop trigger if exists assert_confirmed_team_member_count_trigger on public.team_members;
+create constraint trigger assert_confirmed_team_member_count_trigger
+  after insert or update or delete on public.team_members
+  deferrable initially deferred
+  for each row execute function public.assert_confirmed_team_member_count();
 
 create or replace function public.get_competition_interest_counts(
   comp_ids uuid[] default null
@@ -330,6 +439,16 @@ alter table public.team_members force row level security;
 drop policy if exists auth_accounts_system_all on public.auth_accounts;
 create policy auth_accounts_system_all
   on public.auth_accounts
+  for all
+  using (public.app_is_system())
+  with check (public.app_is_system());
+
+alter table public.auth_security enable row level security;
+alter table public.auth_security force row level security;
+
+drop policy if exists auth_security_system_all on public.auth_security;
+create policy auth_security_system_all
+  on public.auth_security
   for all
   using (public.app_is_system())
   with check (public.app_is_system());
@@ -858,7 +977,7 @@ alter table public.team_activity_logs enable row level security;
 alter table public.team_activity_logs force row level security;
 
 drop policy if exists team_tasks_member_all on public.team_tasks;
-create policy team_tasks_member_all on public.team_tasks for all
+create policy team_tasks_member_select on public.team_tasks for select
   using (
     public.app_is_system() or public.is_teacher() or
     exists (
@@ -866,7 +985,10 @@ create policy team_tasks_member_all on public.team_tasks for all
       join public.teams t on t.id = tm.team_id
       where tm.team_id = team_id and t.status = 'confirmed' and tm.user_id = public.app_uid()
     )
-  )
+  );
+
+create policy team_tasks_teacher_all on public.team_tasks for all
+  using (public.app_is_system() or public.is_teacher())
   with check (public.app_is_system() or public.is_teacher());
 
 drop policy if exists team_activity_select on public.team_activity_logs;
@@ -983,6 +1105,7 @@ begin
     grant usage on schema public to techhub_app;
     grant select, insert, update, delete on table
       public.auth_accounts,
+      public.auth_security,
       public.profiles,
       public.competitions,
       public.interests,
@@ -1003,6 +1126,7 @@ begin
       public.app_uid(),
       public.app_is_system(),
       public.is_teacher(),
+      public.app_session_version(),
       public.is_confirmed_team_member(uuid),
       public.can_view_profile(uuid),
       public.get_competition_interest_counts(uuid[]),
@@ -1117,6 +1241,27 @@ begin
     grant execute on function public.get_directory_profile(uuid) to techhub_app;
   end if;
 end $$;
+
+create or replace function public.ensure_notification_preferences()
+returns trigger
+language plpgsql
+as $$
+begin
+  insert into public.notification_preferences (user_id)
+  values (new.id)
+  on conflict (user_id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists ensure_notification_preferences_trigger on public.auth_accounts;
+create trigger ensure_notification_preferences_trigger
+  after insert on public.auth_accounts
+  for each row execute function public.ensure_notification_preferences();
+
+insert into public.notification_preferences (user_id)
+select id from public.auth_accounts
+on conflict (user_id) do nothing;
 
 -- ----------------------------------------------------------------------------
 -- Tip: Promote the first teacher account after registering via UI:

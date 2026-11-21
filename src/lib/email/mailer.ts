@@ -8,16 +8,20 @@ interface MailInput {
   html: string;
 }
 
-export async function sendMail(input: MailInput): Promise<void> {
+export interface MailResult {
+  delivered: boolean;
+  error: string | null;
+}
+
+export async function sendMail(input: MailInput): Promise<MailResult> {
   const host = process.env.SMTP_HOST?.trim();
   const from = process.env.SMTP_FROM?.trim();
   if (!host || !from) {
-    logEvent("info", "email.dev_mode", {
+    logEvent("info", "email.not_configured", {
       to: input.to,
       subject: input.subject,
-      note: "SMTP not configured; message was not delivered",
     });
-    return;
+    return { delivered: false, error: "SMTP ไม่ได้ตั้งค่า" };
   }
 
   const port = Number(process.env.SMTP_PORT ?? 587);
@@ -32,6 +36,17 @@ export async function sendMail(input: MailInput): Promise<void> {
     greetingTimeout: 10_000,
     socketTimeout: 15_000,
   });
-  await transport.sendMail({ from, to: input.to, subject: input.subject, text: input.text, html: input.html });
-  await transport.close();
+
+  try {
+    await transport.sendMail({
+      from,
+      to: input.to,
+      subject: input.subject,
+      text: input.text,
+      html: input.html,
+    });
+    return { delivered: true, error: null };
+  } finally {
+    transport.close();
+  }
 }

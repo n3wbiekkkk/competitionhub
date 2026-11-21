@@ -118,7 +118,7 @@ function TeamMembers({
                 <a href={member.github_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline"><GitBranch className="h-3 w-3" />GitHub<ExternalLink className="h-2.5 w-2.5" /></a>
               ) : null}
               {member.portfolio_url ? (
-                <a href={member.portfolio_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">Portfolio<ExternalLink className="h-2.5 w-2.5" /></a>
+                <a href={member.portfolio_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">ผลงาน<ExternalLink className="h-2.5 w-2.5" /></a>
               ) : null}
             </div>
           </div>

@@ -5,6 +5,9 @@ set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
+echo "==> schema parity"
+npm run check:schema
+
 echo "==> typecheck"
 npx tsc --noEmit
 

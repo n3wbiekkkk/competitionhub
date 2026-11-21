@@ -386,7 +386,7 @@ export function AdminDashboardClient({
             ศูนย์ควบคุมระบบ
           </p>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            Admin Dashboard
+            แดชบอร์ดผู้ดูแลระบบ
           </h1>
           <p className="text-sm text-muted-foreground">
             จัดการบัญชีนักเรียน/อาจารย์ แก้ไขชั้นห้องเรียน ตรวจสอบงานแข่ง

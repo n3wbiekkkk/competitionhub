@@ -30,6 +30,7 @@ import {
   type TechCategory,
   type UserRole,
 } from "@/lib/constants/tech-taxonomy";
+import { explainSkillMatch } from "@/lib/utils/skill-match";
 import {
   formatThaiDate,
   getDeadlineCountdown,
@@ -63,82 +64,26 @@ interface CompetitionFeedProps {
   todayIso: string;
 }
 
-function tokenizeSkill(rawSkill: string): {
-  full: string;
-  tokens: string[];
-} {
-  const full = rawSkill.trim().toLowerCase();
-  const split = full
-    .split(/[/,\s]+/)
-    .map((part) => part.trim())
-    .filter((part) => part.length > 0);
-  const tokens = Array.from(new Set([full, ...split]));
-  return { full, tokens };
-}
-
-function hintMatchesSkillTokens(hintLower: string, tokens: string[]): boolean {
-  for (const token of tokens) {
-    if (token.length === 1) {
-      if (hintLower === token) return true;
-      continue;
-    }
-    if (hintLower.includes(token) || token.includes(hintLower)) {
-      return true;
-    }
-  }
-  return false;
-}
-
 function computeMatchedTech(
   comp: FeedCompetitionItem,
   userSkills: string[],
 ): { matchedHints: Set<string>; matchedCount: number } {
+  const explanation = explainSkillMatch({
+    userSkills,
+    competition: {
+      title: comp.title,
+      summary: comp.summary,
+      recommended_roles: comp.recommended_roles,
+      tech_stack_hints: comp.tech_stack_hints,
+    },
+  });
   const matchedHints = new Set<string>();
-  if (userSkills.length === 0) {
-    return { matchedHints, matchedCount: 0 };
-  }
-
-  const parsedSkills = userSkills
-    .map(tokenizeSkill)
-    .filter((entry) => entry.full.length > 0);
-  const secondaryHaystack = [
-    ...comp.recommended_roles,
-    comp.summary ?? "",
-  ]
-    .join(" ")
-    .toLowerCase();
-
-  let matchedSkillCount = 0;
-
-  for (const { tokens } of parsedSkills) {
-    let skillMatched = false;
-
-    for (const hint of comp.tech_stack_hints) {
-      const hintLower = hint.trim().toLowerCase();
-      if (hintLower && hintMatchesSkillTokens(hintLower, tokens)) {
-        matchedHints.add(hint);
-        skillMatched = true;
-      }
-    }
-
-    if (!skillMatched) {
-      for (const token of tokens) {
-        if (token.length >= 2 && secondaryHaystack.includes(token)) {
-          skillMatched = true;
-          break;
-        }
-      }
-    }
-
-    if (skillMatched) {
-      matchedSkillCount += 1;
+  for (const skill of explanation.matchedSkills) {
+    for (const evidence of skill.evidence) {
+      if (evidence.field === "tech_stack_hint") matchedHints.add(evidence.value);
     }
   }
-
-  return {
-    matchedHints,
-    matchedCount: Math.max(matchedHints.size, matchedSkillCount),
-  };
+  return { matchedHints, matchedCount: explanation.matchedSkills.length };
 }
 
 function matchesTargetLevel(

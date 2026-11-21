@@ -182,6 +182,30 @@ test("aborting during backoff stops before the next attempt", async () => {
   assert.deepEqual(attempts, [1]);
 });
 
+test("default backoff aborts when the signal is aborted", async () => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20);
+  let calls = 0;
+
+  try {
+    await assert.rejects(
+      runWithRetry({
+        operation: () => {
+          calls += 1;
+          throw new TypeError("fetch failed");
+        },
+        attempts: 3,
+        baseDelayMs: 100,
+        signal: controller.signal,
+      }),
+      (error: unknown) => error === controller.signal.reason,
+    );
+    assert.equal(calls, 1);
+  } finally {
+    clearTimeout(timer);
+  }
+});
+
 test("an AbortError from the operation is not retried", async () => {
   const abortError = new DOMException("Aborted", "AbortError");
   let calls = 0;

@@ -32,7 +32,7 @@ export interface RunWithRetryOptions<T> {
   maxDelayMs?: number;
   signal?: AbortSignal;
   random?: () => number;
-  sleep?: (delayMs: number) => Promise<void>;
+  sleep?: (delayMs: number, signal?: AbortSignal) => Promise<void>;
 }
 
 export class RetryableHttpError extends Error {
@@ -127,7 +127,7 @@ export async function runWithRetry<T>(
         throw new RetryExhaustedError(error, attempt, retryable);
       }
 
-      await sleep(backoffDelay(attempt, baseDelayMs, maxDelayMs, random()));
+      await sleep(backoffDelay(attempt, baseDelayMs, maxDelayMs, random()), signal);
       throwIfAborted(signal);
     }
   }

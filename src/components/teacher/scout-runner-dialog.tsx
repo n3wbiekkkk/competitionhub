@@ -106,6 +106,13 @@ const DEFAULT_SOURCES: SourceStatusItem[] = [
     status: "idle",
     foundCount: 0,
   },
+  {
+    id: "web_search",
+    name: "การค้นหาเว็บ",
+    target: "การแข่งขันเทคโนโลยีในประเทศไทยที่ยังเปิดรับสมัคร",
+    status: "idle",
+    foundCount: 0,
+  },
 ];
 
 export function ScoutRunnerDialog({
@@ -168,7 +175,7 @@ export function ScoutRunnerDialog({
       }
 
       case "closed_expired": {
-        setPhaseLabel("กำลังสแกน 6 แหล่งข่าวการแข่งขันในไทย...");
+        setPhaseLabel(`กำลังสแกน ${DEFAULT_SOURCES.length} แหล่งข่าวการแข่งขันในไทย...`);
         setProgressPct(12);
         appendLog({
           tag: "ปิดหมดเขต",
@@ -491,7 +498,7 @@ export function ScoutRunnerDialog({
               <span>AI Tech Scout — ติดตามการทำงานแบบเรียลไทม์</span>
             </DialogTitle>
             <DialogDescription className="text-xs">
-              สแกน 6 แหล่งประกาศการแข่งขันสายคอมพิวเตอร์ในไทย
+              สแกน {DEFAULT_SOURCES.length} แหล่งประกาศการแข่งขันสายคอมพิวเตอร์ในไทย
               คัดกรองเฉพาะงานสาย Tech ในไทยด้วยระบบวิเคราะห์อัตโนมัติ
             </DialogDescription>
           </DialogHeader>
@@ -518,7 +525,7 @@ export function ScoutRunnerDialog({
               ) : null}
             </div>
 
-            {/* 6 Thai Sources Grid */}
+            {/* Thai sources grid */}
             <div className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground">
                 แหล่งข้อมูลและคำค้นหาที่ตรวจสอบ

@@ -1,3 +1,4 @@
+import { dedupeCompetition } from "@/lib/ai/dedupe";
 import {
   extractTechCompetitionFromText,
   fetchUrlMarkdown,
@@ -538,7 +539,7 @@ async function trackSourceFetch(
       sourceId: descriptor.id,
       sourceName: descriptor.name,
       foundCount: items.length,
-      ok: true,
+      ok: items.length > 0,
     });
     return items;
   } catch {
@@ -655,6 +656,22 @@ export async function runAutoTechScout(options?: {
       [candidateUrls],
     );
     return new Set(res.rows.map((r) => r.source_url));
+  });
+
+  const existingCandidates = await withSystemDb(async (client) => {
+    const res = await client.query<{
+      id: string;
+      title: string;
+      source_url: string | null;
+      deadline: string | null;
+    }>(
+      `select id, title, source_url, deadline::text
+       from public.competitions
+       where status <> 'rejected'
+       order by created_at desc
+       limit 500`,
+    );
+    return res.rows;
   });
 
   const unseenCandidates = dedupedCandidates.filter(
@@ -782,6 +799,30 @@ export async function runAutoTechScout(options?: {
           outcome: "ignored",
           title: extracted.title,
           deadline: extracted.deadline,
+          reason,
+        });
+        continue;
+      }
+
+      const duplicate = dedupeCompetition(
+        {
+          title: extracted.title,
+          sourceUrl: candidate.url,
+          deadline: extracted.deadline,
+        },
+        existingCandidates,
+      );
+      if (duplicate.action === "skip") {
+        const reason = "รายการใกล้เคียงมีอยู่ในระบบแล้ว";
+        ignored.push({ url: candidate.url, title: extracted.title, reason });
+        emit?.({
+          type: "candidate_result",
+          index,
+          total,
+          url: candidate.url,
+          sourceName: candidate.sourceName,
+          outcome: "ignored",
+          title: extracted.title,
           reason,
         });
         continue;

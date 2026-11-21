@@ -22,8 +22,8 @@ export function CompetitionCommunity({ competitionId }: { competitionId: string 
           fetch(`/api/competitions/${competitionId}/comments`),
         ]);
         if (b.ok) {
-          const data = (await b.json()) as { bookmarks: string[] };
-          setBookmarked(data.bookmarks.includes(competitionId));
+          const data = (await b.json()) as { bookmarked: boolean };
+          setBookmarked(data.bookmarked);
         }
         if (c.ok) {
           const data = (await c.json()) as { comments: CompetitionComment[] };

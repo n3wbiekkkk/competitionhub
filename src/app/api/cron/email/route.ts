@@ -23,8 +23,8 @@ async function handle(request: Request) {
     );
   }
 
-  const batch = await withSystemDb(async (client) => {
-    const result = await client.query<OutboxRow>(
+  const result = await withSystemDb(async (client) => {
+    const batchResult = await client.query<OutboxRow>(
       `select id, to_email, template, payload, attempts
        from public.email_outbox
        where status = 'pending' and scheduled_at <= now()
@@ -32,43 +32,56 @@ async function handle(request: Request) {
        limit 20
        for update skip locked`,
     );
-    return result.rows;
-  });
 
-  let sent = 0;
-  let failed = 0;
-  for (const item of batch) {
-    try {
-      await sendMail({
-        to: item.to_email,
-        subject: item.payload.subject ?? `การแจ้งเตือนจาก TechComp Hub (${item.template})`,
-        text: item.payload.text ?? "",
-        html: item.payload.html ?? "",
-      });
-      await withSystemDb(async (client) => {
-        await client.query(
-          "update public.email_outbox set status = 'sent', sent_at = now() where id = $1",
-          [item.id],
-        );
-      });
-      sent += 1;
-    } catch (error) {
-      logError("[cron/email] delivery failed", error, { outboxId: item.id });
-      await withSystemDb(async (client) => {
+    let sent = 0;
+    let failed = 0;
+
+    for (const item of batchResult.rows) {
+      try {
+        const delivery = await sendMail({
+          to: item.to_email,
+          subject: item.payload.subject ?? `การแจ้งเตือนจาก TechComp Hub (${item.template})`,
+          text: item.payload.text ?? "",
+          html: item.payload.html ?? "",
+        });
+
+        if (delivery.delivered) {
+          await client.query(
+            "update public.email_outbox set status = 'sent', sent_at = now(), last_error = null where id = $1",
+            [item.id],
+          );
+          sent += 1;
+        } else {
+          await client.query(
+            `update public.email_outbox
+             set attempts = attempts + 1,
+                 status = 'failed',
+                 last_error = $2
+             where id = $1`,
+            [item.id, delivery.error],
+          );
+          failed += 1;
+        }
+      } catch (error) {
+        logError("[cron/email] delivery failed", error, { outboxId: item.id });
+        const message = error instanceof Error ? error.message : "การส่งอีเมลล้มเหลว";
         await client.query(
           `update public.email_outbox
            set attempts = attempts + 1,
                status = case when attempts + 1 >= 3 then 'failed' else 'pending' end,
-               scheduled_at = now() + interval '5 minutes'
+               scheduled_at = now() + interval '5 minutes',
+               last_error = $2
            where id = $1`,
-          [item.id],
+          [item.id, message],
         );
-      });
-      failed += 1;
+        failed += 1;
+      }
     }
-  }
 
-  return NextResponse.json({ ok: true, processed: batch.length, sent, failed });
+    return { processed: batchResult.rows.length, sent, failed };
+  });
+
+  return NextResponse.json({ ok: true, ...result });
 }
 
 export async function POST(request: Request) {

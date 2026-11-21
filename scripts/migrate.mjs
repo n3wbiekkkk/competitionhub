@@ -62,11 +62,27 @@ async function main() {
     .filter((name) => name.endsWith(".sql"))
     .sort();
   const client = await pool.connect();
+  let inTransaction = false;
   try {
-    await ensureLedger(client);
+    if (!statusOnly) {
+      await client.query("begin");
+      inTransaction = true;
+      await client.query("select pg_advisory_xact_lock(742910)");
+      await ensureLedger(client);
+    }
+
+    const ledgerExists = (
+      await client.query(
+        `select 1 from information_schema.tables
+         where table_schema = 'public' and table_name = 'schema_migrations'`,
+      )
+    ).rowCount === 1;
     const applied = new Map(
-      (await client.query("select version, checksum from public.schema_migrations"))
-        .rows.map((row) => [row.version, row.checksum]),
+      ledgerExists
+        ? (
+            await client.query("select version, checksum from public.schema_migrations")
+          ).rows.map((row) => [row.version, row.checksum])
+        : [],
     );
 
     let count = 0;
@@ -97,23 +113,22 @@ async function main() {
         continue;
       }
 
-      await client.query("begin");
-      try {
-        await client.query("select pg_advisory_xact_lock(742910)");
-        await client.query(sql);
-        await client.query(
-          "insert into public.schema_migrations (version, checksum) values ($1, $2)",
-          [version, checksum],
-        );
-        await client.query("commit");
-      } catch (error) {
-        await client.query("rollback");
-        throw error;
-      }
+      await client.query(sql);
+      await client.query(
+        "insert into public.schema_migrations (version, checksum) values ($1, $2)",
+        [version, checksum],
+      );
       count += 1;
       console.log(`apply ${version} checksum=${checksum.slice(0, 12)}`);
     }
+    if (inTransaction) {
+      await client.query("commit");
+      inTransaction = false;
+    }
     console.log(statusOnly ? "status complete" : `migrations complete applied=${count}`);
+  } catch (error) {
+    if (inTransaction) await client.query("rollback");
+    throw error;
   } finally {
     client.release();
   }

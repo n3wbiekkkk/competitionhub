@@ -10,6 +10,7 @@ import {
 } from "@/lib/constants/classroom";
 import { userRoleSchema } from "@/lib/constants/tech-taxonomy";
 import { withSystemDb, withUserDb } from "@/lib/db/pool";
+import { writeAudit } from "@/lib/utils/audit";
 import type { AdminUserItem, Profile } from "@/types/database";
 import { logError } from "@/lib/utils/logger";
 
@@ -185,6 +186,15 @@ export async function POST(request: Request) {
         { status: 409 },
       );
     }
+
+    await writeAudit({
+      actorId: auth.user.id,
+      action: "admin.user.create",
+      targetType: "user",
+      targetId: outcome.user.id,
+      metadata: { email: normalizedEmail, role: parsed.data.role },
+      ipAddress: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+    });
 
     return NextResponse.json({ user: outcome.user }, { status: 201 });
   } catch (error) {

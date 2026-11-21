@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireTeacherUser } from "@/lib/auth/cookies";
-import { teamStatusSchema } from "@/lib/constants/tech-taxonomy";
+import { techRoleSchema, teamStatusSchema } from "@/lib/constants/tech-taxonomy";
 import { withUserDb } from "@/lib/db/pool";
 import {
   loadTeamBuilderData,
@@ -30,7 +30,7 @@ const syncTeamsSchema = z.object({
       members: z.array(
         z.object({
           user_id: z.string().uuid(),
-          assigned_role: z.string().trim().min(1).max(60),
+          assigned_role: techRoleSchema,
         }),
       ),
     }),

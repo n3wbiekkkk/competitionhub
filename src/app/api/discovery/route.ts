@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { consumeRateLimit } from "@/lib/auth/rate-limit";
 import { getAuthenticatedProfile } from "@/lib/auth/cookies";
 import { filterDiscoveryCandidates, parseDiscoveryQuery, rankCompetitionsWithAi, rankFallbackCompetitions, scoreDiscoveryCompetition } from "@/lib/ai/discovery";
 import { withUserDb } from "@/lib/db/pool";
+import { getRequestIp } from "@/lib/utils/request-ip";
 import { getTodayIsoBangkok } from "@/lib/utils/thai-date";
 import type { Competition } from "@/types/database";
 import { logError } from "@/lib/utils/logger";
@@ -24,6 +26,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" }, { status: 400 });
   }
 
+  const limitKey = user ? `discovery:user:${user.id}` : `discovery:ip:${getRequestIp(request)}`;
+  if (!(await consumeRateLimit(limitKey, 20, 3_600_000)).allowed) {
+    return NextResponse.json(
+      { error: "ค้นหาด้วย AI มากเกินไป กรุณารอสักครู่แล้วลองใช้อีกครั้ง" },
+      { status: 429 },
+    );
+  }
+
   try {
     const allCompetitions = await withUserDb(user?.id ?? null, async (client) => {
       const result = await client.query<Competition>(
@@ -42,9 +52,11 @@ export async function POST(request: Request) {
     const todayIso = getTodayIsoBangkok();
     const intent = parseDiscoveryQuery(parsed.data.query);
     const strictCandidates = filterDiscoveryCandidates(allCompetitions, intent, todayIso);
+    const relaxedIntent = { ...intent, teamSize: null, highSchoolOnly: false, universityOnly: false };
     const candidates = strictCandidates.length > 0
       ? strictCandidates
-      : filterDiscoveryCandidates(allCompetitions, { ...intent, teamSize: null, highSchoolOnly: false, universityOnly: false }, todayIso);
+      : filterDiscoveryCandidates(allCompetitions, relaxedIntent, todayIso);
+    const effectiveIntent = strictCandidates.length > 0 ? intent : relaxedIntent;
     const skills = user?.skills ?? [];
 
     if (candidates.length === 0) {
@@ -57,7 +69,7 @@ export async function POST(request: Request) {
     const ranked = await rankCompetitionsWithAi({
       query: parsed.data.query,
       competitions: candidates
-        .map((competition) => ({ competition, score: scoreDiscoveryCompetition(competition, intent, skills, todayIso) }))
+        .map((competition) => ({ competition, score: scoreDiscoveryCompetition(competition, effectiveIntent, skills, todayIso) }))
         .sort((a, b) => b.score - a.score)
         .slice(0, 24)
         .map(({ competition }) => competition),
@@ -65,7 +77,7 @@ export async function POST(request: Request) {
       todayIso,
     });
 
-    const fallback = rankFallbackCompetitions(candidates, intent, skills, todayIso);
+    const fallback = rankFallbackCompetitions(candidates, effectiveIntent, skills, todayIso);
     if (!ranked.ranking) {
       return NextResponse.json({
         mode: "fallback",

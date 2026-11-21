@@ -64,7 +64,7 @@ import type {
   TeamDetail,
   TeamMemberDetail,
 } from "@/lib/db/team-builder";
-import { scoreTeam } from "@/lib/utils/team-optimizer";
+import { optimizeTeams, scoreTeam } from "@/lib/utils/team-optimizer";
 import type { Competition } from "@/types/database";
 
 interface TeamBuilderBoardProps {
@@ -728,37 +728,61 @@ export function TeamBuilderBoard({
 
     // Step B: Create new balanced draft teams for any remaining students
     if (remaining.length > 0) {
-      const numNewTeams = Math.ceil(remaining.length / maxSize);
-      const roleBuckets = new Map<string, InterestedStudentItem[]>();
-      for (const student of remaining) {
-        const key = student.preferred_role.toLowerCase();
-        const bucket = roleBuckets.get(key) ?? [];
-        bucket.push(student);
-        roleBuckets.set(key, bucket);
+      let numNewTeams = Math.max(1, Math.ceil(remaining.length / maxSize));
+      while (
+        numNewTeams > 1 &&
+        Math.floor(remaining.length / numNewTeams) < competition.min_size
+      ) {
+        numNewTeams -= 1;
       }
 
-      const orderedRemaining: InterestedStudentItem[] = [];
-      for (const bucket of roleBuckets.values()) {
-        orderedRemaining.push(...bucket);
-      }
+      const seeds = Array.from({ length: numNewTeams }, (_, offset) => ({
+        clientId: `temp-team-${Date.now()}-${nextTeams.length + offset + 1}`,
+        name: `Team ${nextTeams.length + offset + 1}`,
+        advisor_id: currentTeacherId,
+      }));
 
-      const createdTeams: EditableTeam[] = Array.from(
-        { length: numNewTeams },
-        (_, offset) => ({
-          clientId: `temp-team-${Date.now()}-${nextTeams.length + offset + 1}`,
-          name: `Team ${nextTeams.length + offset + 1}`,
-          advisor_id: currentTeacherId,
+      const optimized = optimizeTeams({
+        students: remaining.map((student) => ({
+          user_id: student.user_id,
+          preferred_role: student.preferred_role,
+          grade: student.grade,
+          skills: student.skills,
+        })),
+        teams: seeds.map((seed) => ({
+          id: seed.clientId,
           status: "draft",
           members: [],
-        }),
-      );
-
-      orderedRemaining.forEach((student, index) => {
-        const targetTeam = createdTeams[index % numNewTeams];
-        targetTeam.members.push(toMemberDetail(student));
+        })),
+        competition: {
+          min_size: competition.min_size,
+          max_size: competition.max_size,
+          recommended_roles: competition.recommended_roles,
+          tech_stack_hints: competition.tech_stack_hints,
+        },
       });
 
-      nextTeams.push(...createdTeams);
+      const byStudentId = new Map(
+        remaining.map((student) => [student.user_id, student]),
+      );
+      for (const optimizedTeam of optimized.teams) {
+        const seed = seeds.find((item) => item.clientId === optimizedTeam.id);
+        if (!seed) continue;
+        const members = optimizedTeam.members.flatMap((member) => {
+          const student = byStudentId.get(member.user_id);
+          if (!student) return [];
+          return [
+            toMemberDetail({ ...student, preferred_role: member.assigned_role }),
+          ];
+        });
+        nextTeams.push({
+          clientId: seed.clientId,
+          name: seed.name,
+          advisor_id: seed.advisor_id,
+          status: "draft",
+          members,
+        });
+      }
     }
 
     setTeams(nextTeams);

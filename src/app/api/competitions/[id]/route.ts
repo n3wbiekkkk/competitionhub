@@ -6,6 +6,7 @@ import {
   techCategorySchema,
 } from "@/lib/constants/tech-taxonomy";
 import { withUserDb } from "@/lib/db/pool";
+import { writeAudit } from "@/lib/utils/audit";
 import { normalizeToIsoCeDate } from "@/lib/utils/thai-date";
 import type { Competition, Interest } from "@/types/database";
 import { logError } from "@/lib/utils/logger";
@@ -165,7 +166,7 @@ export async function PATCH(
   const data = parsed.data;
 
   try {
-    const updated = await withUserDb(auth.user.id, async (client) => {
+    const updateResult = await withUserDb(auth.user.id, async (client) => {
       const existingRes = await client.query<Competition>(
         `SELECT id, title, category, deadline::text, min_size, max_size,
                 recommended_roles, tech_stack_hints, eligibility, summary,
@@ -244,17 +245,33 @@ export async function PATCH(
           id,
         ],
       );
-      return updateRes.rows[0] ?? null;
+      return {
+        competition: updateRes.rows[0] ?? null,
+        previousStatus: current.status,
+      };
     });
 
-    if (!updated) {
+    if (!updateResult?.competition) {
       return NextResponse.json(
         { error: "ไม่พบรายการแข่งขันนี้" },
         { status: 404 },
       );
     }
 
-    return NextResponse.json({ competition: updated });
+    if (data.status && data.status !== updateResult.previousStatus) {
+      await writeAudit({
+        actorId: auth.user.id,
+        action: "teacher.competition.status",
+        targetType: "competition",
+        targetId: id,
+        metadata: {
+          from: updateResult.previousStatus,
+          to: data.status,
+        },
+      });
+    }
+
+    return NextResponse.json({ competition: updateResult.competition });
   } catch (error) {
     if (error instanceof Error && error.message === "INVALID_SIZE_RANGE") {
       return NextResponse.json(

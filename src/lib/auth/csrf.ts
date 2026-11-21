@@ -7,10 +7,12 @@ export function isAllowedMutationOrigin(request: Request): boolean {
   if (!origin) return true;
   if (origin === "null") return false;
 
-  const host =
-    request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ??
-    request.headers.get("host");
-  if (!host) return false;
+  let host: string;
+  try {
+    host = new URL(request.url).host;
+  } catch {
+    return false;
+  }
 
   try {
     const parsed = new URL(origin);

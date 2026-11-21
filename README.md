@@ -99,6 +99,8 @@ ssh "$DEPLOY_HOST" "cd \"$DEPLOY_DIR\" && \
 
 - Sessions are revoked on password or role changes through `auth_security.session_version`; the acting device receives a fresh cookie.
 - Confirmed teams must hold `min_size`–`max_size` members. The rule is enforced in the API **and** by a deferred constraint trigger in PostgreSQL.
-- `POST /api/cron/discover` requires `Authorization: Bearer $CRON_SECRET`.
+- `POST /api/cron/discover` requires `Authorization: Bearer $CRON_SECRET`. Use `scripts/run-daily-scout.sh`.
+- `POST /api/cron/reminders` uses the same cron secret and sends deadline notifications. Use `scripts/run-reminders.sh` on a daily schedule.
+- Set `TRUST_PROXY_HEADERS=true` only behind a reverse proxy that overwrites `X-Forwarded-For` and `X-Real-IP`. Direct deployments use one non-spoofable `direct` rate-limit bucket.
 - Web search discovery is optional. Set `SEARCH_PROVIDER=auto` and one provider key, or name a provider explicitly. Keys are read only by server code. See `.env.example` for variable names.
 - `COOKIE_SECURE=true` only behind HTTPS; the LAN/Tailscale HTTP setup must keep it `false`.

@@ -17,14 +17,16 @@ export async function GET(
   if (!uuidSchema.safeParse(id).success) {
     return NextResponse.json({ error: "รหัสรายการไม่ถูกต้อง" }, { status: 400 });
   }
-  const result = await withUserDb(auth.user.id, async (client) => {
-    const res = await client.query<{ competition_id: string }>(
-      "select competition_id from public.competition_bookmarks where user_id = $1",
-      [auth.user.id],
+  const bookmarked = await withUserDb(auth.user.id, async (client) => {
+    const res = await client.query(
+      `select 1 from public.competition_bookmarks
+       where user_id = $1 and competition_id = $2
+       limit 1`,
+      [auth.user.id, id],
     );
-    return res.rows.map((row) => row.competition_id);
+    return (res.rowCount ?? 0) > 0;
   });
-  return NextResponse.json({ bookmarks: result });
+  return NextResponse.json({ bookmarked });
 }
 
 export async function POST(

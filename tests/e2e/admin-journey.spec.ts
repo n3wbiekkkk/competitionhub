@@ -23,7 +23,7 @@ test("ผู้ดูแลระบบค้นหาผู้ใช้แล�
     .click();
   await expect(page).toHaveURL(/\/admin/);
   await expect(
-    page.getByRole("heading", { name: "Admin Dashboard" }),
+    page.getByRole("heading", { name: "แดชบอร์ดผู้ดูแลระบบ" }),
   ).toBeVisible();
   await expect(page.getByRole("tab", { name: /จัดการผู้ใช้/ })).toBeVisible();
 

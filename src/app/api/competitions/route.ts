@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { extractTechCompetitionFromText } from "@/lib/ai/extract-competition";
 import { getAuthenticatedProfile, requireAuthUser } from "@/lib/auth/cookies";
 import {
   competitionSourceTypeSchema,
@@ -219,6 +220,7 @@ export async function POST(request: Request) {
   }
 
   const data = parsed.data;
+  const isTeacher = auth.user.role === "teacher";
 
   if (!data.is_tech_related) {
     if (auth.user.role !== "teacher") {
@@ -241,7 +243,29 @@ export async function POST(request: Request) {
     }
   }
 
-  const isTeacher = auth.user.role === "teacher";
+  if (!isTeacher) {
+    let verifiedRelated = false;
+    try {
+      const verification = await extractTechCompetitionFromText(
+        [data.title, data.summary, data.eligibility ?? ""].join("\n"),
+        data.source_url ?? null,
+        { thailandOnly: true },
+      );
+      verifiedRelated = verification.is_tech_related;
+    } catch {
+      verifiedRelated = false;
+    }
+    if (!verifiedRelated) {
+      return NextResponse.json(
+        {
+          error:
+            "ไม่ยืนยันได้ว่ารายการนี้เป็นการแข่งขันสายคอมพิวเตอร์/เทคโนโลยีในประเทศไทย กรุณาตรวจสอบข้อมูลอีกครั้ง",
+        },
+        { status: 403 },
+      );
+    }
+  }
+
   const finalStatus = isTeacher ? (data.status ?? "open") : "pending_review";
   const finalSourceType = isTeacher
     ? data.source_type

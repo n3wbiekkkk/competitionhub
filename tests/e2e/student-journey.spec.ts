@@ -27,6 +27,10 @@ test("นักเรียนลงชื่อสนใจการแข่�
     "ทีมของฉัน",
   );
 
+  await page.getByRole("button", { name: "การแจ้งเตือน" }).click();
+  await expect(page.getByText("ยังไม่มีการแจ้งเตือน")).toBeVisible();
+  await page.getByRole("button", { name: "การแจ้งเตือน" }).click();
+
   await page.getByRole("link", { name: competitionTitle, exact: true }).click();
   await expect(
     page.getByRole("heading", { name: competitionTitle, exact: true }),

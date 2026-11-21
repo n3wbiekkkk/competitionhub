@@ -79,6 +79,12 @@ jobs:
           psql "$MIGRATION_DATABASE_URL" -v ON_ERROR_STOP=1 -f db/schema.sql
           npm run db:migrate
 
+      - name: Schema parity
+        run: npm run check:schema
+
+      - name: Integration schema and RLS check
+        run: npm run test:integration
+
       - name: Seed E2E fixtures
         run: |
           {
@@ -171,9 +177,6 @@ jobs:
           );
           SQL
 
-      - name: Integration schema and RLS check
-        run: npm run test:integration
-
       - name: Typecheck
         run: npm run typecheck
 
@@ -185,6 +188,9 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Public repo gate
+        run: ./scripts/audit-public-repo.sh
 
       - name: Playwright E2E
         run: npm run test:e2e
