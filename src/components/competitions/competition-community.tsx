@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { Bookmark, Loader2, MessageCircle } from "lucide-react";
+import { Loader2, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,7 +9,6 @@ import { formatThaiDate } from "@/lib/utils/thai-date";
 import type { CompetitionComment } from "@/types/database";
 
 export function CompetitionCommunity({ competitionId }: { competitionId: string }) {
-  const [bookmarked, setBookmarked] = useState(false);
   const [comments, setComments] = useState<CompetitionComment[]>([]);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
@@ -17,16 +16,13 @@ export function CompetitionCommunity({ competitionId }: { competitionId: string 
   useEffect(() => {
     void (async () => {
       try {
-        const [b, c] = await Promise.all([
-          fetch(`/api/competitions/${competitionId}/bookmark`),
-          fetch(`/api/competitions/${competitionId}/comments`),
-        ]);
-        if (b.ok) {
-          const data = (await b.json()) as { bookmarked: boolean };
-          setBookmarked(data.bookmarked);
-        }
-        if (c.ok) {
-          const data = (await c.json()) as { comments: CompetitionComment[] };
+        const response = await fetch(
+          `/api/competitions/${competitionId}/comments`,
+        );
+        if (response.ok) {
+          const data = (await response.json()) as {
+            comments: CompetitionComment[];
+          };
           setComments(data.comments);
         }
       } catch {
@@ -34,22 +30,6 @@ export function CompetitionCommunity({ competitionId }: { competitionId: string 
       }
     })();
   }, [competitionId]);
-
-  async function toggleBookmark() {
-    setBusy(true);
-    try {
-      const response = await fetch(`/api/competitions/${competitionId}/bookmark`, {
-        method: bookmarked ? "DELETE" : "POST",
-      });
-      if (!response.ok) throw new Error("bookmark failed");
-      setBookmarked(!bookmarked);
-      toast.success(bookmarked ? "ลบรายการที่บันทึกแล้ว" : "บันทึกการแข่งขันแล้ว");
-    } catch {
-      toast.error("ไม่สามารถบันทึกได้");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function submitComment(event: FormEvent) {
     event.preventDefault();
@@ -75,21 +55,11 @@ export function CompetitionCommunity({ competitionId }: { competitionId: string 
 
   return (
     <section className="space-y-5 border-t border-border pt-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-sm font-semibold text-foreground">ติดตามและสอบถาม</h2>
-          <p className="text-xs text-muted-foreground">บันทึกไว้ดูซ้ำ หรือถามอาจารย์และเพื่อนในรายการนี้</p>
-        </div>
-        <Button
-          type="button"
-          variant={bookmarked ? "secondary" : "outline"}
-          onClick={() => void toggleBookmark()}
-          disabled={busy}
-          className="gap-2 rounded-lg"
-        >
-          <Bookmark className="h-4 w-4" />
-          {bookmarked ? "บันทึกแล้ว" : "บันทึกไว้"}
-        </Button>
+      <div>
+        <h2 className="text-sm font-semibold text-foreground">ถาม-ตอบและประกาศ</h2>
+        <p className="text-xs text-muted-foreground">
+          ถามอาจารย์และเพื่อนในรายการนี้ หรือติดตามประกาศที่ถูกปักหมุด
+        </p>
       </div>
 
       <ul className="space-y-3">
