@@ -14,6 +14,7 @@ export default defineConfig({
   reporter: process.env.CI ? "github" : "list",
   use: {
     baseURL,
+    extraHTTPHeaders: { Origin: baseURL },
     locale: "th-TH",
     timezoneId: "Asia/Bangkok",
     actionTimeout: 30_000,

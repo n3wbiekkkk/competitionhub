@@ -126,6 +126,13 @@ test("LFG → เชิญเพื่อน → AI roadmap → แชท → me
     expect(competitionId).toBeTruthy();
     if (!competitionId) return;
 
+    const interest = await postJson(
+      page,
+      `/api/competitions/${competitionId}/interest`,
+      { preferred_role: "Frontend", note: null },
+    );
+    expect([200, 201]).toContain(interest.status);
+
     const teamName = `E2E LFG ${randomUUID()}`;
     const created = await postJson(
       page,

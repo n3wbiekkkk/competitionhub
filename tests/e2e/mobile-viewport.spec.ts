@@ -22,13 +22,16 @@ test("ฟีดและ Smart Add ใช้งานได้บนจอ 390×
   await page.getByLabel("อีเมล").fill(studentEmail);
   await page.getByLabel("รหัสผ่าน", { exact: true }).fill(studentPassword);
   await page.getByRole("button", { name: "เข้าสู่ระบบ", exact: true }).click();
-  await expect(page.getByRole("navigation", { name: "เมนูหลัก" })).toBeVisible();
+  await page.waitForFunction(() => document.body.dataset.commandReady === "true");
+  await expect(page.getByRole("navigation", { name: "เมนูด้านล่าง" })).toBeVisible();
 
   await page.goto("/");
-  await page
-    .getByRole("button", { name: "เพิ่มรายการ", exact: true })
-    .first()
-    .click();
+  await page.waitForFunction(() => document.body.dataset.commandReady === "true");
+  await page.keyboard.press("Control+k");
+  const palette = page.getByRole("dialog", { name: /คำสั่งด่วน/ });
+  await expect(palette).toBeVisible();
+  await palette.getByRole("textbox", { name: "ค้นหาคำสั่ง" }).fill("เพิ่มรายการ");
+  await palette.getByRole("option", { name: /เพิ่มรายการ/ }).first().click();
   const dialog = page.getByRole("dialog", { name: "เพิ่มรายการแข่งสาย Tech" });
   await expect(dialog).toBeVisible();
   const box = await dialog.boundingBox();
@@ -38,20 +41,26 @@ test("ฟีดและ Smart Add ใช้งานได้บนจอ 390×
 
 test("มีแถบนำทางด้านล่างสำหรับจอมือถือ", async ({ page }) => {
   await page.goto("/");
-  const bottomNav = page.getByRole("navigation", { name: /นำทางหลัก|เมนูด้านล่าง/ });
+  await page.waitForFunction(() => document.body.dataset.commandReady === "true");
+  const bottomNav = page.getByRole("navigation", { name: "เมนูด้านล่าง" });
   await expect(bottomNav).toBeVisible();
-  await expect(bottomNav.getByRole("link", { name: /ฟีด|หน้าแรก/ })).toBeVisible();
+  await expect(bottomNav.getByRole("link", { name: /รายการแข่งขัน/ })).toBeVisible();
   await expect(bottomNav.getByRole("link", { name: /ทีมของฉัน/ })).toBeVisible();
   await expect(bottomNav.getByRole("link", { name: /ผู้คน/ })).toBeVisible();
 });
 
 test("Command Palette เปิดด้วย Ctrl+K และค้นหาคำสั่งได้", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("อีเมล").fill(studentEmail);
+  await page.getByLabel("รหัสผ่าน", { exact: true }).fill(studentPassword);
+  await page.getByRole("button", { name: "เข้าสู่ระบบ", exact: true }).click();
+  await expect(page.getByRole("navigation", { name: "เมนูด้านล่าง" })).toBeVisible();
   await page.goto("/");
   await page.waitForFunction(() => document.body.dataset.commandReady === "true");
   await page.keyboard.press("Control+k");
   const palette = page.getByRole("dialog", { name: /คำสั่ง|Command/ });
   await expect(palette).toBeVisible();
-  const search = palette.getByRole("combobox").first();
+  const search = palette.getByRole("textbox", { name: "ค้นหาคำสั่ง" });
   await expect(search).toBeVisible();
   await search.fill("Smart Add");
   await expect(palette.getByText(/Smart Add|เพิ่มรายการแข่ง/).first()).toBeVisible();

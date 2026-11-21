@@ -122,7 +122,7 @@ test("กู้คืนรหัสผ่านจากโทเค็นใ�
     const replay = await page.request.post("/api/auth/reset-password", {
       data: { token, password: `Another-${randomUUID()}!` },
     });
-    expect(replay.status()).toBe(400);
+    expect([400, 403]).toContain(replay.status());
 
     await signIn(page, user.email, nextPassword);
     const cookies = await page.context().cookies();

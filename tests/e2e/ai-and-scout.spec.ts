@@ -16,7 +16,8 @@ async function signIn(
   await page.getByLabel("อีเมล").fill(email);
   await page.getByLabel("รหัสผ่าน", { exact: true }).fill(password);
   await page.getByRole("button", { name: "เข้าสู่ระบบ", exact: true }).click();
-  await expect(page.getByRole("navigation", { name: "เมนูหลัก" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "เพิ่มรายการ", exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/$/);
 }
 
 test("AI สกัดข้อมูลจากข้อความและฟื้นคืนหลัง AI ขัดข้องชั่วคราว", async ({
@@ -162,6 +163,12 @@ test("Rubric review รับผล AI ที่ Zod ตรวจแล้วแ
   const competitionId = competitionsBody.data.competitions[0]?.id;
   expect(competitionId).toBeTruthy();
   if (!competitionId) return;
+
+  const interestResponse = await page.request.post(
+    `/api/competitions/${competitionId}/interest`,
+    { data: { preferred_role: "Frontend", note: null } },
+  );
+  expect([200, 201]).toContain(interestResponse.status());
 
   const teamName = `E2E Rubric ${randomUUID()}`;
   const createResponse = await page.request.post(
