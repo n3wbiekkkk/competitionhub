@@ -3,31 +3,35 @@
 Baseline commit: `fdd8830`
 Baseline gate: 37 tests pass, lint/typecheck/build pass, public repo gate pass.
 Branch: `main`
-Final verification commit: `aa4280f`
-Final code CI run: `44861768813`
-Final deploy stamp: `20261121T033725Z`
-Final production probe: `/tmp/competition-hub-phases/production-probe-final.log`
+Wave 2 code commit: `1c709d9`
+Wave 2 code CI run: `44875005294`
+Wave 2 final CI run: pending
+Final deploy stamp: `20261121T063626Z`
+Final production probe: pending
+Security fuzz: `/tmp/competition-hub-wave2/fuzz4.log`
+Backup verification: `/tmp/competition-hub-wave2/verify-backup3.log`
+Query benchmark: `/tmp/competition-hub-wave2/bench-final.log`
 
 ## Phase status
 
 | Phase | Focus | Status | Evidence |
 | --- | --- | --- | --- |
 | 1 | Security, observability, hardening | VERIFIED | CI run 44861768813 green; 84 unit tests; production probe shows schema ok and login 401, not 429. |
-| 2 | Database evolution, migration engine | VERIFIED | 9 migrations applied in production; `db:status` complete; schema parity reports 9 migrations and 41 objects. |
+| 2 | Database evolution, migration engine | VERIFIED | 14 migrations applied in production; `db:status` complete; schema parity reports 14 migrations and 96 objects. |
 | 3 | Auth, SMTP, admin RBAC | VERIFIED | jti sessions, truthful outbox, audit writes, RBAC. CI green and production login probe pass. |
 | 4 | Scout engine, AI extraction v2 | VERIFIED | Server gatekeeper, dedupe, retry abort fix, 7 sources, web search. CI green; `/tmp/competition-hub-phases/live-search-probe.log`. |
 | 5 | Discovery, matching, student workspace | VERIFIED | Rate-limited AI ranking, honest relaxed intent, explainable matching wired. CI green. |
 | 6 | Teacher ops, team builder, analytics | VERIFIED | Canonical roles, optimizer wired, safer task RLS. CI green; integration RLS probe reports 0 unprotected tables. |
 | 7 | Notifications, media, UX polish | VERIFIED | New-user preference trigger applied as 0008; reminders scheduler added; E2E covers notification bell. CI green. |
-| 8 | Tests, CI/CD, production docs | VERIFIED | CI run 44861768813 green with 3 Playwright tests; public repo gate green; deploy stamp 20261121T033725Z healthy. |
-| 9 | Student-led teams and recruitment | IMPLEMENTED | Migration 0010, LFG and invite workflows, teammate ranking. Pending CI. |
-| 10 | AI coach and prep studio | IMPLEMENTED | Migration 0011, roadmap, rubric review, deliverables, readiness meter. Pending CI. |
-| 11 | SSE, team chat and mentor check-ins | IMPLEMENTED | Migration 0012, SSE, chat, check-ins, mentor triage. Pending CI. |
-| 12 | Calendar, webhooks and showcase | IMPLEMENTED | Migration 0013, tokenized .ics, webhook routing, public showcase, OG images. Pending CI. |
-| 13 | Badges, skill evidence and reports | IMPLEMENTED | Migration 0014, badge engine, verified skills, school impact reports. Pending CI. |
-| 14 | PWA, offline read and command palette | IMPLEMENTED | Manifest, service worker, command palette, mobile bottom nav. Pending CI. |
-| 15 | Resilience, backups and profiling | IMPLEMENTED | Backup verifier, ops telemetry, 10-query benchmark harness. Pending CI. |
-| 16 | E2E, fuzzing and v1.0.0 | IMPLEMENTED | 5 new E2E specs, fuzz suite, release workflow, v1.0.0 version. Pending CI. |
+| 8 | Tests, CI/CD, production docs | VERIFIED | CI run 44875005294 green with 13 Playwright tests; public repo gate green; deploy stamp 20261121T063626Z healthy. |
+| 9 | Student-led teams and recruitment | VERIFIED | Migration 0010, LFG/invites, teammate ranking. CI 44875005294 green; fuzz 7/7. |
+| 10 | AI coach and prep studio | VERIFIED | Migration 0011, roadmap, rubric review, deliverables, readiness meter. CI 44875005294 green. |
+| 11 | SSE, team chat and mentor check-ins | VERIFIED | Migration 0012, SSE, chat, check-ins, mentor triage. CI 44875005294 green. |
+| 12 | Calendar, webhooks and showcase | VERIFIED | Migration 0013, tokenized .ics, webhook routing, public showcase, OG images. CI 44875005294 green. |
+| 13 | Badges, skill evidence and reports | VERIFIED | Migration 0014, badge engine, verified skills, school impact reports. CI 44875005294 green. |
+| 14 | PWA, offline read and command palette | VERIFIED | Manifest, private-safe service worker, command palette, mobile bottom nav. CI 44875005294 green. |
+| 15 | Resilience, backups and profiling | VERIFIED | Backup restore passed; 10-query benchmark complete; ops telemetry mounted. CI 44875005294 green. |
+| 16 | E2E, fuzzing and v1.0.0 | VERIFIED | 13 Playwright tests green; fuzz 7/7; package version 1.0.0; release workflow added. |
 
 ## Decision trail
 
