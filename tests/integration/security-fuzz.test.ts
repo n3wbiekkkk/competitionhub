@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { randomBytes, randomUUID, scrypt } from "node:crypto";
+import { createHash, randomBytes, randomUUID, scrypt } from "node:crypto";
 import { after, before, test } from "node:test";
 import { SignJWT } from "jose";
 import { Pool, type PoolClient } from "pg";
@@ -37,6 +37,7 @@ interface TableSpec {
 }
 
 const createdUserIds: string[] = [];
+const createdCompetitionIds: string[] = [];
 const createdRateKeys: string[] = [];
 let competitionId: string | null = null;
 
@@ -56,17 +57,17 @@ before(async () => {
 });
 
 after(async () => {
-  if (competitionId && adminPool) {
-    await adminPool.query("DELETE FROM public.competitions WHERE id = $1", [
-      competitionId,
-    ]);
+  if (adminPool) {
+    for (const id of createdCompetitionIds) {
+      await adminPool.query("DELETE FROM public.competitions WHERE id = $1", [id]);
+    }
   }
   if (adminPool) {
     await adminPool.query("DELETE FROM public.webhook_routes WHERE name = $1", [
       marker,
     ]);
     await adminPool.query(
-      "DELETE FROM public.badge_definitions WHERE slug = $1",
+      "DELETE FROM public.badge_definitions WHERE code = $1",
       [marker],
     );
     await adminPool.query("DELETE FROM public.rate_limit_buckets WHERE key = ANY($1::text[])", [
@@ -310,22 +311,24 @@ test("Wave 2 ทุกตารางปฏิเสธการอ่านแ�
   assert.ok(adminPool, "MIGRATION_DATABASE_URL is required");
 
   const owner = await createUser("student");
+  const recipient = await createUser("student");
   const attacker = await createUser("student");
 
   const competition = await adminPool.query<{ id: string }>(
     `INSERT INTO public.competitions
        (title, category, deadline, min_size, max_size, summary, source_url, source_type, status)
      VALUES ($1, 'Programming / Competitive', (current_date + interval '30 days')::date,
-             1, 4, $2, $3, 'manual', 'open')
+             1, 1, $2, $3, 'manual', 'open')
      RETURNING id`,
     [`Fuzz Competition ${marker}`, `fuzz ${marker}`, `https://example.test/${marker}`],
   );
   competitionId = competition.rows[0]?.id ?? null;
+  if (competitionId) createdCompetitionIds.push(competitionId);
   assert.ok(competitionId, "could not seed competition");
 
   const team = await adminPool.query<{ id: string }>(
     `INSERT INTO public.teams (competition_id, name, status)
-     VALUES ($1, $2, 'confirmed') RETURNING id`,
+     VALUES ($1, $2, 'draft') RETURNING id`,
     [competitionId, `Fuzz Team ${marker}`],
   );
   const teamId = team.rows[0]?.id;
@@ -335,22 +338,19 @@ test("Wave 2 ทุกตารางปฏิเสธการอ่านแ�
      VALUES ($1, $2, 'Frontend')`,
     [teamId, owner.id],
   );
+  await adminPool.query("UPDATE public.teams SET status = 'confirmed' WHERE id = $1", [teamId]);
 
-  let badgeId: string | null = null;
   if (await tableExists("badge_definitions")) {
     await seedRow("badge_definitions", {
-      slug: marker,
-      title_th: `Fuzz ${marker}`,
+      code: marker,
+      name_th: `Fuzz ${marker}`,
       description_th: `fuzz ${marker}`,
-      icon: "award",
+      category: "milestone",
+      icon_name: "Award",
       tier: "bronze",
-      criteria: "{}",
+      criterion: "interest_count",
+      threshold: 1,
     });
-    const badge = await adminPool.query<{ id: string }>(
-      "SELECT id FROM public.badge_definitions WHERE slug = $1 LIMIT 1",
-      [marker],
-    );
-    badgeId = badge.rows[0]?.id ?? null;
   }
 
   const specs: TableSpec[] = [
@@ -358,16 +358,16 @@ test("Wave 2 ทุกตารางปฏิเสธการอ่านแ�
       table: "team_invitations",
       values: {
         team_id: teamId,
-        inviter_id: owner.id,
-        invitee_id: attacker.id,
-        direction: "invite",
-        status: "pending",
-        message: marker,
+        direction: "team_invite",
+        sender_id: owner.id,
+        recipient_id: recipient.id,
+        role: "Frontend",
+        note: marker,
       },
     },
     {
       table: "team_open_roles",
-      values: { team_id: teamId, role_name: "Frontend", note: marker },
+      values: { team_id: teamId, role: "Frontend", note: marker },
     },
     {
       table: "team_messages",
@@ -377,19 +377,21 @@ test("Wave 2 ทุกตารางปฏิเสธการอ่านแ�
       table: "team_checkins",
       values: {
         team_id: teamId,
-        submitted_by: owner.id,
-        status: "at_risk",
-        progress_summary: marker,
+        author_id: owner.id,
+        week_start: new Date().toISOString().slice(0, 10),
+        progress: marker,
+        next_steps: marker,
+        risk_level: "at_risk",
       },
     },
     {
       table: "team_ai_plans",
       values: {
         team_id: teamId,
-        plan_type: "roadmap",
+        kind: "roadmap",
         input_hash: marker,
-        content: "{}",
         model: "fuzz",
+        plan: "{}",
         created_by: owner.id,
       },
     },
@@ -397,33 +399,36 @@ test("Wave 2 ทุกตารางปฏิเสธการอ่านแ�
       table: "team_deliverables",
       values: {
         team_id: teamId,
-        kind: "repo",
+        kind: "source_code",
         title: marker,
         url: `https://example.test/${marker}`,
-        submitted_by: owner.id,
+        created_by: owner.id,
       },
     },
     {
       table: "calendar_feed_tokens",
-      values: { user_id: owner.id, token_hash: marker },
+      values: {
+        user_id: owner.id,
+        token_hash: createHash("sha256").update(marker).digest("hex"),
+      },
     },
     {
       table: "webhook_routes",
       values: {
         name: marker,
-        provider: "generic_json",
         target_url: `https://example.test/${marker}`,
-        event_types: "{}",
+        events: ["result.verified"],
+      },
+    },
+    {
+      table: "user_badges",
+      values: {
+        user_id: owner.id,
+        badge_code: marker,
+        evidence_count: 1,
       },
     },
   ];
-
-  if (badgeId) {
-    specs.push({
-      table: "user_badges",
-      values: { user_id: owner.id, badge_id: badgeId, evidence_ref: "{}" },
-    });
-  }
 
   const checked: string[] = [];
   for (const spec of specs) {
@@ -536,32 +541,14 @@ test("SSRF: บริการวิเคราะห์ต้องปฏิ�
 });
 
 test("SSRF: webhook targets ต้องถูกปฏิเสธก่อนบันทึก", async () => {
-  const teacherEmail = process.env.E2E_TEACHER_EMAIL ?? "teacher.e2e@example.test";
-  assert.ok(adminPool, "admin database pool is not configured");
-  const teacher = await adminPool.query<{ id: string }>(
-    "SELECT id FROM public.auth_accounts WHERE lower(email) = lower($1) LIMIT 1",
-    [teacherEmail],
-  );
-  const teacherId = teacher.rows[0]?.id;
-  assert.ok(teacherId, "seeded teacher is required for webhook fuzzing");
-  const jti = randomUUID();
-  await adminPool.query(
-    `INSERT INTO public.user_sessions (jti, user_id, user_agent, ip_address)
-     VALUES ($1, $2, 'security-fuzz', 'direct')`,
-    [jti, teacherId],
-  );
-  const token = await signToken(
-    { id: teacherId, email: teacherEmail },
-    jti,
-    "teacher",
-  );
+  const teacher = await createUser("teacher");
+  const token = teacher.token;
 
   const response = await mutation("/api/admin/webhooks", {
     ...jsonMutationInit({
       name: marker,
-      provider: "generic_json",
-      target_url: "http://127.0.0.1:3100/admin",
-      event_types: ["competition_approved"],
+      targetUrl: "http://127.0.0.1:3100/admin",
+      events: ["result.verified"],
     }),
     headers: {
       "content-type": "application/json",
@@ -579,7 +566,7 @@ test("SSRF: deliverable links ต้องปฏิเสธ URL ภายใน
     `INSERT INTO public.competitions
        (title, category, deadline, min_size, max_size, summary, source_url, source_type, status)
      VALUES ($1, 'Programming / Competitive', (current_date + interval '30 days')::date,
-             1, 4, $2, $3, 'manual', 'open')
+             1, 1, $2, $3, 'manual', 'open')
      RETURNING id`,
     [
       `Fuzz Deliverable ${marker}`,
@@ -590,9 +577,10 @@ test("SSRF: deliverable links ต้องปฏิเสธ URL ภายใน
   const deliverableCompetitionId = competition.rows[0]?.id;
   assert.ok(deliverableCompetitionId);
   if (!competitionId) competitionId = deliverableCompetitionId;
+  createdCompetitionIds.push(deliverableCompetitionId);
   const team = await adminPool.query<{ id: string }>(
     `INSERT INTO public.teams (competition_id, name, status)
-     VALUES ($1, $2, 'confirmed') RETURNING id`,
+     VALUES ($1, $2, 'draft') RETURNING id`,
     [deliverableCompetitionId, `Fuzz Deliverable Team ${marker}`],
   );
   const teamId = team.rows[0]?.id;
@@ -602,10 +590,11 @@ test("SSRF: deliverable links ต้องปฏิเสธ URL ภายใน
      VALUES ($1, $2, 'Frontend')`,
     [teamId, user.id],
   );
+  await adminPool.query("UPDATE public.teams SET status = 'confirmed' WHERE id = $1", [teamId]);
 
   const response = await mutation(`/api/teams/${teamId}/deliverables`, {
     ...jsonMutationInit({
-      kind: "repo",
+      kind: "source_code",
       title: "private",
       url: "http://169.254.169.254/latest/meta-data/",
     }),

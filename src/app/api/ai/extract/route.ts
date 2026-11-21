@@ -53,13 +53,6 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!isTyphoonConfigured()) {
-    return NextResponse.json(
-      { error: "ยังไม่ได้ตั้งค่าบริการวิเคราะห์อัตโนมัติในระบบ" },
-      { status: 500 },
-    );
-  }
-
   const contentType = request.headers.get("content-type") ?? "";
 
   try {
@@ -133,6 +126,23 @@ export async function POST(request: Request) {
     }
 
     if (parsed.data.mode === "url") {
+      try {
+        validatePublicHttpUrl(parsed.data.url);
+      } catch {
+        return NextResponse.json(
+          {
+            error: "ลิงก์ต้นทางต้องเป็น URL สาธารณะ http/https เท่านั้น",
+            code: "BLOCKED_URL",
+          },
+          { status: 422 },
+        );
+      }
+      if (!isTyphoonConfigured()) {
+        return NextResponse.json(
+          { error: "ยังไม่ได้ตั้งค่าบริการวิเคราะห์อัตโนมัติในระบบ" },
+          { status: 500 },
+        );
+      }
       const fetched = await fetchUrlMarkdown(parsed.data.url);
       if (!fetched.ok) {
         return NextResponse.json(
@@ -155,6 +165,13 @@ export async function POST(request: Request) {
         sourceType: "ai_link" as const,
         sourceUrl: fetched.url,
       });
+    }
+
+    if (!isTyphoonConfigured()) {
+      return NextResponse.json(
+        { error: "ยังไม่ได้ตั้งค่าบริการวิเคราะห์อัตโนมัติในระบบ" },
+        { status: 500 },
+      );
     }
 
     const optionalUrl = parsed.data.sourceUrl?.trim() || null;
