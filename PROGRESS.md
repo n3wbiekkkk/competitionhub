@@ -102,14 +102,14 @@ Baseline for visual work: commit `1a536e3`, baseline gate `/tmp/competition-hub-
 | U3 | Competition detail and public showcase | VERIFIED | 12-column detail split, sticky action rail, editorial showcase with KPI strip and gallery. Final check and E2E green. |
 | U4 | Student workspace | VERIFIED | Team split pane, directory grid, profile and settings subnav. Final check and E2E green. |
 | U5 | Teacher studio and admin console | VERIFIED | Edge-to-edge board, master-detail review, KPI bento, sticky table rows, scrollable tabs. Final check and E2E green. |
-| U6 | Visual polish and multi-viewport audit | VERIFIED | Skeletons, empty states, 24 visual checks across 1920/1440/390 in light and dark, 13 E2E pass, full local gate green. |
+| U6 | Visual polish and multi-viewport audit | VERIFIED | Skeletons, empty states, 72 visual checks across 12 routes at 1920/1440/390 in light and dark, 13 E2E pass, full local gate green. |
 
 ### UX/UI verification notes
 
-- Full local gate: `/tmp/competition-hub-ux/final-check.log`, all checks passed.
-- Remote CI run `44882473213` green at commit `3f00cc0`, 13 Playwright tests passed.
+- Full local gate: `/tmp/competition-hub-ux/final-check3.log`, all checks passed including integration schema and RLS.
+- Remote CI run `44883498588` green at commit `989cdbd`, 13 Playwright tests passed.
 - Playwright: 13 passed in `/tmp/competition-hub-ux/e2e8.log`.
-- Visual audit: 24 checks pass in `/tmp/competition-hub-ux/visual-final.log`. Screenshots in `/tmp/competition-hub-ux/final/visual`.
+- Visual audit: 72 checks pass in `/tmp/competition-hub-ux/visual-final4.log`. Screenshots in `/tmp/competition-hub-ux/final/visual4`.
 - 1920px light shell metric: sidebar 247px, topbar 65px, main starts at 248px, no horizontal overflow. Produced by `scripts/visual-audit.mjs`.
 - 390px metric: sidebar hidden, bottom navigation visible, no horizontal overflow.
 - Decision trail: `docs/ux-overhaul-decisions.tsv`.

@@ -8,6 +8,9 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 echo "==> schema parity"
 npm run check:schema
 
+echo "==> integration schema and RLS"
+npm run test:integration
+
 echo "==> production build"
 npm run build
 

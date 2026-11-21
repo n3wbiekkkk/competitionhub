@@ -144,14 +144,9 @@ export function ScoutRunnerDialog({
 
   function appendLog(item: Omit<ActivityLogItem, "id" | "time">) {
     seqRef.current += 1;
-    setLogs((prev) => [
-      ...prev,
-      {
-        id: `scout-log-${seqRef.current}`,
-        time: nowTimeLabel(),
-        ...item,
-      },
-    ]);
+    const id = `scout-log-${seqRef.current}`;
+    const time = nowTimeLabel();
+    setLogs((prev) => [...prev, { id, time, ...item }]);
   }
 
   function handleStreamEvent(event: ScoutProgressEvent) {
