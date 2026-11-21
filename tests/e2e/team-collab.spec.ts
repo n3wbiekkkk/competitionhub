@@ -181,6 +181,9 @@ test("LFG → เชิญเพื่อน → AI roadmap → แชท → me
     }
     expect(teamId).toBeTruthy();
     if (!teamId) return;
+    await pool.query("update public.teams set status = 'confirmed' where id = $1", [
+      teamId,
+    ]);
 
     const invited = await postJson(
       page,
