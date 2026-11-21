@@ -88,8 +88,12 @@ async function postJson(
   page: Page,
   url: string,
   data: unknown,
+  method: "POST" | "PATCH" = "POST",
 ): Promise<{ status: number; body: unknown }> {
-  const response = await page.request.post(url, { data });
+  const response =
+    method === "PATCH"
+      ? await page.request.patch(url, { data })
+      : await page.request.post(url, { data });
   const text = await response.text();
   let body: unknown = null;
   try {
@@ -182,12 +186,9 @@ test("LFG → เชิญเพื่อน → AI roadmap → แชท → me
       page,
       `/api/teams/${teamId}/invitations`,
       {
-        inviteeId: peer.id,
-        invitee_id: peer.id,
-        direction: "invite",
-        proposedRole: "Frontend",
-        proposed_role: "Frontend",
-        message: "เชิญร่วมทีม E2E",
+        target_user_id: peer.id,
+        role: "Frontend",
+        note: "เชิญร่วมทีม E2E",
       },
     );
     expect([200, 201]).toContain(invited.status);
@@ -201,8 +202,9 @@ test("LFG → เชิญเพื่อน → AI roadmap → แชท → me
       await signIn(peerPage, peer.email, peer.password);
       const accepted = await postJson(
         peerPage,
-        `/api/invitations/${invitationId}/accept`,
-        {},
+        `/api/invitations/${invitationId}`,
+        { action: "accept" },
+        "PATCH",
       );
       expect([200, 201]).toContain(accepted.status);
     } finally {
