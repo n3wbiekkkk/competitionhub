@@ -3,12 +3,8 @@ import type { ReactNode } from "react";
 import { cookies } from "next/headers";
 import { IBM_Plex_Sans_Thai, JetBrains_Mono } from "next/font/google";
 import { CommandPaletteProvider } from "@/components/command/command-palette-provider";
-import { Footer } from "@/components/layout/footer";
-import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
-import { Navbar } from "@/components/layout/navbar";
-import { OfflineBanner } from "@/components/pwa/offline-banner";
-import { ServiceWorkerRegistrar } from "@/components/pwa/service-worker-registrar";
-import { ThemedToaster, ThemeProvider } from "@/components/theme/theme-provider";
+import { AppShell } from "@/components/layout/app-shell";
+import { ThemeProvider } from "@/components/theme/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/session";
 import "./globals.css";
@@ -64,27 +60,7 @@ export default async function RootLayout({
         <ThemeProvider>
           <CommandPaletteProvider>
             <TooltipProvider>
-              <a
-                href="#main-content"
-                className="fixed left-4 top-3 z-[100] -translate-y-24 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg transition-transform focus:translate-y-0"
-              >
-                ข้ามไปยังเนื้อหาหลัก
-              </a>
-              <OfflineBanner />
-              <Navbar />
-              <div
-                id="main-content"
-                tabIndex={-1}
-                className="flex-1 pb-24 outline-none md:pb-0"
-              >
-                {children}
-              </div>
-              <div className="pb-16 md:pb-0">
-                <Footer />
-              </div>
-              <MobileBottomNav />
-              <ServiceWorkerRegistrar />
-              <ThemedToaster />
+              <AppShell>{children}</AppShell>
             </TooltipProvider>
           </CommandPaletteProvider>
         </ThemeProvider>

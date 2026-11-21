@@ -90,3 +90,16 @@ Fresh Compose boot: `/tmp/competition-hub-wave2/fresh-compose2.log`
 - Production health reports migration `0014_badges_reports`, `ok=true`, and package version `1.0.0` in `/tmp/competition-hub-wave2/production-final.log`.
 - `/showcase`, `/`, `/login`, `/api/health`, and `/api/competitions?status=all` return HTTP 200.
 - Fresh Compose boot applied all 13 remaining migrations, returned 200 on `/`, `/login`, `/showcase`, and `/api/health`, and reported memory limits 536870912 bytes for web and 268435456 bytes for db.
+
+## UX/UI Overhaul (Phases U1–U6)
+
+Baseline for visual work: commit `1a536e3`, baseline gate `/tmp/competition-hub-ux/baseline-check.log`.
+
+| Phase | Focus | Status | Evidence |
+| --- | --- | --- | --- |
+| U1 | Design tokens and full-viewport app shell | IMPLEMENTED | Surface tokens, Thai line-height, collapsible sidebar, h-16 topbar, full-width content shell. Pending phase gate. |
+| U2 | Competition feed and discovery | PLANNED | Sticky filter rail, card grid, grid/list toggle, compact discovery bar. |
+| U3 | Competition detail and public showcase | PLANNED | 12-column detail split, sticky action rail, editorial showcase. |
+| U4 | Student workspace | PLANNED | Team split pane, directory grid, profile and settings subnav. |
+| U5 | Teacher studio and admin console | PLANNED | Edge-to-edge board, master-detail review, KPI bento, sticky tables. |
+| U6 | Visual polish and multi-viewport audit | PLANNED | Skeletons, empty states, 1920/1440/390 light and dark audit, full E2E gate. |

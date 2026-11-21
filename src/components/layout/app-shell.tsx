@@ -1,8 +1,9 @@
-import { NavbarClient } from "@/components/layout/navbar-client";
 import { getAuthenticatedProfile } from "@/lib/auth/cookies";
 import { withUserDb } from "@/lib/db/pool";
+import { AppShellClient } from "@/components/layout/app-shell-client";
+import type { ReactNode } from "react";
 
-export async function Navbar() {
+export async function AppShell({ children }: { children: ReactNode }) {
   const user = await getAuthenticatedProfile();
   let pendingReviewCount = 0;
 
@@ -19,5 +20,9 @@ export async function Navbar() {
     }
   }
 
-  return <NavbarClient user={user} pendingReviewCount={pendingReviewCount} />;
+  return (
+    <AppShellClient user={user} pendingReviewCount={pendingReviewCount}>
+      {children}
+    </AppShellClient>
+  );
 }
