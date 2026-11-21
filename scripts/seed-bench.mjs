@@ -291,11 +291,7 @@ try {
         ok: i % 7 !== 0,
       }),
       isoTime(-i / 4),
-    ]).map((row) => {
-      const copy = [...row];
-      copy[5] = `${copy[5]}::jsonb`;
-      return copy;
-    }),
+    ]),
   );
 
   const sourceIds = SOURCES.map((_, i) => benchUuid(`scout-source:${i + 1}`));
@@ -312,11 +308,7 @@ try {
       true,
       i === 3 ? "failed" : "ok",
       i === 3 ? 2 : 0,
-    ]).map((row) => {
-      const copy = [...row];
-      copy[4] = `${copy[4]}::jsonb`;
-      return copy;
-    }),
+    ]),
   );
 
   const runIds = Array.from({ length: 12 }, (_, i) => benchUuid(`scout-run:${i + 1}`));
