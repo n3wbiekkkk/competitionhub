@@ -3,24 +3,23 @@
 Baseline commit: `fdd8830`
 Baseline gate: 37 tests pass, lint/typecheck/build pass, public repo gate pass.
 Branch: `main`
-Final code verification commit: `c504dd7`
-Final code CI run: `44860707491`
-Final docs commit: `5f79bf0`
-Final docs CI run: `44861225420`
-Final deploy stamp: `20261121T032346Z`
+Final verification commit: `aa4280f`
+Final code CI run: `44861768813`
+Final deploy stamp: `20261121T033725Z`
+Final production probe: `/tmp/competition-hub-phases/production-probe-final.log`
 
 ## Phase status
 
 | Phase | Focus | Status | Evidence |
 | --- | --- | --- | --- |
-| 1 | Security, observability, hardening | VERIFIED | CI run 44860707491 green; 84 unit tests; production probe shows schema ok and login 401, not 429. |
+| 1 | Security, observability, hardening | VERIFIED | CI run 44861768813 green; 84 unit tests; production probe shows schema ok and login 401, not 429. |
 | 2 | Database evolution, migration engine | VERIFIED | 9 migrations applied in production; `db:status` complete; schema parity reports 9 migrations and 41 objects. |
 | 3 | Auth, SMTP, admin RBAC | VERIFIED | jti sessions, truthful outbox, audit writes, RBAC. CI green and production login probe pass. |
 | 4 | Scout engine, AI extraction v2 | VERIFIED | Server gatekeeper, dedupe, retry abort fix, 7 sources, web search. CI green; `/tmp/competition-hub-phases/live-search-probe.log`. |
 | 5 | Discovery, matching, student workspace | VERIFIED | Rate-limited AI ranking, honest relaxed intent, explainable matching wired. CI green. |
 | 6 | Teacher ops, team builder, analytics | VERIFIED | Canonical roles, optimizer wired, safer task RLS. CI green; integration RLS probe reports 0 unprotected tables. |
 | 7 | Notifications, media, UX polish | VERIFIED | New-user preference trigger applied as 0008; reminders scheduler added; E2E covers notification bell. CI green. |
-| 8 | Tests, CI/CD, production docs | VERIFIED | CI run 44860707491 green with 3 Playwright tests; public repo gate green; deploy stamp 20261121T032346Z healthy. |
+| 8 | Tests, CI/CD, production docs | VERIFIED | CI run 44861768813 green with 3 Playwright tests; public repo gate green; deploy stamp 20261121T033725Z healthy. |
 
 ## Decision trail
 
@@ -55,7 +54,7 @@ Final deploy stamp: `20261121T032346Z`
 | 7 | Add a trigger that creates notification preferences for new users | New users were excluded from reminders | `db/migrations/0008_notification_preferences.sql` |
 | 8 | Check all public tables and all migration versions in the integration probe | The old probe missed missing tables and migrations | `scripts/test-integration.mjs` |
 
-| 8 | Marked all phases VERIFIED only after CI, deploy, and production probes passed | Labels without real verification were the original problem | CI runs 44860707491 and 44861225420, deploy stamp 20261121T032346Z, `/tmp/competition-hub-phases/production-probe.log` |
+| 8 | Marked all phases VERIFIED only after CI, deploy, and production probes passed | Labels without real verification were the original problem | CI run 44861768813, deploy stamp 20261121T033725Z, `/tmp/competition-hub-phases/production-probe-final.log` |
 
 ## Accepted boundaries
 
