@@ -1,6 +1,8 @@
 begin;
 
 drop policy if exists team_tasks_member_all on public.team_tasks;
+drop policy if exists team_tasks_member_select on public.team_tasks;
+drop policy if exists team_tasks_teacher_all on public.team_tasks;
 
 create policy team_tasks_member_select on public.team_tasks for select
   using (
