@@ -339,7 +339,7 @@ Swarm checklist:
 | O3 | Google and GitHub OAuth backend | VERIFIED | Provider module, start route and two callbacks green |
 | O4 | Login UI and Thai error states | VERIFIED | Buttons and three Thai error codes present, audit green |
 | O5 | Tests and .env.example | VERIFIED | 141 unit tests, 14 E2E tests pass |
-| O6 | Push, deploy and live verification | IN PROGRESS | Commit and deploy next |
+| O6 | Push, deploy and live verification | VERIFIED | Pushed 9d37659 and f1c2b32, rollback images tagged, live checks all pass |
 
 Secret handling: the four OAuth values were pasted in this thread. They were registered through `request_secret` and written only to the production `.env.local` on `newbie`. They do not appear in Git or in this tracker.
 
@@ -362,3 +362,15 @@ Secret handling: the four OAuth values were pasted in this thread. They were reg
 - `linkOAuthAccount` runs under `withSystemDb` after provider verification. It links by provider id first, then by verified email, and forces `student` on every newly created account. Existing roles are preserved.
 - `auth_accounts.password_hash` is nullable in migration 0015, and the password login treats null as invalid credentials.
 - `shouldUseSecureCookie` is exported from `src/lib/auth/cookies.ts` and reused by the OAuth cookies with HttpOnly, SameSite Lax, Secure under HTTPS, and a 600 second lifetime.
+
+### Deploy and live verification
+
+- Pushed `9d37659` for the feature and `f1c2b32` for the expected migration version in `/api/health`.
+- Tagged rollback images `tech-competition-hub-web:rollback-pre-oauth` and `tech-competition-hub-web:rollback-pre-health` before each build. `cloudflared.service` was not touched.
+- Synced with rsync using the same host-state exclusions as the earlier deploy, including `.env.local`, `backups/`, and `scout.log`.
+- Applied migration 0015 inside the web container with `node scripts/migrate.mjs`.
+- Production DB reports 15 migrations and 0 public tables without FORCE RLS.
+- Containers `tech-competition-hub-web-1` and `tech-competition-hub-db-1` are healthy. `/api/health` returns 200 with `migration ok true`.
+- Live checks on `https://pbcomphub.dpdns.org` all pass. Both OAuth start endpoints return 302 to the correct provider host with `redirect_uri` on the public domain. Google has S256 and openid email profile. GitHub has read:user and user:email. Both buttons are visible with no horizontal overflow at 1920px and 390px. `/teacher` and `/admin` still return 307 for anonymous requests.
+
+The four OAuth values were registered through `request_secret` and written only to the production `.env.local`. They are not in Git.
