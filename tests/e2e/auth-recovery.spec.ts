@@ -96,10 +96,7 @@ test("กู้คืนรหัสผ่านจากโทเค็นใ�
   page,
   browser,
 }) => {
-  test.skip(
-    !databaseUrl,
-    "ไม่มี MIGRATION_DATABASE_URL จึงอ่านโทเค็นจาก email_outbox ไม่ได้ (ลบ guard นี้หลังมี outbox read API)",
-  );
+  expect(databaseUrl, "MIGRATION_DATABASE_URL is required for recovery E2E").toBeTruthy();
   if (!databaseUrl) return;
 
   const pool = new Pool({ connectionString: databaseUrl, max: 1 });

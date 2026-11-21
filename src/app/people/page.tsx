@@ -3,6 +3,7 @@ import { Users } from "lucide-react";
 import { PeopleDirectory } from "@/components/profile/people-directory";
 import { requireAuthUser } from "@/lib/auth/cookies";
 import { listDirectoryProfiles } from "@/lib/db/directory";
+import { listVisibleBadgesForProfiles } from "@/lib/db/badges";
 import { consumeRateLimit } from "@/lib/auth/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +21,12 @@ export default async function PeoplePage({
   const { q } = await searchParams;
   const limited = !(await consumeRateLimit(`people:${auth.user.id}`)).allowed;
   const people = limited ? [] : await listDirectoryProfiles(auth.user.id, q);
+  const badgesByUser = limited
+    ? {}
+    : await listVisibleBadgesForProfiles({
+        viewerId: auth.user.id,
+        profileIds: people.slice(0, 100).map((person) => person.id),
+      });
 
   return (
     <main className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
@@ -49,6 +56,7 @@ export default async function PeoplePage({
         people={people}
         viewerId={auth.user.id}
         initialQuery={q ?? ""}
+        badgesByUser={badgesByUser}
       />
 
       <p className="flex items-center gap-2 border-t border-border pt-6 text-xs text-muted-foreground">

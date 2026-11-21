@@ -1,15 +1,7 @@
-import { existsSync } from "node:fs";
-import path from "node:path";
 import { expect, test } from "@playwright/test";
 
 const studentEmail = process.env.E2E_STUDENT_EMAIL ?? "student.e2e@example.test";
 const studentPassword = process.env.E2E_STUDENT_PASSWORD ?? "e2e-student-pass";
-
-const bottomNavComponent = path.join(
-  process.cwd(),
-  "src/components/layout/mobile-bottom-nav.tsx",
-);
-const commandDirectory = path.join(process.cwd(), "src/components/command");
 
 test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 
@@ -45,11 +37,6 @@ test("ฟีดและ Smart Add ใช้งานได้บนจอ 390×
 });
 
 test("มีแถบนำทางด้านล่างสำหรับจอมือถือ", async ({ page }) => {
-  test.skip(
-    !existsSync(bottomNavComponent),
-    "Phase 14 mobile-bottom-nav.tsx ยังไม่ได้รวมเข้า repository",
-  );
-
   await page.goto("/");
   const bottomNav = page.getByRole("navigation", { name: /นำทางหลัก|เมนูด้านล่าง/ });
   await expect(bottomNav).toBeVisible();
@@ -59,11 +46,6 @@ test("มีแถบนำทางด้านล่างสำหรับ�
 });
 
 test("Command Palette เปิดด้วย Ctrl+K และค้นหาคำสั่งได้", async ({ page }) => {
-  test.skip(
-    !existsSync(commandDirectory),
-    "Phase 14 command palette ยังไม่ได้รวมเข้า repository",
-  );
-
   await page.goto("/");
   await page.keyboard.press("Control+k");
   const palette = page.getByRole("dialog", { name: /คำสั่ง|Command/ });

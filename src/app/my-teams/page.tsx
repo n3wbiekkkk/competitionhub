@@ -323,6 +323,12 @@ export default async function MyTeamsPage() {
                         {item.title}
                       </Link>
                     </h2>
+                    <Link
+                      href={`/my-teams/${item.competition_id}`}
+                      className="inline-flex text-xs font-medium text-primary hover:underline"
+                    >
+                      จัดทีมและหาเพื่อนร่วมทีม
+                    </Link>
                   </div>
 
                   <p className="shrink-0 text-xs tabular-nums text-muted-foreground sm:pt-1">

@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PeopleBadgeStrip } from "@/components/badges/people-badge-strip";
+import type { UserBadge } from "@/lib/db/badges";
 import { getInitials } from "@/lib/utils/initials";
 import { parseClassroom } from "@/lib/constants/classroom";
 import { USER_ROLE_LABELS_TH } from "@/lib/constants/tech-taxonomy";
@@ -16,6 +18,7 @@ interface PeopleDirectoryProps {
   people: DirectoryProfile[];
   viewerId: string;
   initialQuery: string;
+  badgesByUser?: Record<string, UserBadge[]>;
 }
 
 function displayName(person: DirectoryProfile): string {
@@ -28,6 +31,7 @@ export function PeopleDirectory({
   people,
   viewerId,
   initialQuery,
+  badgesByUser = {},
 }: PeopleDirectoryProps) {
   const [query, setQuery] = useState(initialQuery);
 
@@ -128,6 +132,7 @@ export function PeopleDirectory({
                       {USER_ROLE_LABELS_TH[person.role]}
                     </Badge>
                   ) : null}
+                  <PeopleBadgeStrip badges={badgesByUser[person.id] ?? []} />
                   {skills.length > 0 ? (
                     <ul className="mt-2 hidden flex-wrap gap-1 md:flex" aria-label="ทักษะ">
                       {skills.map((skill) => (

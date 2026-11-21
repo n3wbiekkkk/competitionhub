@@ -1,6 +1,4 @@
 import { randomBytes, randomUUID, scrypt } from "node:crypto";
-import { existsSync } from "node:fs";
-import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { Pool } from "pg";
 
@@ -8,16 +6,6 @@ const databaseUrl = process.env.MIGRATION_DATABASE_URL ?? process.env.DATABASE_U
 const teacherEmail = process.env.E2E_TEACHER_EMAIL ?? "teacher.e2e@example.test";
 const studentEmail = process.env.E2E_STUDENT_EMAIL ?? "student.e2e@example.test";
 const studentPassword = process.env.E2E_STUDENT_PASSWORD ?? "e2e-student-pass";
-
-const showcasePage = path.join(process.cwd(), "src/app/showcase/page.tsx");
-const calendarFeedRoute = path.join(
-  process.cwd(),
-  "src/app/api/calendar/feed/[token].ics/route.ts",
-);
-const calendarTokenRoute = path.join(
-  process.cwd(),
-  "src/app/api/calendar/token/route.ts",
-);
 
 async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16).toString("hex");
@@ -152,10 +140,7 @@ function tokenFromBody(body: unknown): string | null {
 test("showcase เฉพาะผลงานที่ opt-in และไม่เปิดเผยข้อมูลส่วนตัว", async ({
   browser,
 }) => {
-  test.skip(
-    !existsSync(showcasePage) || !databaseUrl,
-    "Phase 12 /showcase ยังไม่ได้รวมเข้า repository (ต้องการ MIGRATION_DATABASE_URL)",
-  );
+  expect(databaseUrl, "MIGRATION_DATABASE_URL is required for showcase E2E").toBeTruthy();
   if (!databaseUrl) return;
 
   const pool = new Pool({ connectionString: databaseUrl, max: 1 });
@@ -183,11 +168,6 @@ test("showcase เฉพาะผลงานที่ opt-in และไม่
 });
 
 test("ฟีด .ics ใช้โทเค็นและหยุดทำงานทันทีหลังเพิกถอน", async ({ page }) => {
-  test.skip(
-    !existsSync(calendarFeedRoute) || !existsSync(calendarTokenRoute),
-    "Phase 12 calendar feed/token routes ยังไม่ได้รวมเข้า repository",
-  );
-
   await signIn(page);
   await page.goto("/settings");
   await expect(page.getByText(/webcal|Calendar|ปฏิทิน/i).first()).toBeVisible();

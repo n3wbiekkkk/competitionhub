@@ -1,6 +1,4 @@
 import { randomBytes, randomUUID, scrypt } from "node:crypto";
-import { existsSync } from "node:fs";
-import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { Pool } from "pg";
 import { z } from "zod";
@@ -10,16 +8,6 @@ const studentEmail = process.env.E2E_STUDENT_EMAIL ?? "student.e2e@example.test"
 const studentPassword = process.env.E2E_STUDENT_PASSWORD ?? "e2e-student-pass";
 const teacherEmail = process.env.E2E_TEACHER_EMAIL ?? "teacher.e2e@example.test";
 const teacherPassword = process.env.E2E_TEACHER_PASSWORD ?? "e2e-teacher-pass";
-
-const requiredRoutes = [
-  "src/app/api/competitions/[id]/student-teams/route.ts",
-  "src/app/api/teams/[id]/invitations/route.ts",
-  "src/app/api/invitations/[id]/route.ts",
-  "src/app/api/teams/[id]/ai-roadmap/route.ts",
-  "src/app/api/teams/[id]/messages/route.ts",
-  "src/app/api/teams/[id]/checkins/route.ts",
-  "src/app/api/teacher/checkins/route.ts",
-];
 
 async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16).toString("hex");
@@ -115,13 +103,7 @@ test("LFG → เชิญเพื่อน → AI roadmap → แชท → me
   page,
   browser,
 }) => {
-  const missingRoutes = requiredRoutes.filter(
-    (route) => !existsSync(path.join(process.cwd(), route)),
-  );
-  test.skip(
-    missingRoutes.length > 0 || !databaseUrl,
-    `Wave 2 เส้นทางยังไม่ได้รวมเข้า repository: ${missingRoutes.join(", ") || "none"} (ต้องการ MIGRATION_DATABASE_URL ด้วย)`,
-  );
+  expect(databaseUrl, "MIGRATION_DATABASE_URL is required for collaboration E2E").toBeTruthy();
   if (!databaseUrl) return;
 
   const pool = new Pool({ connectionString: databaseUrl, max: 1 });

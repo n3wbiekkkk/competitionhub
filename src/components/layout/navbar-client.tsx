@@ -211,6 +211,12 @@ export function NavbarClient({ user, pendingReviewCount }: NavbarClientProps) {
       badge: pendingReviewCount,
     },
     {
+      href: "/teacher/reports",
+      label: "รายงานโรงเรียน",
+      show: user?.role === "teacher",
+      badge: 0,
+    },
+    {
       href: "/admin",
       label: "ผู้ดูแลระบบ",
       show: user?.role === "teacher",
@@ -373,6 +379,12 @@ export function NavbarClient({ user, pendingReviewCount }: NavbarClientProps) {
                         <Link href="/teacher/review" className="cursor-pointer">
                           <ClipboardCheck className="mr-2 h-4 w-4" />
                           คิวตรวจรายการ
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/teacher/reports" className="cursor-pointer">
+                          <ClipboardCheck className="mr-2 h-4 w-4" />
+                          รายงานโรงเรียน
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>

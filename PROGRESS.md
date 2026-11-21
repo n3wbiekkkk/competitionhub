@@ -20,6 +20,14 @@ Final production probe: `/tmp/competition-hub-phases/production-probe-final.log`
 | 6 | Teacher ops, team builder, analytics | VERIFIED | Canonical roles, optimizer wired, safer task RLS. CI green; integration RLS probe reports 0 unprotected tables. |
 | 7 | Notifications, media, UX polish | VERIFIED | New-user preference trigger applied as 0008; reminders scheduler added; E2E covers notification bell. CI green. |
 | 8 | Tests, CI/CD, production docs | VERIFIED | CI run 44861768813 green with 3 Playwright tests; public repo gate green; deploy stamp 20261121T033725Z healthy. |
+| 9 | Student-led teams and recruitment | IMPLEMENTED | Migration 0010, LFG and invite workflows, teammate ranking. Pending CI. |
+| 10 | AI coach and prep studio | IMPLEMENTED | Migration 0011, roadmap, rubric review, deliverables, readiness meter. Pending CI. |
+| 11 | SSE, team chat and mentor check-ins | IMPLEMENTED | Migration 0012, SSE, chat, check-ins, mentor triage. Pending CI. |
+| 12 | Calendar, webhooks and showcase | IMPLEMENTED | Migration 0013, tokenized .ics, webhook routing, public showcase, OG images. Pending CI. |
+| 13 | Badges, skill evidence and reports | IMPLEMENTED | Migration 0014, badge engine, verified skills, school impact reports. Pending CI. |
+| 14 | PWA, offline read and command palette | IMPLEMENTED | Manifest, service worker, command palette, mobile bottom nav. Pending CI. |
+| 15 | Resilience, backups and profiling | IMPLEMENTED | Backup verifier, ops telemetry, 10-query benchmark harness. Pending CI. |
+| 16 | E2E, fuzzing and v1.0.0 | IMPLEMENTED | 5 new E2E specs, fuzz suite, release workflow, v1.0.0 version. Pending CI. |
 
 ## Decision trail
 
@@ -55,6 +63,11 @@ Final production probe: `/tmp/competition-hub-phases/production-probe-final.log`
 | 8 | Check all public tables and all migration versions in the integration probe | The old probe missed missing tables and migrations | `scripts/test-integration.mjs` |
 
 | 8 | Marked all phases VERIFIED only after CI, deploy, and production probes passed | Labels without real verification were the original problem | CI run 44861768813, deploy stamp 20261121T033725Z, `/tmp/competition-hub-phases/production-probe-final.log` |
+| 9-16 | Split Wave 2 into eight isolated worktree slices | Parallel work needed separate write ownership | `/tmp/competition-hub-wave2/PLAN.md`, eight phase reports |
+| 9-16 | Integrated migrations 0010 to 0014 by appending them to schema.sql | Fresh boot must match the migration ledger | `npm run check:schema`, 14 migrations and 96 objects |
+| 9-16 | Added a canonical dynamic calendar feed route | Next 16 treats `[token].ics` as a literal segment | `src/app/api/calendar/feed/[token]/route.ts` |
+| 9-16 | Removed all planned-route skip guards after merging | Zero skipped tests is part of the release gate | five E2E specs and fuzz suite |
+| 15 | Added verify-backup, bench:seed and bench:queries scripts | Ops claims need rerunnable tools | `package.json`, `scripts/verify-backup.sh`, `scripts/bench-queries.mjs` |
 
 ## Accepted boundaries
 

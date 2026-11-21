@@ -105,10 +105,10 @@ test("feed URLs carry the opaque token and use the request origin", () => {
   const https = buildHttpsFeedUrl("http://localhost:3000/settings", "abc");
   assert.equal(
     https,
-    "http://localhost:3000/api/calendar/feed/[token].ics?feed=abc",
+    "http://localhost:3000/api/calendar/feed/abc.ics",
   );
   assert.equal(
     buildWebcalUrl("https://hub.example.com/settings", "abc"),
-    "webcal://hub.example.com/api/calendar/feed/[token].ics?feed=abc",
+    "webcal://hub.example.com/api/calendar/feed/abc.ics",
   );
 });

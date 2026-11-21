@@ -28,6 +28,15 @@ npm run dev
 - **ค้นหาด้วย AI (`POST /api/discovery`):** นักเรียนพิมพ์เป็นภาษาธรรมชาติได้ เช่น “อยากแข่ง AI หุ่นยนต์ ทีม 3 คน” ระบบแปลงคำขอเป็นหมวด/ขนาดทีม/ระดับชั้น กรองเฉพาะรายการ `open` ที่ยังไม่หมดอายุจาก PostgreSQL ผ่าน RLS แล้วให้บริการวิเคราะห์อัตโนมัติจัดอันดับ **เฉพาะ ID ที่มีอยู่จริง**; ทุกฟิลด์ที่แสดงมาจากแถวฐานข้อมูล ถ้า AI ไม่พร้อมหรือตอบไม่ตรงรูปแบบจะฟอลแบ็กเป็นผลลัพธ์แบบคะแนนและบอกเหตุผลเป็นภาษาไทย
 - **Smart Add / Auto Scout:** สกัดข้อมูลจากลิงก์ ข้อความ และโปสเตอร์ ตรวจ URL สาธารณะและแหล่งที่มา ไม่สร้างรายการจากพาดหัวข่าวอย่างเดียว และรองรับการยกเลิกกลางทาง Auto Scout ยังค้นหาเว็บจากแหล่งข่าวสาธารณะเพื่อหาลิงก์ใหม่ ก่อนกรอง URL สาธารณะและส่งให้ตัววิเคราะห์อัตโนมัติ รายการที่พบยังเข้าสู่สถานะ `pending_review` เสมอ
 
+## v1.0 collaboration and showcase
+
+- Students can form teams, advertise open roles, invite visible peers, and receive explainable teammate suggestions.
+- Team workspaces include an AI coach, rubric review, deliverable vault, team chat, weekly check-ins, and submission readiness.
+- Teachers get mentor triage, school impact reports, and verified badge evidence. Admins get signed webhook routing and ops telemetry.
+- Subscribers can generate a tokenized `webcal://` feed. The public `/showcase` page shows only opted-in, teacher-verified results.
+- The app installs as a PWA with a private-safe offline read cache, global command palette, and mobile bottom navigation.
+- Set `WEBHOOK_SIGNING_SECRET` before sending admin webhooks. `BENCH_DATABASE_URL` is only needed for local benchmarks.
+
 ## Verification (must pass before deploy)
 
 ```bash

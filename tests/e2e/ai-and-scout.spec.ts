@@ -1,5 +1,3 @@
-import { existsSync } from "node:fs";
-import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 import { z } from "zod";
@@ -8,15 +6,6 @@ const teacherEmail = process.env.E2E_TEACHER_EMAIL ?? "teacher.e2e@example.test"
 const teacherPassword = process.env.E2E_TEACHER_PASSWORD ?? "e2e-teacher-pass";
 const studentEmail = process.env.E2E_STUDENT_EMAIL ?? "student.e2e@example.test";
 const studentPassword = process.env.E2E_STUDENT_PASSWORD ?? "e2e-student-pass";
-
-const rubricRoute = path.join(
-  process.cwd(),
-  "src/app/api/teams/[id]/ai-review/route.ts",
-);
-const studentTeamRoute = path.join(
-  process.cwd(),
-  "src/app/api/competitions/[id]/student-teams/route.ts",
-);
 
 async function signIn(
   page: Page,
@@ -158,11 +147,6 @@ test("Auto Scout แสดงการ suppressing รายการซ้ำ�
 test("Rubric review รับผล AI ที่ Zod ตรวจแล้วและฟื้นคืนหลัง timeout", async ({
   page,
 }) => {
-  test.skip(
-    !existsSync(rubricRoute) || !existsSync(studentTeamRoute),
-    "Phase 9 student-teams หรือ Phase 10 ai-review ยังไม่ได้รวมเข้าสายหลัก (ลบ guard นี้หลัง merged)",
-  );
-
   await signIn(page, studentEmail, studentPassword);
 
   const competitionsResponse = await page.request.get(

@@ -27,5 +27,5 @@ export function buildWebcalUrl(requestUrl: string, token: string): string {
 
 export function buildHttpsFeedUrl(requestUrl: string, token: string): string {
   const url = new URL(requestUrl);
-  return `${url.origin}/api/calendar/feed/[token].ics?feed=${encodeURIComponent(token)}`;
+  return `${url.origin}/api/calendar/feed/${encodeURIComponent(token)}.ics`;
 }

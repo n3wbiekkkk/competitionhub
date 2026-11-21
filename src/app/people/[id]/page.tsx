@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { BadgeShowcase } from "@/components/badges/badge-showcase";
 import { ProfileView } from "@/components/profile/profile-view";
 import { requireAuthUser } from "@/lib/auth/cookies";
+import { listVisibleUserBadges } from "@/lib/db/badges";
 import { getDirectoryProfile } from "@/lib/db/directory";
 import { consumeRateLimit } from "@/lib/auth/rate-limit";
 import { notFound } from "next/navigation";
@@ -43,9 +45,14 @@ export default async function PersonPage({
   if (!profile) {
     notFound();
   }
+  const badges = await listVisibleUserBadges({
+    viewerId: auth.user.id,
+    profileId: id,
+  });
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+      <BadgeShowcase badges={badges} compact />
       <ProfileView profile={profile} />
     </main>
   );

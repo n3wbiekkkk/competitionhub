@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { Settings2 } from "lucide-react";
 import { AccountPageHeader } from "@/components/account/account-page-header";
+import { ProfileBadges } from "@/components/badges/profile-badges";
+import { VerifiedSkillEvidencePanel } from "@/components/badges/verified-skill-evidence";
 import { ProfileForm } from "@/components/profile/profile-form";
 import { requireAuthUser } from "@/lib/auth/cookies";
+import { getVerifiedSkillEvidence, listMyBadges } from "@/lib/db/badges";
 import { redirect } from "next/navigation";
 
 export default async function ProfilePage() {
@@ -10,6 +13,11 @@ export default async function ProfilePage() {
   if (!auth.ok) {
     redirect("/login?next=/profile");
   }
+
+  const [badges, skillEvidence] = await Promise.all([
+    listMyBadges(auth.user.id),
+    getVerifiedSkillEvidence({ viewerId: auth.user.id, userId: auth.user.id }),
+  ]);
 
   return (
     <main className="mx-auto max-w-5xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
@@ -24,6 +32,8 @@ export default async function ProfilePage() {
           </ButtonLink>
         }
       />
+      <ProfileBadges badges={badges} />
+      <VerifiedSkillEvidencePanel skills={skillEvidence} />
       <ProfileForm initialProfile={auth.user} />
     </main>
   );

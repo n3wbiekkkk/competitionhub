@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { MentorTriagePanel } from "@/components/teacher/mentor-triage-panel";
 import { ResetRequestsPanel } from "@/components/teacher/reset-requests-panel";
 import { ReviewQueueClient,
   type ReviewCompetitionItem,
@@ -77,6 +78,7 @@ export default async function TeacherReviewPage() {
 
   return (
     <main className="mx-auto max-w-6xl space-y-10 px-4 py-8 sm:px-6 lg:px-8">
+      <MentorTriagePanel />
       <ResetRequestsPanel requests={resetRequests} />
       <ReviewQueueClient initialCompetitions={items} />
     </main>

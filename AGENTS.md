@@ -111,6 +111,13 @@ Defined in `src/lib/constants/classroom.ts`:
 | `src/lib/utils/thai-date.ts`, `url-safety.ts` | Thai Buddhist Era date formatting, UTC countdowns, public HTTP URL SSRF validation |
 | `src/lib/ai/opentyphoon.ts`, `extract-competition.ts`, `scout.ts` | OpenTyphoon client, URL/text/OCR extractor, streaming Thailand tech scout |
 | `src/lib/search/*` | Server-only web search providers, provider selection, and common result normalization |
+| `src/lib/db/student-teams.ts`, `src/lib/utils/teammate-match.ts` | Student-led recruitment, invites, open roles, and explainable teammate ranking |
+| `src/lib/ai/prep-studio.ts`, `src/components/prep-studio/*` | AI roadmap, rubric review, deliverables, and submission readiness |
+| `src/lib/realtime/*`, `src/components/collab/*` | SSE transport, team chat, mentions, and weekly check-ins |
+| `src/lib/integrations/*`, `src/app/showcase/*` | Calendar feeds, signed webhooks, showcase projection, and OG images |
+| `src/lib/db/badges.ts`, `src/lib/reports/*` | Verified badges, skill evidence, and Thai academic-year reports |
+| `src/components/command/*`, `src/components/pwa/*`, `public/sw.js` | Command palette, installable PWA, and private-safe offline read cache |
+| `src/lib/ops/*`, `scripts/bench-queries.mjs`, `scripts/verify-backup.sh` | Ops telemetry, query benchmarks, and backup restore verification |
 | `src/types/database.ts` | Shared database & admin view TypeScript interfaces |
 | `src/components/theme/*` | `ThemeProvider`, `ThemedToaster`, and SSR-safe `<ThemeToggle />` |
 | `src/components/competitions/*` | `CompetitionFeed` (SSR query sync + skill matching), `CompetitionActions` (share + `.ics`), `InterestDrawer`, `SmartAddModal` |

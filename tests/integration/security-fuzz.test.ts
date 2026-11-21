@@ -1,7 +1,5 @@
 import assert from "node:assert/strict";
 import { randomBytes, randomUUID, scrypt } from "node:crypto";
-import { existsSync } from "node:fs";
-import path from "node:path";
 import { after, before, test } from "node:test";
 import { SignJWT } from "jose";
 import { Pool, type PoolClient } from "pg";
@@ -18,15 +16,6 @@ const marker = `e2e-fuzz-${randomUUID()}`;
 
 const adminPool = adminDbUrl ? new Pool({ connectionString: adminDbUrl, max: 1 }) : null;
 const appPool = appDbUrl ? new Pool({ connectionString: appDbUrl, max: 1 }) : null;
-
-const webhookRoute = path.join(
-  process.cwd(),
-  "src/app/api/admin/webhooks/route.ts",
-);
-const deliverableRoute = path.join(
-  process.cwd(),
-  "src/app/api/teams/[id]/deliverables/route.ts",
-);
 
 interface FuzzUser {
   id: string;
@@ -317,7 +306,7 @@ function jsonMutationInit(body: unknown, headers: Record<string, string> = {}): 
   };
 }
 
-test("Wave 2 ทุกตารางปฏิเสธการอ่านและเขียนข้ามผู้ใช้", async (context) => {
+test("Wave 2 ทุกตารางปฏิเสธการอ่านและเขียนข้ามผู้ใช้", async () => {
   assert.ok(adminPool, "MIGRATION_DATABASE_URL is required");
 
   const owner = await createUser("student");
@@ -442,12 +431,7 @@ test("Wave 2 ทุกตารางปฏิเสธการอ่านแ�
     if (await assertNoCrossUserAccess(attacker.id, spec)) checked.push(spec.table);
   }
 
-  if (checked.length === 0) {
-    context.skip(
-      "no Wave 2 tables found; remove this guard after migrations 0010-0014 are merged",
-    );
-    return;
-  }
+  assert.ok(checked.length > 0, "Wave 2 tables must be present for RLS fuzzing");
   console.log(`rls fuzz checked=${checked.join(",")}`);
 });
 
@@ -551,11 +535,7 @@ test("SSRF: บริการวิเคราะห์ต้องปฏิ�
   }
 });
 
-test("SSRF: webhook targets ต้อง being rejected ก่อนบันทึก", {
-  skip: !existsSync(webhookRoute)
-    ? "Phase 12 admin webhooks route is not merged"
-    : false,
-}, async () => {
+test("SSRF: webhook targets ต้องถูกปฏิเสธก่อนบันทึก", async () => {
   const teacherEmail = process.env.E2E_TEACHER_EMAIL ?? "teacher.e2e@example.test";
   assert.ok(adminPool, "admin database pool is not configured");
   const teacher = await adminPool.query<{ id: string }>(
@@ -592,11 +572,7 @@ test("SSRF: webhook targets ต้อง being rejected ก่อนบันท
   assert.equal(response.status, 400);
 });
 
-test("SSRF: deliverable links ต้องปฏิเสธ URL ภายใน", {
-  skip: !existsSync(deliverableRoute)
-    ? "Phase 10 deliverables route is not merged"
-    : false,
-}, async () => {
+test("SSRF: deliverable links ต้องปฏิเสธ URL ภายใน", async () => {
   const user = await createUser("student");
   assert.ok(adminPool, "admin database pool is not configured");
   const competition = await adminPool.query<{ id: string }>(

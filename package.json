@@ -1,6 +1,6 @@
 {
   "name": "tech-competition-hub",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "license": "MIT",
   "scripts": {
@@ -14,6 +14,10 @@
     "db:status": "node scripts/migrate.mjs --status",
     "check:schema": "node scripts/check-schema-parity.mjs",
     "test:integration": "node scripts/test-integration.mjs",
+    "test:fuzz": "node --no-warnings --experimental-strip-types --experimental-loader ./tests/alias-loader.mjs --test tests/integration/security-fuzz.test.ts",
+    "verify:backup": "bash scripts/verify-backup.sh",
+    "bench:seed": "node scripts/seed-bench.mjs",
+    "bench:queries": "node scripts/bench-queries.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "playwright:install": "playwright install --with-deps chromium"

@@ -3,6 +3,10 @@ import { AdminDashboardClient } from "@/components/admin/admin-dashboard-client"
 import { getAuthenticatedProfile } from "@/lib/auth/cookies";
 import { withSystemDb, withUserDb } from "@/lib/db/pool";
 import { AdminOpsPanel } from "@/components/admin/admin-ops-panel";
+import { LazyOpsTelemetry } from "@/components/admin/ops-telemetry-lazy";
+import { WebhookRoutingManager } from "@/components/admin/webhook-routing-manager";
+import type { WebhookRouteItem } from "@/lib/integrations/webhook-events";
+import { loadOpsTelemetry } from "@/lib/ops/telemetry";
 import type {
   AdminCompetitionItem,
   AdminTeamItem,
@@ -167,9 +171,23 @@ export default async function AdminDashboardPage() {
     return { outbox: outboxRes.rows, auditLogs: auditRes.rows };
   });
 
+  const telemetry = await loadOpsTelemetry();
+  const webhookRoutes = await withSystemDb(async (client) => {
+    const res = await client.query<WebhookRouteItem>(
+      `select id, name, target_url, events,
+              is_active, created_at::text, updated_at::text,
+              last_success_at::text, last_failure_at::text
+       from public.webhook_routes
+       order by created_at desc`,
+    );
+    return res.rows;
+  });
+
   return (
     <main className="mx-auto max-w-7xl space-y-10 px-4 py-8 sm:px-6 lg:px-8">
       <AdminOpsPanel outbox={ops.outbox} auditLogs={ops.auditLogs} />
+      <LazyOpsTelemetry snapshot={telemetry} />
+      <WebhookRoutingManager initialRoutes={webhookRoutes} />
       <AdminDashboardClient
         currentUserId={user.id}
         initialUsers={users}
