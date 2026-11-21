@@ -54,6 +54,31 @@ async function main() {
       "select count(*)::text as count from public.schema_migrations",
     );
     assert.ok(Number(migrations.rows[0]?.count ?? 0) > 0, "migration ledger not empty");
+
+    const rateKey = `integration:rate-limit:${Date.now()}`;
+    const bucket = await client.query(
+      `INSERT INTO public.rate_limit_buckets (key, hit_count, window_start, expires_at)
+       VALUES ($1, 1, now(), now() + ($2 || ' milliseconds')::interval)
+       ON CONFLICT (key) DO UPDATE
+       SET hit_count = CASE
+             WHEN public.rate_limit_buckets.expires_at <= now() THEN 1
+             ELSE public.rate_limit_buckets.hit_count + 1
+           END,
+           window_start = CASE
+             WHEN public.rate_limit_buckets.expires_at <= now() THEN now()
+             ELSE public.rate_limit_buckets.window_start
+           END,
+           expires_at = CASE
+             WHEN public.rate_limit_buckets.expires_at <= now()
+               THEN now() + ($2 || ' milliseconds')::interval
+             ELSE public.rate_limit_buckets.expires_at
+           END
+       RETURNING hit_count`,
+      [rateKey, 60_000],
+    );
+    assert.equal(bucket.rows[0]?.hit_count, 1, "rate limit upsert must accept typed parameters");
+    await client.query("DELETE FROM public.rate_limit_buckets WHERE key = $1", [rateKey]);
+
     console.log(`integration ok tables=${tables.length} migrations=${migrations.rows[0]?.count}`);
   } finally {
     client.release();

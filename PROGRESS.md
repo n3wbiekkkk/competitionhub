@@ -32,3 +32,4 @@ Branch: `main`
 | 4 | Keep search snippets as hints only | AI extraction remains the only writer of competition fields | `fetchWebSearchCandidates` sets `requireFetchedContent` |
 | 8 | Add a schema and RLS integration probe | CI needs proof that migrations and row security work together | `scripts/test-integration.mjs` wired into CI |
 | 8 | Copy `db/` into the standalone runner | Migration command runs inside the web container and needs migration files | `Dockerfile` runner stage |
+| 1 | Remove the unused limit parameter from the rate limit upsert | PostgreSQL rejected the untyped parameter and every rate limited route failed closed with 429 | `src/lib/auth/rate-limit.ts`, `scripts/test-integration.mjs` |

@@ -44,7 +44,7 @@ export async function consumeRateLimit(
         retry_after: number;
       }>(
         `INSERT INTO public.rate_limit_buckets (key, hit_count, window_start, expires_at)
-         VALUES ($1, 1, now(), now() + ($3 || ' milliseconds')::interval)
+         VALUES ($1, 1, now(), now() + ($2 || ' milliseconds')::interval)
          ON CONFLICT (key) DO UPDATE
          SET hit_count = CASE
                WHEN public.rate_limit_buckets.expires_at <= now() THEN 1
@@ -56,12 +56,12 @@ export async function consumeRateLimit(
              END,
              expires_at = CASE
                WHEN public.rate_limit_buckets.expires_at <= now()
-                 THEN now() + ($3 || ' milliseconds')::interval
+                 THEN now() + ($2 || ' milliseconds')::interval
                ELSE public.rate_limit_buckets.expires_at
              END
          RETURNING hit_count,
                    GREATEST(1, CEIL(EXTRACT(EPOCH FROM (expires_at - now()))))::int AS retry_after`,
-        [key, limit, windowMs],
+        [key, windowMs],
       );
       return result.rows[0] ?? null;
     });
